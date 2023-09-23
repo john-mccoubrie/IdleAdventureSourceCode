@@ -66,6 +66,9 @@ public:
     UFUNCTION()
     void HandleChatConnected();
 
+    UFUNCTION()
+    void HandleUpdateDisplayNameSuccess();
+
     APhotonChatManager* PhotonChatManagerInstance;
     AIdleGameModeBase* IdleGameMode;
     UIdleGameInstance* IdleGameInstance;

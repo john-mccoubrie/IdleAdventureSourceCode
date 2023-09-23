@@ -26,14 +26,11 @@ void APlayLoginActor::BeginPlay()
 
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
 
-    //PlayFab::ClientModels::FLoginWithCustomIDRequest request;
-    //request.CustomId = TEXT("John");
-    //request.CreateAccount = true;
-    
-    //clientAPI->LoginWithCustomID(request,
-      //PlayFab::UPlayFabClientAPI::FLoginWithCustomIDDelegate::CreateUObject(this, &APlayLoginActor::OnSuccess),
-        //PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnError)
-    //);
+    //Update display name reference and delegate when complete
+    UpdatePlayerDisplayNameInstance = NewObject<UUpdatePlayerDisplayName>();
+    UpdatePlayerDisplayNameInstance->OnUpdateDisplayNameSuccessDelegate.AddDynamic(this, &APlayLoginActor::HandleUpdateDisplayNameSuccess);
+
+
     if (bShouldConnectToChatAfterLevelLoad)
     {
         AIdleGameModeBase* GameMode = Cast<AIdleGameModeBase>(GetWorld()->GetAuthGameMode());
@@ -204,9 +201,17 @@ void APlayLoginActor::LoginUser(FString username, FString password, FString emai
     LoginRequest.Username = username;
     LoginRequest.Password = password;
 
-    clientAPI->LoginWithPlayFab(LoginRequest,
-        PlayFab::UPlayFabClientAPI::FLoginWithPlayFabDelegate::CreateUObject(this, &APlayLoginActor::OnLoginSuccess),
-        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnLoginError));
+    if (clientAPI.IsValid())
+    {
+        clientAPI->LoginWithPlayFab(LoginRequest,
+            PlayFab::UPlayFabClientAPI::FLoginWithPlayFabDelegate::CreateUObject(this, &APlayLoginActor::OnLoginSuccess),
+            PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnLoginError)
+        );
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("clientAPI is not valid!"));
+    }
 }
 
 void APlayLoginActor::OnRegisterSuccess(const PlayFab::ClientModels::FRegisterPlayFabUserResult& result) const
@@ -237,11 +242,29 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
         UE_LOG(LogTemp, Warning, TEXT("IdleGameInstance is null"));
     }
 
-    UpdatePlayerDisplayNameInstance = NewObject<UUpdatePlayerDisplayName>();
+    //check if the player has a display name set
+
+    
 
     if (UpdatePlayerDisplayNameInstance)
     {
         UpdatePlayerDisplayNameInstance->FetchPlayerProfile(PlayFabUserID);
+        FTimerHandle ProfileFetchTimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(
+            ProfileFetchTimerHandle,
+            [this]() {
+                if (UpdatePlayerDisplayNameInstance->HasDisplayName())
+                {
+                    UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
+                }
+                else
+                {
+                    UGameplayStatics::OpenLevel(this, TEXT("ProfileSetup"));
+                }
+            },
+            1.0f,  // Wait for 1 second (adjust as needed)
+            false
+        );
     }
     else
     {
@@ -265,6 +288,11 @@ void APlayLoginActor::OnLoginError(const PlayFab::FPlayFabCppError& errorResult)
 void APlayLoginActor::HandleChatConnected()
 {
     
+}
+
+void APlayLoginActor::HandleUpdateDisplayNameSuccess()
+{
+    UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
 }
 
 

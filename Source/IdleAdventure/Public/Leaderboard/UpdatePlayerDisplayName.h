@@ -5,10 +5,13 @@
 #include "CoreMinimal.h"
 #include "UpdatePlayerDisplayName.generated.h"
 
+
+
+
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class IDLEADVENTURE_API UUpdatePlayerDisplayName : public UObject
 {
 
@@ -18,7 +21,7 @@ public:
 	UUpdatePlayerDisplayName();
 	~UUpdatePlayerDisplayName();
 	UFUNCTION(BlueprintCallable, Category = "PlayFab")
-	void CustomUpdateDisplayName(const FString& DesiredDisplayName);
+	void UpdateDisplayName(const FString& DesiredDisplayName);
 	UFUNCTION(BlueprintCallable, Category = "PlayFab|Profile")
 	void FetchPlayerProfile(const FString& PlayFabId);
 	
@@ -27,6 +30,13 @@ public:
 	void OnUpdateDisplayNameError(const PlayFab::FPlayFabCppError& Error);
 	void OnGetPlayerProfileSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result);
 	void OnGetPlayerProfileError(const PlayFab::FPlayFabCppError& Error);
+
+	bool bHasDisplayName = false;
+	bool HasDisplayName() const { return bHasDisplayName; }
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUpdateDisplayNameSuccess);
+	UPROPERTY(BlueprintAssignable, Category = "EventDispatchers")
+	FOnUpdateDisplayNameSuccess OnUpdateDisplayNameSuccessDelegate;
 
 private:
 	PlayFabClientPtr clientAPI = nullptr;

@@ -18,4 +18,7 @@ public:
 
 	virtual void BeginPlay() override;
 	
+
+	UFUNCTION()
+	void LoadIdleForestLevel();
 };

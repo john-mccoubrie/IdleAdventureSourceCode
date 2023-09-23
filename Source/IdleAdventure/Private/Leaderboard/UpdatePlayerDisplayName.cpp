@@ -5,6 +5,7 @@
 #include "Core/PlayFabClientAPI.h"
 #include "Leaderboard/UpdatePlayerDisplayName.h"
 #include <Kismet/GameplayStatics.h>
+#include <Game/IdleGameModeLogin.h>
 
 UUpdatePlayerDisplayName::UUpdatePlayerDisplayName()
 {
@@ -16,7 +17,7 @@ UUpdatePlayerDisplayName::~UUpdatePlayerDisplayName()
 
 }
 
-void UUpdatePlayerDisplayName::CustomUpdateDisplayName(const FString& DesiredDisplayName)
+void UUpdatePlayerDisplayName::UpdateDisplayName(const FString& DesiredDisplayName)
 {
     PlayFab::ClientModels::FUpdateUserTitleDisplayNameRequest DisplayNameRequest;
     DisplayNameRequest.DisplayName = DesiredDisplayName;
@@ -41,6 +42,9 @@ void UUpdatePlayerDisplayName::FetchPlayerProfile(const FString& PlayFabId)
 void UUpdatePlayerDisplayName::OnUpdateDisplayNameSuccess(const PlayFab::ClientModels::FUpdateUserTitleDisplayNameResult& Result)
 {
     UE_LOG(LogTemp, Warning, TEXT("Display name updated successfully!"));
+    //Display name is successfully updated, delegate points to APlayLoginActor to call "Idle Forest" Level
+    //Cannot call GetWorld() here because it is a UObject and has no world context
+    OnUpdateDisplayNameSuccessDelegate.Broadcast();
 }
 
 void UUpdatePlayerDisplayName::OnUpdateDisplayNameError(const PlayFab::FPlayFabCppError& Error)
@@ -50,19 +54,11 @@ void UUpdatePlayerDisplayName::OnUpdateDisplayNameError(const PlayFab::FPlayFabC
 
 void UUpdatePlayerDisplayName::OnGetPlayerProfileSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result)
 {
-    if (!Result.PlayerProfile.Get()->DisplayName.IsEmpty())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Display name already set: %s"), *Result.PlayerProfile.Get()->DisplayName);
-        UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
-    }
-    else
-    {
-        //CustomUpdateDisplayName("YourDesiredDisplayName");
-        UGameplayStatics::OpenLevel(this, TEXT("ProfileSetup"));
-    }
+    bHasDisplayName = !Result.PlayerProfile.Get()->DisplayName.IsEmpty();
 }
 
 void UUpdatePlayerDisplayName::OnGetPlayerProfileError(const PlayFab::FPlayFabCppError& Error)
 {
     UE_LOG(LogTemp, Error, TEXT("Error fetching player profile: %s"), *Error.ErrorMessage);
 }
+
