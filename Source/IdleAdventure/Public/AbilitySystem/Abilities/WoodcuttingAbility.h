@@ -60,11 +60,6 @@ public:
 	FTimerHandle StopWoodcuttingTimerHandle;
 	FActiveGameplayEffectHandle ActiveEffectHandle;
 
-	UPROPERTY(EditAnywhere, Category = "Log Yield")
-	int32 ChanceToYield;
-
-	UPROPERTY(EditAnywhere, Category = "Log Yield")
-	int32 RandomRoll;
 
 	bool bAbilityIsActive;
 

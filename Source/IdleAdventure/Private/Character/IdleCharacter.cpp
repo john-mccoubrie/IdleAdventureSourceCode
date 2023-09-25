@@ -6,6 +6,8 @@
 #include "UI/HUD/IdleHUD.h"
 #include "Animation/AnimMontage.h"
 #include <AbilitySystem/IdleAttributeSet.h>
+#include <PlayerEquipment/EquipmentManager.h>
+#include <PlayerEquipment/PlayerEquipment.h>
 
 AIdleCharacter::AIdleCharacter()
 {

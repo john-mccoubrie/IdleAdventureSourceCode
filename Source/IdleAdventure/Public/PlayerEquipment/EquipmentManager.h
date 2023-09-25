@@ -1,0 +1,61 @@
+
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include <DataRegistrySource_DataTable.h>
+#include "UObject/NoExportTypes.h"
+#include "EquipmentManager.generated.h"
+
+
+
+USTRUCT(BlueprintType)
+struct FEquipmentData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float LevelRequired;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletalMesh* Mesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName SocketName;
+};
+
+UCLASS(Blueprintable)
+class IDLEADVENTURE_API UEquipmentManager : public UObject
+{
+	GENERATED_BODY()
+	
+public:
+	static UEquipmentManager& Get();
+
+	UFUNCTION()
+	void UnlockEquipment(float PlayerLevel);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FEquipmentData> UnlockedEquipment;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FEquipmentData EquippedItem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data")
+	UDataTable* AllEquipmentDataTable;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipmentUnlocked, const FEquipmentData&, NewEquipment);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnEquipmentUnlocked OnEquipmentUnlocked;
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	TArray<FEquipmentData> GetUnlockedEquipment() const;
+
+private:
+
+	UEquipmentManager();
+};

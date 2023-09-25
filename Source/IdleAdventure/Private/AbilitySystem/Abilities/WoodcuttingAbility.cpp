@@ -7,6 +7,7 @@
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystemBlueprintLibrary.h>
 #include <Kismet/GameplayStatics.h>
+#include <AbilitySystem/IdleAttributeSet.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -106,20 +107,39 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 {
     //UE_LOG(LogTemp, Warning, TEXT("Periodic delegate called on target"));
     //Unbind the delegate once the tree is chopped down
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
 
-    ChanceToYield = 10 + (5 - 1);
+    //Woodcutting algorithm
+    float LevelMultiplier = IdleAttributeSet->GetWoodcuttingLevel();
+    UE_LOG(LogTemp, Warning, TEXT("LevelMultiplier: %f"), LevelMultiplier);
 
-    RandomRoll = FMath::RandRange(0, 100);
-    if (RandomRoll <= ChanceToYield)
-    {
-        //Award the log
-        //UE_LOG(LogTemp, Warning, TEXT("Get log in woodcuttingability!"));
+    // Adjust the base chance and the level influence to balance the ease of gathering logs
+    float BaseChance = 10.0f;
+    float LevelInfluence = 0.5f;
+    float ChanceToYield = BaseChance + (LevelMultiplier * LevelInfluence);
+    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield: %f"), ChanceToYield);
+
+    // Random factor to add some unpredictability
+    float RandomFactor = FMath::RandRange(-10.0f, 10.0f);
+    ChanceToYield += RandomFactor;
+    ChanceToYield = FMath::Clamp(ChanceToYield, 0.0f, 100.0f);  // Ensure chance stays between 0 and 100
+    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield after RandomFactor: %f"), ChanceToYield);
+
+    float RandomRoll = FMath::RandRange(0, 100);
+    UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
+
+    //if (RandomRoll <= ChanceToYield)
+    //{
+        // Award the log
+        UE_LOG(LogTemp, Warning, TEXT("Get log in woodcuttingability!"));
         AddEssenceToInventory();
-    }
-    else
-    {
+    //}
+    //else
+    //{
         //UE_LOG(LogTemp, Warning, TEXT("No log awarded"));
-    }
+    //}
 }
 
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const

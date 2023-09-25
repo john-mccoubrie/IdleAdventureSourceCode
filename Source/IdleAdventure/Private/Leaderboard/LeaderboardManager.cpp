@@ -47,20 +47,21 @@ void ULeaderboardManager::OnGetPlayerLeaderboardPositionSuccess(const PlayFab::C
 {
     //Players need to set a display name
     TArray<FPlayerLeaderboardData> LeaderboardDataArray;
-    UE_LOG(LogTemp, Warning, TEXT("Retreived leaderboard"));
+    //UE_LOG(LogTemp, Warning, TEXT("Retreived leaderboard"));
     for (const auto& PlayerData : Result.Leaderboard)
     {
         FPlayerLeaderboardData DataEntry;
         DataEntry.PlayerName = PlayerData.DisplayName;
+        
         DataEntry.Rank = PlayerData.Position + 1;  // 0-based to 1-based
         DataEntry.Exp = PlayerData.StatValue;
 
         LeaderboardDataArray.Add(DataEntry);
-        UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %s"), *PlayerData.DisplayName);
+        //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %s"), *PlayerData.DisplayName);
         //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %d"), PlayerData.Rank);
         //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %d"), PlayerData.Exp);
     }
-    
+  
     OnLeaderboardDataReceived.Broadcast(LeaderboardDataArray);
 
     /*

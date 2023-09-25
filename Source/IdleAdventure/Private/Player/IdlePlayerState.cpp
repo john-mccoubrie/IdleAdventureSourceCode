@@ -11,6 +11,7 @@
 #include <Leaderboard/PlayLoginActor.h>
 #include <Kismet/GameplayStatics.h>
 #include <Save/IdleSaveGame.h>
+#include <PlayerEquipment/EquipmentManager.h>
 
 
 AIdlePlayerState::AIdlePlayerState()
@@ -33,43 +34,10 @@ AIdlePlayerState::AIdlePlayerState()
 
 void AIdlePlayerState::BeginPlay()
 {
-	/*
-	// Instantiate Woodcutting Ability
-	WoodcuttingAbility = NewObject<UWoodcuttingAbility>(this, UWoodcuttingAbility::StaticClass());
-	
-	if (WoodcuttingAbility)
-	{
-		// Initialize ability system
-		if (AbilitySystemComponent)
-		{
-			// Setup ability system component, bind to ASC if needed
-			// ...
-
-			// Grant the Woodcutting Ability to this player
-			FGameplayAbilitySpec WoodcuttingSpec(WoodcuttingAbility, 1, INDEX_NONE);
-			AbilitySystemComponent->GiveAbility(WoodcuttingSpec);
-
-			// Notify the ability system globals about this actor having an ability system component
-			//UAbilitySystemGlobals::Get().InitAbilityActorInfo(this, this);
-		}
-	}
-
-	//Instantiate the conversion ability
-	ConversionAbility = NewObject<UConversionAbility>(this, UConversionAbility::StaticClass());
-
-	if (ConversionAbility)
-	{
-		if (AbilitySystemComponent)
-		{
-			//Grant the conversion ability to this player
-			FGameplayAbilitySpec ConversionSpec(ConversionAbility, 1, INDEX_NONE);
-			AbilitySystemComponent->GiveAbility(ConversionSpec);
-		}
-	}
-	*/
 	// Handle auto save
 	LoadExp();
 	GetWorld()->GetTimerManager().SetTimer(SaveGameTimerHandle, this, &AIdlePlayerState::AutoSaveGame, 10.f, true);
+
 	
 	//Set initial values
 	InitializePlayerValues();
@@ -178,10 +146,10 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 	// Next level's required experience
 	float expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(2, IdleAttributeSet->GetWoodcuttingLevel() - 1);
-
+	
 	// Player's total experience
 	float totalExp = IdleAttributeSet->GetWoodcutExp();
-
+	
 	// Experience relative to the current level
 	float relativeExp = totalExp - expForCurrentLevel;
 
@@ -198,7 +166,7 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 	*/
 	// Broadcast the current progress
 	WhenLevelUp.Broadcast(progress);
-
+	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
 	// If the player has leveled up
 	if (IdleAttributeSet->GetWoodcutExp() >= expForNextLevel)
 	{
@@ -211,8 +179,13 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		relativeExp = totalExp - expForCurrentLevel;
 		progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 
+		UEquipmentManager& EquipmentManager = UEquipmentManager::Get();
+		EquipmentManager.UnlockEquipment(IdleAttributeSet->GetWoodcuttingLevel());
+		//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
+
 		// Broadcast level up delegate
 		WhenLevelUp.Broadcast(progress);
+		ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
 	}
 }
 

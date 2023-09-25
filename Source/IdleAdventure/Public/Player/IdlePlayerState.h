@@ -18,6 +18,7 @@ class UConversionAbility;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEXPChanged, float, NewEXP);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWhenLevelUp, float, CurrentExp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FShowExpNumbersOnText, float, CurrentExp, float, MaxExp);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FExpGained, float, OnExpGained);
 
 // Struct to define a gameplay ability information
@@ -93,7 +94,7 @@ public:
 		FWhenLevelUp WhenLevelUp;
 
 		UPROPERTY(BlueprintAssignable, Category = "GAS|Attributes")
-		FExpGained OnExpGained;
+		FShowExpNumbersOnText ShowExpNumbersOnText;
 
 	//UPROPERTY()
 		//UWoodcuttingAbility* WoodcuttingAbility;
@@ -115,6 +116,7 @@ public:
 
 		UPROPERTY(EditAnywhere, Category = "Tree")
 		TSubclassOf<AIdleEffectActor> TreeBlueprintClass;
+
 
 private:
 
