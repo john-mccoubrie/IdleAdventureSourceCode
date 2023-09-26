@@ -12,6 +12,7 @@ USTRUCT(BlueprintType)
 struct FPlayerLeaderboardData
 {
 	GENERATED_USTRUCT_BODY()
+
 	UPROPERTY(BlueprintReadOnly)
 	FString PlayerName;
 
@@ -20,6 +21,12 @@ struct FPlayerLeaderboardData
 
 	UPROPERTY(BlueprintReadOnly)
 	int32 Exp;
+
+	FPlayerLeaderboardData()
+		: Rank(0)
+		, Exp(0)
+	{
+	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeaderboardDataReceived, const TArray<FPlayerLeaderboardData>&, PlayFabLeaderboardData);
@@ -36,6 +43,12 @@ public:
 	~ULeaderboardManager();
 
 	void Initialize(UWorld* InWorld) { CachedWorld = InWorld; StartTimer(); }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Leaderboard Data", meta = (AllowPrivateAccess = "true"))
+	int32 Rank = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Leaderboard Data", meta = (AllowPrivateAccess = "true"))
+	int32 Exp = 0;
 
 	// Methods to interact with PlayFab
 	void FetchLeaderboardData();

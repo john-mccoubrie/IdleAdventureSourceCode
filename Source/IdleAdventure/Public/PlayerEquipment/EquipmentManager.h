@@ -14,17 +14,24 @@ struct FEquipmentData : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	FString Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	float LevelRequired;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	USkeletalMesh* Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	FName SocketName;
+
+	FEquipmentData()
+		: LevelRequired(0.0f)
+		, Mesh(nullptr)
+		, SocketName(NAME_None)
+	{
+	}
 };
 
 UCLASS(Blueprintable)

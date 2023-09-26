@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <PlayFab.h>
+#include "Core/PlayFabClientDataModels.h"
+#include "Core/PlayFabClientAPI.h"
 #include "PhotonListener.h"
 #include "PhotonChat.h"
 #include "PhotonChatManager.generated.h"
@@ -59,11 +62,21 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Photon Chat")
 	FOnChatConnected OnChatConnected;
-	
+
+	//UFUNCTION(BlueprintCallable, Category = "Photon")
+	void GetDisplayName();
+	//UFUNCTION(BlueprintCallable, Category = "Photon")
+	void OnGetDisplayNameSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result);
+	//UFUNCTION(BlueprintCallable, Category = "Photon")
+	void OnGetDisplayNameError(const PlayFab::FPlayFabCppError& ErrorResult) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Photon Chat")
+	FString DisplayName;
 
 private:
 	PhotonListener* chatListener;
 	ExitGames::Chat::Client* chatClient;
 	FTimerHandle ServiceChatClientTimerHandle;
+	PlayFabClientPtr clientAPI = nullptr;
 	
 };
