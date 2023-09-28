@@ -340,7 +340,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 
 	
 
-	if (MyCharacter->EssenceCount <= 28)
+	if (MyCharacter->EssenceCount <= 24)
 	{
 		bIsChoppingTree = true;
 
@@ -368,7 +368,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Inventory is full!"));
+		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
 	}
 }
 

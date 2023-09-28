@@ -7,7 +7,23 @@
 #include "GameFramework/Actor.h"
 #include "Inventory.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, bool, bAdded);
+USTRUCT(BlueprintType)
+struct FEssenceCoffer
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    FName Key;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    int32 Value;
+};
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, FName, RowName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, FName, RowName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FboolOnItemAdded, bool, bItemAdded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceTransferred, const TArray<FEssenceCoffer>&, EssenceCofferArray);
 
 
 UCLASS()
@@ -28,11 +44,33 @@ public:
         void RemoveItem(UItem* Item);
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
-        FOnInventoryUpdated OnInventoryUpdated;
+        FOnItemAdded OnItemAdded;
+
+        UPROPERTY(BlueprintAssignable, Category = "Inventory")
+        FOnItemRemoved OnItemRemoved;
+
+        UPROPERTY(BlueprintAssignable, Category = "Inventory")
+        FboolOnItemAdded boolOnItemAdded;
+
+        UPROPERTY(BlueprintReadWrite, EditAnywhere)
+        TMap<FName, int32> EssenceCount;
+
+        UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+        TMap<FName, int32> EssenceAddedToCoffer;
+
+        UFUNCTION(BlueprintCallable, Category = "Inventory")
+        void TransferAndClearEssenceCounts();
+
+        UPROPERTY(BlueprintAssignable, Category = "Inventory")
+        FOnEssenceTransferred OnEssenceTransferred;
 
 
     // List of items in the inventory
     UPROPERTY(EditAnywhere, Category = "Inventory")
         TArray<UItem*> Items;
+
+        int32 GetEssenceCount(FName EssenceType) const;
+
+        TMap<FName, int32> GetAllEssenceCounts() const;
 
 };

@@ -94,7 +94,7 @@ void UConversionAbility::CovertEssenceToEXP()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Too little or too few logs!"));
+		UE_LOG(LogTemp, Warning, TEXT("Not enough essence in conversion ability!"));
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Too little or too few essence, must have at least 3."));

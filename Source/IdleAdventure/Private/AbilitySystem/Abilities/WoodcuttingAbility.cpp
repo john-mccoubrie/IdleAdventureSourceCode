@@ -96,11 +96,11 @@ void UWoodcuttingAbility::SetDuration(float TotalDuration)
 void UWoodcuttingAbility::AddEssenceToInventory()
 {
     AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
-    UItem* Essence = NewObject<UItem>();
-    Character->CharacterInventory->AddItem(Essence);
     Character->EssenceCount++;
     //UE_LOG(LogTemp, Warning, TEXT("Essence Added to inventory"));
-    //UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
+    UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
+    UItem* Essence = NewObject<UItem>();
+    Character->CharacterInventory->AddItem(Essence); 
 }
 
 void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle)
@@ -131,11 +131,55 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     //UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
 
     //uncomment this to return to normal algorithm
+    RandomRoll = 1;
     if (RandomRoll <= ChanceToYield)
     {
         // Award the log
         //UE_LOG(LogTemp, Warning, TEXT("Get log in woodcuttingability!"));
-        AddEssenceToInventory();
+        //AddEssenceToInventory();
+
+        // Determine the type of log based on the rarity roll
+        UItem* NewLog = NewObject<UItem>();
+        float RarityRoll = FMath::RandRange(0.f, 100.f);
+
+        if (RarityRoll <= 50.f)  // 50% chance for Water
+        {
+            NewLog->EssenceRarity = "Wisdom";
+            //UE_LOG(LogTemp, Warning, TEXT("Wisdom"));
+        }
+        else if (RarityRoll <= 75.f)  // 25% chance for Earth
+        {
+            NewLog->EssenceRarity = "Temperance";
+            //UE_LOG(LogTemp, Warning, TEXT("Temperance"));
+        }
+        else if (RarityRoll <= 95.f)  // 20% chance for Wind
+        {
+            NewLog->EssenceRarity = "Justice";
+            //UE_LOG(LogTemp, Warning, TEXT("Justice"));
+        }
+        else  // 5% chance for Fire
+        {
+            NewLog->EssenceRarity = "Courage";
+            //UE_LOG(LogTemp, Warning, TEXT("Courage"));
+        }
+
+        // Load the data table
+        UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/Blueprints/UI/Inventory/DT_EssenceType.DT_EssenceType'"));
+        if (EssenceDataTable)
+        {
+            // Get the log data based on the essence rarity
+            FEssenceData* EssenceData = EssenceDataTable->FindRow<FEssenceData>(NewLog->EssenceRarity, TEXT(""));
+            if (EssenceData)
+            {
+                // Set the log properties from the data table
+                NewLog->Name = EssenceData->Name;
+                NewLog->Icon = EssenceData->Icon;
+                NewLog->ItemDescription = EssenceData->Description;
+            }
+        }
+
+        AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+        Character->CharacterInventory->AddItem(NewLog);
     }
     //else
     //{

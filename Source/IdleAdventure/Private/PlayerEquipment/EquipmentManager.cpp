@@ -54,7 +54,7 @@ void UEquipmentManager::UnlockEquipment(float PlayerLevel)
                 if (UnlockedData.Name == EquipmentData->Name)  // Assuming that each equipment has a unique Id field
                 {
                     bAlreadyUnlocked = true;
-                    UE_LOG(LogTemp, Warning, TEXT("This equipment is already unlocked: %s"), *EquipmentData->Name);
+                    //UE_LOG(LogTemp, Warning, TEXT("This equipment is already unlocked: %s"), *EquipmentData->Name);
                     break;
                 }
             }
@@ -63,12 +63,12 @@ void UEquipmentManager::UnlockEquipment(float PlayerLevel)
             if (!bAlreadyUnlocked)
             {
                 UnlockedEquipment.Add(*EquipmentData);
-                UE_LOG(LogTemp, Warning, TEXT("Added equipment: %s"), *EquipmentData->Name);
+                //UE_LOG(LogTemp, Warning, TEXT("Added equipment: %s"), *EquipmentData->Name);
             }
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("Player Level too low!"));
+            //UE_LOG(LogTemp, Warning, TEXT("Player Level too low!"));
         }
     }
 }
