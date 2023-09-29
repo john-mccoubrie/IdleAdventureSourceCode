@@ -4,6 +4,7 @@
 #include "AbilitySystemInterface.h"
 #include <AbilitySystem/Abilities/ConversionAbility.h>
 #include "GameplayEffectTypes.h"
+#include "Actor/IdleEffectActor.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "IdlePlayerState.generated.h"

@@ -26,7 +26,7 @@ struct FEquipmentData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	FName SocketName;
 	
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
     int32 WisdomCost;
 
@@ -41,7 +41,7 @@ struct FEquipmentData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
     int32 LegendaryCost;
-
+	
     FEquipmentData()
         : LevelRequired(0.0f)
         , Mesh(nullptr)

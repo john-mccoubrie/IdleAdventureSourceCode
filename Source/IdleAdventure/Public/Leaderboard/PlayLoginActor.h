@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include <PlayFab.h>
 #include "IdleGameInstance.h"
+#include "Leaderboard/UpdatePlayerDisplayName.h"
 #include "Chat/PhotonChatManager.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"

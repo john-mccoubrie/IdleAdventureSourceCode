@@ -243,6 +243,7 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
     }
 
     //check if the player has a display name set
+    
     if (UpdatePlayerDisplayNameInstance)
     {
         UpdatePlayerDisplayNameInstance->FetchPlayerProfile(PlayFabUserID);
@@ -267,7 +268,7 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
     {
         UE_LOG(LogTemp, Error, TEXT("Failed to create UpdatePlayerDisplayName instance."));
     }
-
+    
     //UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
 }
 
