@@ -9,7 +9,8 @@ public class IdleAdventureTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
+        ExtraModuleNames.AddRange( new string[] { "IdleAdventure" } );
 
-		ExtraModuleNames.AddRange( new string[] { "IdleAdventure" } );
-	}
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+    }
 }

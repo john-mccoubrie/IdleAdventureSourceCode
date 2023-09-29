@@ -243,9 +243,6 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
     }
 
     //check if the player has a display name set
-
-    
-
     if (UpdatePlayerDisplayNameInstance)
     {
         UpdatePlayerDisplayNameInstance->FetchPlayerProfile(PlayFabUserID);

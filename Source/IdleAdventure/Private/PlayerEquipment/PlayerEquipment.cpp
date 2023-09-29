@@ -5,6 +5,9 @@
 #include <Player/IdlePlayerState.h>
 #include <Player/IdlePlayerController.h>
 #include <AbilitySystem/IdleAttributeSet.h>
+#include <PlayFab/PlayFabManager.h>
+#include <Character/IdleCharacter.h>
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values for this component's properties
 UPlayerEquipment::UPlayerEquipment()
@@ -119,6 +122,62 @@ void UPlayerEquipment::RemoveEquipmentEffects()
 	// TODO: Implement logic to remove effects (e.g., reset character stats to their unequipped state)
 }
 
+
+bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquipmentData& ItemData)
+{
+    
+    if (!CanEquipItem(ItemData))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player cannot equip the item"));
+        return false;
+    }
+
+    UPlayFabManager* PlayFabManager = UPlayFabManager::GetInstance();
+    if (!PlayFabManager)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PlayFabManager instance is null"));
+        return false;
+    }
+
+    // Ensuring the player has enough essences before proceeding with the purchase
+    if (!PlayFabManager->UpdatePlayFabEssenceCount(ItemData))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Insufficient essence to purchase the item"));
+        return false;
+    }
+
+    if (PlayFabManager->PurchaseEquipment(ItemData.Name, ItemData))
+    {
+        // Update the local inventory
+        AddEquipmentItem(ItemData);
+
+        AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+        if (Character)
+        {
+            // Then update the server-side data
+            // Convert the TMap to TArray for passing to PlayFab manager
+            TArray<FEquipmentData> NewPlayerEquipmentInventory;
+            PlayerEquipmentInventory.GenerateValueArray(NewPlayerEquipmentInventory);
+            PlayFabManager->UpdatePlayerEquipmentInventory(NewPlayerEquipmentInventory);
+
+            UE_LOG(LogTemp, Warning, TEXT("Item added to Player Equipment Inventory"));
+            //EquipItem(ItemData);
+            return true;
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Character is null"));
+        }
+    }
+
+    return false;
+    
+}
+
+void UPlayerEquipment::AddEquipmentItem(const FEquipmentData& ItemData)
+{
+    PlayerEquipmentInventory.Add(ItemData.Name, ItemData);
+}
 
 // Called when the game starts
 void UPlayerEquipment::BeginPlay()

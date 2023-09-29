@@ -80,7 +80,6 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "PlayFab")
     UUpdatePlayerDisplayName* UpdatePlayerDisplayNameInstance;
 
-private:
     PlayFabClientPtr clientAPI = nullptr;
 
 };

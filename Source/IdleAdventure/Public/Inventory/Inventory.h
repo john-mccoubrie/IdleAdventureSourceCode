@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include <PlayFab.h>
+#include "Core/PlayFabClientDataModels.h"
+#include "Core/PlayFabClientAPI.h"
 #include "CoreMinimal.h"
 #include "Item.h"
 #include "GameFramework/Actor.h"
@@ -35,6 +38,8 @@ public:
 	// Sets default values for this actor's properties
 	AInventory();
 
+    virtual void BeginPlay() override;
+
     // Add an item to the inventory
     UFUNCTION(BlueprintCallable, Category = "Inventory")
         void AddItem(UItem* Item);
@@ -63,6 +68,18 @@ public:
 
         UPROPERTY(BlueprintAssignable, Category = "Inventory")
         FOnEssenceTransferred OnEssenceTransferred;
+
+        //PlayFab
+        void OnGetDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
+        void OnGetDataFailure(const PlayFab::FPlayFabCppError& Error);
+        void OnUpdateDataSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
+        void OnUpdateDataFailure(const PlayFab::FPlayFabCppError& Error);
+        void RequestPlayFabData();
+
+        TSharedPtr<FJsonObject> TMapToJsonObject(const TMap<FName, int32>& Map);
+        TMap<FName, int32> JsonObjectToTMap(const TSharedPtr<FJsonObject>& JsonObject);
+
+        PlayFabClientPtr clientAPI = nullptr;
 
 
     // List of items in the inventory

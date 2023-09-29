@@ -25,13 +25,34 @@ struct FEquipmentData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	FName SocketName;
+	
 
-	FEquipmentData()
-		: LevelRequired(0.0f)
-		, Mesh(nullptr)
-		, SocketName(NAME_None)
-	{
-	}
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+    int32 WisdomCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+    int32 TemperanceCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+    int32 JusticeCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+    int32 CourageCost;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+    int32 LegendaryCost;
+
+    FEquipmentData()
+        : LevelRequired(0.0f)
+        , Mesh(nullptr)
+        , SocketName(NAME_None)
+        , WisdomCost(0)
+        , TemperanceCost(0)
+        , JusticeCost(0)
+        , CourageCost(0)
+        , LegendaryCost(0)
+    {
+    }
 };
 
 UCLASS(Blueprintable)

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <DataRegistrySource_DataTable.h>
+#include "Engine/DataTable.h"
 #include "UObject/NoExportTypes.h"
 #include "Item.generated.h"
 

@@ -45,11 +45,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USkeletalMesh* DefaultStaffMesh;
 
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	bool PurchaseAndAddItemToPlayerEquipmentInventory(const FEquipmentData& ItemData);
+
+	// Player's equipment inventory
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	TMap<FString, FEquipmentData> PlayerEquipmentInventory;
+
+	// Method to add an equipment item to the inventory
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void AddEquipmentItem(const FEquipmentData& ItemData);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-	
 
 public:	
 	// Called every frame
