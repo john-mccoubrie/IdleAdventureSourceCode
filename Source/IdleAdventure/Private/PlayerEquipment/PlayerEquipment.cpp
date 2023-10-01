@@ -132,7 +132,7 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
         return false;
     }
 
-    UPlayFabManager* PlayFabManager = UPlayFabManager::GetInstance();
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance();
     if (!PlayFabManager)
     {
         UE_LOG(LogTemp, Error, TEXT("PlayFabManager instance is null"));

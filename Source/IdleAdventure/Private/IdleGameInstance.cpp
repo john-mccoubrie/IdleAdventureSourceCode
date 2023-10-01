@@ -12,9 +12,7 @@ UIdleGameInstance::UIdleGameInstance(const FObjectInitializer& ObjectInitializer
 
 void UIdleGameInstance::Init()
 {
-	
-
-	
+		
 }
 
 /*

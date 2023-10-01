@@ -3,6 +3,8 @@
 
 #include "Game/IdleGameModeBase.h"
 #include <IdleGameInstance.h>
+#include "PlayFab/PlayFabManager.h"
+
 //#include <Actor/IdleActorManager.h>
 
 AIdleGameModeBase::AIdleGameModeBase()
@@ -43,6 +45,21 @@ void AIdleGameModeBase::BeginPlay()
      //USceneComponent* RootComponent = PhotonChatManagerInstance->GetRootComponent();
      //UE_LOG(LogTemp, Warning, TEXT("PhotonChatManager created on IdleGameMode begin play"));
      //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("PhotonChatManager created on IdleGameMode begin play!"));
+
+     //Spawn the stoic store instance
+     StoicStoreManagerInstance = GetWorld()->SpawnActor<AStoicStoreManager>(AStoicStoreManager::StaticClass());
+     //UE_LOG(LogTemp, Warning, TEXT("Store manager spawned"));
+
+     // Spawn the PlayFabManager singleton instance
+     APlayFabManager* PlayFabManagerInstance = GetWorld()->SpawnActor<APlayFabManager>(APlayFabManager::StaticClass());
+     if (PlayFabManagerInstance)
+     {
+         UE_LOG(LogTemp, Log, TEXT("PlayFabManager instance spawned successfully"));
+     }
+     else
+     {
+         UE_LOG(LogTemp, Error, TEXT("Failed to spawn PlayFabManager instance"));
+     }
 }
 
 void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID)

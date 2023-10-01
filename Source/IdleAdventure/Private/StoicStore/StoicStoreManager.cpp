@@ -5,6 +5,8 @@
 #include <PlayerEquipment/PlayerEquipment.h>
 #include <Character/IdleCharacter.h>
 #include <Kismet/GameplayStatics.h>
+#include <Player/IdlePlayerController.h>
+#include <Player/IdlePlayerState.h>
 
 // Sets default values
 AStoicStoreManager::AStoicStoreManager()
@@ -16,7 +18,8 @@ AStoicStoreManager::AStoicStoreManager()
 
 bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
 {
-	
+	AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 	AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
 	return PlayerEquipment ? PlayerEquipment->PurchaseAndAddItemToPlayerEquipmentInventory(ItemData) : false;
@@ -27,7 +30,6 @@ bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
 void AStoicStoreManager::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame

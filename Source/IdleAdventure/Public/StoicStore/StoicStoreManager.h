@@ -8,7 +8,7 @@
 #include "StoicStoreManager.generated.h"
 
 
-UCLASS()
+UCLASS(Blueprintable)
 class IDLEADVENTURE_API AStoicStoreManager : public AActor
 {
 	GENERATED_BODY()

@@ -75,6 +75,7 @@ public:
         void OnUpdateDataSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
         void OnUpdateDataFailure(const PlayFab::FPlayFabCppError& Error);
         void RequestPlayFabData();
+        void InitializeEssenceCounts();
 
         TSharedPtr<FJsonObject> TMapToJsonObject(const TMap<FName, int32>& Map);
         TMap<FName, int32> JsonObjectToTMap(const TSharedPtr<FJsonObject>& JsonObject);

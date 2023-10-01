@@ -22,6 +22,7 @@ void AInventory::BeginPlay()
 {
     Super::BeginPlay();
 
+    //InitializeEssenceCounts();
     //Delay the PlayFab data pull by 3 seconds to allow level to load
     FTimerHandle PlayFabPullDelayTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(PlayFabPullDelayTimerHandle, this, &AInventory::RequestPlayFabData, 3.0f, false);
@@ -32,6 +33,21 @@ void AInventory::AddItem(UItem* Item)
 {
     if (Item != nullptr)
     {
+        // Ensure all essence types are initialized to 0 if they don't already exist in the map
+        TArray<FName> AllEssenceTypes = {
+            FName(TEXT("Wisdom")),
+            FName(TEXT("Temperance")),
+            FName(TEXT("Justice")),
+            FName(TEXT("Courage")),
+            FName(TEXT("Legendary"))
+        };
+        for (const FName& EssenceType : AllEssenceTypes)
+        {
+            EssenceCount.FindOrAdd(EssenceType);
+        }
+
+        // ... rest of your code ...
+
         Items.Add(Item);
         boolOnItemAdded.Broadcast(true);
         OnItemAdded.Broadcast(Item->EssenceRarity);
@@ -94,6 +110,8 @@ void AInventory::TransferAndClearEssenceCounts()
     FString UpdatedDataString;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedDataString);
     FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+    UE_LOG(LogTemp, Log, TEXT("Updating PlayFab with essence data: %s"), *UpdatedDataString);
 
     // Create a request to update the PlayFab user data
     PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
@@ -162,6 +180,23 @@ void AInventory::RequestPlayFabData()
         PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &AInventory::OnGetDataSuccess),
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &AInventory::OnGetDataFailure)
     );
+}
+
+void AInventory::InitializeEssenceCounts()
+{
+    //Initializes all essence counts to zero before the update so none are missed (and for new players)
+    TArray<FName> AllEssenceTypes = {
+        FName(TEXT("Wisdom")),
+        FName(TEXT("Temperance")),
+        FName(TEXT("Justice")),
+        FName(TEXT("Courage")),
+        FName(TEXT("Legendary"))
+    };
+
+    for (const FName& EssenceType : AllEssenceTypes)
+    {
+        EssenceCount.FindOrAdd(EssenceType) = 0;
+    }
 }
 
 TSharedPtr<FJsonObject> AInventory::TMapToJsonObject(const TMap<FName, int32>& Map)
