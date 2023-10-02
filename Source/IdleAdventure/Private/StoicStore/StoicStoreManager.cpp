@@ -2,8 +2,8 @@
 
 
 #include "StoicStore/StoicStoreManager.h"
-#include <PlayerEquipment/PlayerEquipment.h>
 #include <Character/IdleCharacter.h>
+#include "PlayerEquipment/PlayerEquipment.h"
 #include <Kismet/GameplayStatics.h>
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
@@ -21,8 +21,20 @@ bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
 	AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
 	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 	AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	//Instance of this might be causing it to not be called!
 	UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
-	return PlayerEquipment ? PlayerEquipment->PurchaseAndAddItemToPlayerEquipmentInventory(ItemData) : false;
+	if (PlayerEquipment != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Returned true in stoicstoremanager"));
+		//OnPurchaseCompleted.Broadcast(true);
+		return PlayerEquipment->PurchaseAndAddItemToPlayerEquipmentInventory(ItemData);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("returned false in stoicstoremanager"));
+		//OnPurchaseCompleted.Broadcast(false);
+		return false;
+	}
 	
 }
 

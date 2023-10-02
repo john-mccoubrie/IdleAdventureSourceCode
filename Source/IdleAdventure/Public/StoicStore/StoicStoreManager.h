@@ -8,6 +8,8 @@
 #include "StoicStoreManager.generated.h"
 
 
+
+
 UCLASS(Blueprintable)
 class IDLEADVENTURE_API AStoicStoreManager : public AActor
 {

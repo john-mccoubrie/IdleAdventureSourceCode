@@ -22,7 +22,6 @@ struct FEssenceCoffer
     int32 Value;
 };
 
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, FName, RowName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, FName, RowName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FboolOnItemAdded, bool, bItemAdded);
@@ -56,6 +55,9 @@ public:
 
         UPROPERTY(BlueprintAssignable, Category = "Inventory")
         FboolOnItemAdded boolOnItemAdded;
+
+        //UPROPERTY(BlueprintAssignable, Category = "Events")
+        //FOnEssenceUpdated OnEssenceUpdated;
 
         UPROPERTY(BlueprintReadWrite, EditAnywhere)
         TMap<FName, int32> EssenceCount;

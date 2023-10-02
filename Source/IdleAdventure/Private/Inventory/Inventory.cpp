@@ -15,7 +15,7 @@ AInventory::AInventory()
 	PrimaryActorTick.bCanEverTick = true;
 
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-    //UE_LOG(LogTemp, Warning, TEXT("Inventory class constructor called"));
+    UE_LOG(LogTemp, Warning, TEXT("Inventory class constructor called"));
 }
 
 void AInventory::BeginPlay()
@@ -165,7 +165,23 @@ void AInventory::OnGetDataFailure(const PlayFab::FPlayFabCppError& Error)
 
 void AInventory::OnUpdateDataSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Log, TEXT("Successfully updated user data on PlayFab."));
+    UE_LOG(LogTemp, Warning, TEXT("Successfully updated user data on PlayFab."));
+
+    /*
+    // Create an array of FEssenceCoffer to be broadcasted
+    TArray<FEssenceCoffer> EssenceCofferArray;
+    for (const auto& KeyValue : EssenceAddedToCoffer)
+    {
+        FEssenceCoffer EssenceCoffer;
+        EssenceCoffer.Key = KeyValue.Key;
+        EssenceCoffer.Value = KeyValue.Value;
+        EssenceCofferArray.Add(EssenceCoffer);
+    }
+
+    // Broadcast the OnEssenceTransferred event
+    OnEssenceTransferred.Broadcast(EssenceCofferArray);
+
+    */
 }
 
 void AInventory::OnUpdateDataFailure(const PlayFab::FPlayFabCppError& Error)

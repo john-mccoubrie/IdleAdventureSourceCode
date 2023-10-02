@@ -3,6 +3,7 @@
 
 #include "IdleGameInstance.h"
 #include <PlayerEquipment/EquipmentManager.h>
+#include <PlayFab/PlayFabManager.h>
 
 UIdleGameInstance::UIdleGameInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -12,7 +13,33 @@ UIdleGameInstance::UIdleGameInstance(const FObjectInitializer& ObjectInitializer
 
 void UIdleGameInstance::Init()
 {
-		
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        FActorSpawnParameters SpawnParams;
+        //SpawnParams.Owner = this;
+        SpawnParams.Instigator = nullptr;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+        // Set the location and rotation for the spawn
+        FVector Location = FVector::ZeroVector;
+        FRotator Rotation = FRotator::ZeroRotator;
+
+        // Spawn the actor
+        APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(World);
+        if (PlayFabManager)
+        {
+            UE_LOG(LogTemp, Log, TEXT("PlayFabManager spawned successfully"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to spawn PlayFabManager"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("World is null in GameInstance Init"));
+    }
 }
 
 /*

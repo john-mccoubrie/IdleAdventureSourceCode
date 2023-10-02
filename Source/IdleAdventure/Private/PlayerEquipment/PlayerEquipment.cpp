@@ -38,7 +38,7 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
         for (auto& Row : UEquipmentManager::Get().AllEquipmentDataTable->GetRowMap())
         {
             FEquipmentData* EquipmentData = (FEquipmentData*)Row.Value;
-            UE_LOG(LogTemp, Warning, TEXT("Player Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
+            //UE_LOG(LogTemp, Warning, TEXT("Player Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
             if (EquipmentData->Name == ItemData.Name)
             {
                 bItemExistsInTable = true;
@@ -125,14 +125,14 @@ void UPlayerEquipment::RemoveEquipmentEffects()
 
 bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquipmentData& ItemData)
 {
-    
+    UE_LOG(LogTemp, Warning, TEXT("PurchaseAndAddItemToPlayerEquipmentInventory Reached"));
     if (!CanEquipItem(ItemData))
     {
         UE_LOG(LogTemp, Warning, TEXT("Player cannot equip the item"));
         return false;
     }
 
-    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance();
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
     if (!PlayFabManager)
     {
         UE_LOG(LogTemp, Error, TEXT("PlayFabManager instance is null"));
@@ -161,6 +161,7 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
             PlayFabManager->UpdatePlayerEquipmentInventory(NewPlayerEquipmentInventory);
 
             UE_LOG(LogTemp, Warning, TEXT("Item added to Player Equipment Inventory"));
+            
             //EquipItem(ItemData);
             return true;
         }
@@ -169,7 +170,7 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
             UE_LOG(LogTemp, Warning, TEXT("Character is null"));
         }
     }
-
+    
     return false;
     
 }

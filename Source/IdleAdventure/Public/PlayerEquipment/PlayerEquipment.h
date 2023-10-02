@@ -7,8 +7,6 @@
 #include "Components/ActorComponent.h"
 #include "PlayerEquipment.generated.h"
 
-
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable )
 class IDLEADVENTURE_API UPlayerEquipment : public UActorComponent
 {
