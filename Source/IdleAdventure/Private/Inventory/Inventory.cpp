@@ -15,7 +15,7 @@ AInventory::AInventory()
 	PrimaryActorTick.bCanEverTick = true;
 
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-    UE_LOG(LogTemp, Warning, TEXT("Inventory class constructor called"));
+    //UE_LOG(LogTemp, Warning, TEXT("Inventory class constructor called"));
 }
 
 void AInventory::BeginPlay()

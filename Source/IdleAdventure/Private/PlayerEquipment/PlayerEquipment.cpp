@@ -125,6 +125,13 @@ void UPlayerEquipment::RemoveEquipmentEffects()
 
 bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquipmentData& ItemData)
 {
+
+    if (PlayerEquipmentInventory.Contains(ItemData.Name))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player already owns the item in playerequipment class"));
+        return false;
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("PurchaseAndAddItemToPlayerEquipmentInventory Reached"));
     if (!CanEquipItem(ItemData))
     {

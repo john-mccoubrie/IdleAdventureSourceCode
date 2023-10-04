@@ -26,6 +26,7 @@ void UIdleGameInstance::Init()
         FRotator Rotation = FRotator::ZeroRotator;
 
         // Spawn the actor
+        /*
         APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(World);
         if (PlayFabManager)
         {
@@ -35,6 +36,7 @@ void UIdleGameInstance::Init()
         {
             UE_LOG(LogTemp, Error, TEXT("Failed to spawn PlayFabManager"));
         }
+        */
     }
     else
     {

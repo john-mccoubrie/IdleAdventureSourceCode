@@ -11,7 +11,7 @@
 
 AIdleCharacter::AIdleCharacter()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Character constructor called"));
+	//UE_LOG(LogTemp, Warning, TEXT("Character constructor called"));
 	//Inventory = CreateDefaultSubobject<AInventory>(TEXT("Inventory"));
 
 

@@ -7,6 +7,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
+#include <PlayFab/PlayFabManager.h>
 
 // Sets default values
 AStoicStoreManager::AStoicStoreManager()
@@ -18,24 +19,40 @@ AStoicStoreManager::AStoicStoreManager()
 
 bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
 {
-	AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-	AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	//Instance of this might be causing it to not be called!
-	UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
-	if (PlayerEquipment != nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Returned true in stoicstoremanager"));
-		//OnPurchaseCompleted.Broadcast(true);
-		return PlayerEquipment->PurchaseAndAddItemToPlayerEquipmentInventory(ItemData);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("returned false in stoicstoremanager"));
-		//OnPurchaseCompleted.Broadcast(false);
-		return false;
-	}
-	
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
+
+    if (PlayerEquipment != nullptr)
+    {
+        // Access the APlayFabManager instance and call PurchaseEquipment
+        APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld()); // Assume GetInstance() provides access to the manager
+        if (PlayFabManager)
+        {
+            if (PlayFabManager->PurchaseEquipment(ItemData.Name, ItemData) && PlayerEquipment->PurchaseAndAddItemToPlayerEquipmentInventory(ItemData))
+            {
+                // If purchase is successful, add item to player equipment inventory
+                return true;
+                UE_LOG(LogTemp, Warning, TEXT("Purchase successfull in stoic store manager"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Purchase failed in PlayFabManager"));
+                return false;
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("PlayFabManager is null"));
+            return false;
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("returned false in stoicstoremanager"));
+        return false;
+    }	
 }
 
 // Called when the game starts or when spawned

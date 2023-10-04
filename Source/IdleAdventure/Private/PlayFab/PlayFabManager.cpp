@@ -6,25 +6,29 @@
 #include "EngineUtils.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
+#include <PlayerEquipment/PlayerEquipment.h>
 
 //Define the static member variable
 APlayFabManager* APlayFabManager::SingletonInstance = nullptr;
 
 APlayFabManager::APlayFabManager()
 {
-    UE_LOG(LogTemp, Warning, TEXT("PlayFabManager constructor called"));
+    //UE_LOG(LogTemp, Warning, TEXT("PlayFabManager constructor called"));
+    
 }
 
 void APlayFabManager::BeginPlay()
 {
     Super::BeginPlay();
-    
+
+    clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
     // Ensure the singleton instance is set on BeginPlay
     if (!SingletonInstance)
     {
         SingletonInstance = this;
     }
     Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    LoadPlayerEquipmentInventory();
 }
 
 void APlayFabManager::BeginDestroy()
@@ -59,8 +63,31 @@ void APlayFabManager::ResetInstance()
 
 bool APlayFabManager::PurchaseEquipment(const FString& EquipmentName, const FEquipmentData& EquipmentData)
 {
-    // TODO: Implement logic to update player essence count on PlayFab
-    return false;
+
+    if (DataTableRowNames.Contains(FName(*EquipmentName)))
+    {
+        // Item already exists, do not proceed with purchase
+        UE_LOG(LogTemp, Warning, TEXT("in playfab manager, Item already exists in inventory: %s"), *EquipmentName);
+        return false;
+    }
+    // Create an array to hold the new equipment data
+    TArray<FEquipmentData> NewPlayerEquipmentInventory;
+    NewPlayerEquipmentInventory.Add(EquipmentData);
+    return true;
+    /*
+    // Update the player equipment inventory on PlayFab
+    if (UpdatePlayerEquipmentInventory(NewPlayerEquipmentInventory))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    */
+
+    // Update local inventory immediately upon successful purchase
+    //DataTableRowNames.Add(FName(*EquipmentName));
 }
 
 bool APlayFabManager::UpdatePlayFabEssenceCount(const FEquipmentData& EquipmentData)
@@ -159,8 +186,75 @@ bool APlayFabManager::UpdatePlayFabEssenceCount(const FEquipmentData& EquipmentD
 
 bool APlayFabManager::UpdatePlayerEquipmentInventory(const TArray<FEquipmentData>& NewPlayerEquipmentInventory)
 {
-    // TODO: Implement logic to update player inventory on PlayFab
-    return false;
+    // Convert TArray to a format suitable for PlayFab
+    // Assume ConvertToPlayFabFormat is a method that converts TArray to a PlayFab compatible format
+    auto PlayFabInventoryData = ConvertToPlayFabFormat(NewPlayerEquipmentInventory);
+
+    // Create a request to update the PlayFab user data
+    PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
+    UpdateRequest.Data.Add(TEXT("PlayerEquipmentInventory"), PlayFabInventoryData);
+
+    // Send the request to PlayFab
+    clientAPI->UpdateUserData(UpdateRequest,
+        PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &APlayFabManager::OnSuccessUpdateInventory),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnErrorUpdateInventory));
+
+    return true;
+}
+
+void APlayFabManager::LoadPlayerEquipmentInventory()
+{
+    if (!clientAPI.IsValid())
+    {
+        UE_LOG(LogTemp, Error, TEXT("clientAPI is not valid in LoadPlayerEquipmentInventory"));
+        return;
+    }
+
+    // Create a request to get the user data from PlayFab
+    PlayFab::ClientModels::FGetUserDataRequest GetRequest;
+
+    // Send the request to PlayFab
+    clientAPI->GetUserData(GetRequest,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnSuccessFetchInventory),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnErrorFetchInventory));
+}
+
+void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnSuccessFetchInventoryCalled"));
+
+    auto PlayerEquipmentDataString = Result.Data[TEXT("PlayerEquipmentInventory")].Value;
+    //auto DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
+    DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
+
+    if (Character)
+    {
+        UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
+
+        for (const FName& DataTableRowName : DataTableRowNames)
+        {
+            UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/Character/Equipment/DT_Equipment")));
+            FEquipmentData* EquipmentData = EquipmentDataTable->FindRow<FEquipmentData>(DataTableRowName, TEXT("LookupEquipmentData"));
+            DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
+
+            if (EquipmentData)
+            {
+                PlayerEquipment->AddEquipmentItem(*EquipmentData);
+            }
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
+        OnInventoryLoaded.Broadcast(DataTableRowNames);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Character null in playfabmanager"));
+    }
+}
+
+void APlayFabManager::OnErrorFetchInventory(const PlayFab::FPlayFabCppError& Error)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to update player equipment inventory on PlayFab. Error: %s"), *Error.GenerateErrorReport());
 }
 
 
@@ -214,6 +308,18 @@ void APlayFabManager::OnErrorUpdateEssence(const PlayFab::FPlayFabCppError& Erro
 {
     OnPurchaseCompleted.Broadcast(false);
     UE_LOG(LogTemp, Error, TEXT("Failed to update essence count on PlayFab. Error: %s"), *Error.GenerateErrorReport());
+}
+
+void APlayFabManager::OnSuccessUpdateInventory(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Log, TEXT("Successfully updated player equipment inventory on PlayFab"));
+    //LoadPlayerEquipmentInventory();
+}
+
+void APlayFabManager::OnErrorUpdateInventory(const PlayFab::FPlayFabCppError& Error)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to update player equipment inventory on PlayFab. Error: %s"), *Error.GenerateErrorReport());
+    // Optionally: trigger some in-game feedback to the player
 }
 
 TSharedPtr<FJsonObject> APlayFabManager::TMapToJsonObject(const TMap<FName, int32>& Map)
@@ -280,4 +386,63 @@ void APlayFabManager::InitializeEssenceCounts()
     {
         UE_LOG(LogTemp, Warning, TEXT("Character or inventory are null ptr in InitializeEssenceCounts"));
     }
+}
+
+FString APlayFabManager::ConvertToPlayFabFormat(const TArray<FEquipmentData>& EquipmentDataArray)
+{
+    FString OutputString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+    Writer->WriteArrayStart();
+    for (const FEquipmentData& EquipmentData : EquipmentDataArray)
+    {
+        Writer->WriteObjectStart();
+        Writer->WriteValue(TEXT("DataTableRowName"), EquipmentData.Name);
+        Writer->WriteObjectEnd();
+
+        // Log the name being written
+        UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Writing EquipmentData.Name: %s"), *EquipmentData.Name);
+    }
+    Writer->WriteArrayEnd();
+
+    Writer->Close();
+
+    // Log the final output string
+    UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Final OutputString: %s"), *OutputString);
+
+    return OutputString;
+}
+
+TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabData)
+{
+    TArray<FName> OutputArray;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(PlayFabData);
+
+    UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Input PlayFabData: %s"), *PlayFabData);
+
+    TArray<TSharedPtr<FJsonValue>> JsonArray;
+    if (FJsonSerializer::Deserialize(Reader, JsonArray))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Successfully deserialized PlayFabData."));
+        for (TSharedPtr<FJsonValue> Value : JsonArray)
+        {
+            TSharedPtr<FJsonObject> Object = Value->AsObject();
+            if (Object.IsValid())
+            {
+                FName DataTableRowName = FName(*Object->GetStringField(TEXT("DataTableRowName")));
+                OutputArray.Add(DataTableRowName);
+                UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Added DataTableRowName: %s"), *DataTableRowName.ToString());
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("ConvertFromPlayFabFormat: Object is not valid."));
+            }
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ConvertFromPlayFabFormat: Failed to deserialize PlayFabData."));
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Number of items in OutputArray: %d"), OutputArray.Num());
+    return OutputArray;
 }
