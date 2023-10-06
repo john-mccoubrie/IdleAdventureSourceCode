@@ -20,25 +20,26 @@ void ACoffer::CofferClicked(FHitResult CofferHit)
     APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (!PlayerController) return;
 
+
     //Range between the player and the tree (if it's clickable)
-    float InRange = 800.f;
+    //float InRange = 800.f;
     APawn* PlayerPawn = PlayerController->GetPawn();
     if (!PlayerPawn) return;
 
     //Calculate the current distance between the player and the tree
-    FVector PlayerLocation = PlayerPawn->GetActorLocation();
-    FVector ObjectLocation = CofferHit.GetActor()->GetActorLocation();
-    float Distance = FVector::Distance(PlayerLocation, ObjectLocation);
+    //FVector PlayerLocation = PlayerPawn->GetActorLocation();
+    //FVector ObjectLocation = CofferHit.GetActor()->GetActorLocation();
+    //float Distance = FVector::Distance(PlayerLocation, ObjectLocation);
 
     //reference to the clicked coffer
     ACoffer* ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
 
     //if the clicked coffer is in range grant the conversion ability
-    if (ClickedCoffer && Distance <= InRange)
-    {
+    //if (ClickedCoffer && Distance <= InRange)
+    //{
         AIdlePlayerState* PS = PlayerController->GetPlayerState<AIdlePlayerState>();
         PS->ActivateAbility(UConversionAbility::StaticClass());
-    }
+    //}
 }
 
 // Starts the timer on the coffer, decrementing by 1 every second based on the conversion abilities gameplay effect duration

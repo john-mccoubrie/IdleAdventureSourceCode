@@ -56,6 +56,9 @@ void AIdleCharacter::BeginPlay()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	CharacterInventory = GetWorld()->SpawnActor<AInventory>(AInventory::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+
+	SpringArm = FindComponentByClass<USpringArmComponent>();
+	Camera = FindComponentByClass<UCameraComponent>();
 }
 
 

@@ -38,6 +38,7 @@ public:
 	void AddEssenceToInventory();
 
 	void CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle);
+	void AddExperience(float Amount);
 
 	void GainExperience(const FGameplayAbilityActorInfo* ActorInfo);
 	void OnGameplayEffectRemoved(const FActiveGameplayEffect& Effect);
@@ -60,6 +61,7 @@ public:
 	FTimerHandle StopWoodcuttingTimerHandle;
 	FActiveGameplayEffectHandle ActiveEffectHandle;
 
+	float ExperienceGain;
 
 	bool bAbilityIsActive;
 

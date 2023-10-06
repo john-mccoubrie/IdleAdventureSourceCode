@@ -1,8 +1,10 @@
 #pragma once
 
+
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AbilitySystemInterface.h"
+#include "NiagaraComponent.h"
 #include "AbilitySystemComponent.h"
 #include "IdleEffectActor.generated.h"
 
@@ -55,6 +57,17 @@ public:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tree Respawn")
 		float MaxDuration;
 		
+
+		void ActivateLegendaryEffect();
+		//Legendary Tree
+		// Niagara system component for the legendary effect
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
+		UNiagaraComponent* LegendaryEffectParticle;
+
+		// Niagara system to be used for the legendary effect
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+		UNiagaraSystem* LegendaryEffect;
+
 
 		//UGameplayEffect* WoodcuttingGameplayEffect;
 

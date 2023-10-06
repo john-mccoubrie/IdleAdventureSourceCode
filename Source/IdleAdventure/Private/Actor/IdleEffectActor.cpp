@@ -22,6 +22,10 @@ AIdleEffectActor::AIdleEffectActor()
 	TreeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TreeMeshComponent"));
 	TreeMeshComponent->SetupAttachment(RootComponent);
 
+	// Initialize and attach the Niagara system component
+	LegendaryEffectParticle = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LegendaryEffectParticle"));
+	LegendaryEffectParticle->SetupAttachment(RootComponent);
+	LegendaryEffectParticle->SetAutoActivate(false); // Don't auto-activate the particle effect
 
 }
 
@@ -96,6 +100,20 @@ void AIdleEffectActor::SetTreeLifespan(AIdleEffectActor* Tree)
 		UE_LOG(LogTemp, Warning, TEXT("Attempted to set lifespan on a nullptr Tree actor"));
 	}
 	
+}
+
+void AIdleEffectActor::ActivateLegendaryEffect()
+{
+	if (LegendaryEffect)
+	{
+		LegendaryEffectParticle->SetAsset(LegendaryEffect);
+		LegendaryEffectParticle->Activate();
+		UE_LOG(LogTemp, Warning, TEXT("Activate legendary tree effect in IdleEffectActor"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Legendary effect is null in IdleEffectActor"));
+	}
 }
 
 

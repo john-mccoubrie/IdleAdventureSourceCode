@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StoicStore")
 	AStoicStoreManager* StoicStoreManagerInstance;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
+	ABonusManager* BonusManagerInstance;
+
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayFabManager")
 	//APlayFabManager* PlayFabManagerInstance;
 	

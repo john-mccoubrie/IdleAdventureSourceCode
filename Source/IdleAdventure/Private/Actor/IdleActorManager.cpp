@@ -1,9 +1,17 @@
 #include "Actor/IdleActorManager.h"
 #include "EngineUtils.h"
+#include "NiagaraComponent.h"
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 
 AIdleActorManager* AIdleActorManager::Instance = nullptr;
+
+void AIdleActorManager::BeginPlay()
+{
+    Super::BeginPlay();
+
+    GetLegendaryTree();
+}
 
 void AIdleActorManager::BeginDestroy()
 {
@@ -90,6 +98,73 @@ void AIdleActorManager::RespawnTree(FName TreeName)
         UE_LOG(LogTemp, Warning, TEXT("Does not contain Tree: %s"), *TreeName.ToString());
     }
 }
+
+void AIdleActorManager::GetLegendaryTree()
+{
+    // Ensure the array is empty before populating it
+    AllIdleEffectActors.Empty();
+
+    for (TActorIterator<AIdleEffectActor> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+    {
+        AllIdleEffectActors.Add(*ActorItr);
+    }
+
+    // Ensure there is at least one IdleEffectActor in the level
+    if (AllIdleEffectActors.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, AllIdleEffectActors.Num() - 1);
+        LegendaryIdleEffectActor = AllIdleEffectActors[RandomIndex];
+
+        // Log the name of the LegendaryIdleEffectActor to the output log
+        UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
+
+        // Check if the actor is valid before trying to call a method on it
+        if (LegendaryIdleEffectActor)
+        {
+            // Activate the legendary effect particle system
+            LegendaryIdleEffectActor->ActivateLegendaryEffect();
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("LegendaryIdleEffectActor is INVALID!"));
+        }
+    }
+    else
+    {
+        // Log a warning if no IdleEffectActor instances are found
+        UE_LOG(LogTemp, Warning, TEXT("No IdleEffectActor instances found in the level!"));
+    }
+}
+
+void AIdleActorManager::SelectNewLegendaryTree()
+{
+    // Ensure there is at least one IdleEffectActor in the level
+    if (AllIdleEffectActors.Num() > 0)
+    {
+        int32 RandomIndex = FMath::RandRange(0, AllIdleEffectActors.Num() - 1);
+        LegendaryIdleEffectActor = AllIdleEffectActors[RandomIndex];
+
+        // Log the name of the LegendaryIdleEffectActor to the output log
+        UE_LOG(LogTemp, Warning, TEXT("New LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
+
+        // Check if the actor is valid before trying to call a method on it
+        if (LegendaryIdleEffectActor)
+        {
+            // Activate the legendary effect particle system
+            LegendaryIdleEffectActor->ActivateLegendaryEffect();
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("New LegendaryIdleEffectActor is INVALID!"));
+        }
+    }
+    else
+    {
+        // Log a warning if no IdleEffectActor instances are found
+        UE_LOG(LogTemp, Warning, TEXT("No IdleEffectActor instances found in the level!"));
+    }
+}
+
 
 AIdleActorManager* AIdleActorManager::GetInstance(UWorld* World)
 {

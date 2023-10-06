@@ -8,6 +8,7 @@
 #include <PlayFab/PlayFabManager.h>
 #include <Character/IdleCharacter.h>
 #include <Kismet/GameplayStatics.h>
+#include "PlayerEquipment/BonusManager.h"
 
 // Sets default values for this component's properties
 UPlayerEquipment::UPlayerEquipment()
@@ -114,12 +115,15 @@ void UPlayerEquipment::UnequipCurrentItem()
 
 void UPlayerEquipment::ApplyEquipmentEffects(const FEquipmentData& ItemData)
 {
-	// TODO: Implement logic to apply effects (e.g., modify character stats)
+    ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+    BonusManager->ApplyExperienceBonus(ItemData.ItemBonus.ExperienceMultiplier);
+    BonusManager->ApplyEssenceBonus(ItemData.ItemBonus);
 }
 
 void UPlayerEquipment::RemoveEquipmentEffects()
 {
-	// TODO: Implement logic to remove effects (e.g., reset character stats to their unequipped state)
+    ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+    BonusManager->RemoveEssenceBonus();
 }
 
 

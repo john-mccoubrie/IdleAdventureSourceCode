@@ -1,7 +1,9 @@
 
 
 #pragma once
-
+#include "PlayFab.h"
+#include "Core/PlayFabClientDataModels.h"
+#include "Core/PlayFabClientAPI.h"
 #include "CoreMinimal.h"
 #include "UpdatePlayerDisplayName.generated.h"
 

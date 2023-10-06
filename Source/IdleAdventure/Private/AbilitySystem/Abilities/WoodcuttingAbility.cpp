@@ -2,12 +2,14 @@
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include "Character/IdleCharacter.h"
 #include "Player/IdlePlayerController.h"
+#include "Actor/IdleActorManager.h"
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include "Actor/IdleEffectActor.h"
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystemBlueprintLibrary.h>
 #include <Kismet/GameplayStatics.h>
 #include <AbilitySystem/IdleAttributeSet.h>
+#include <PlayerEquipment/BonusManager.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -80,6 +82,10 @@ void UWoodcuttingAbility::OnTreeCutDown()
     PS->AbilitySystemComponent->RemoveActiveGameplayEffect(PC->WoodcuttingEffectHandle);
     UAnimMontage* AnimMontage = Character->WoodcutMontage;
     Character->StopAnimMontage(AnimMontage);
+
+    UWorld* World = GetWorld();
+    AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(World);
+    IdleActorManager->SelectNewLegendaryTree();
     //EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
@@ -110,6 +116,7 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
 
     //Woodcutting algorithm
     float LevelMultiplier = IdleAttributeSet->GetWoodcuttingLevel();
@@ -142,26 +149,28 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         UItem* NewLog = NewObject<UItem>();
         float RarityRoll = FMath::RandRange(0.f, 100.f);
 
-        if (RarityRoll <= 50.f)  // 50% chance for Water
+        if (RarityRoll <= 50.f)  // 50% chance for Wisdom
         {
             NewLog->EssenceRarity = "Wisdom";
-            //UE_LOG(LogTemp, Warning, TEXT("Wisdom"));
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->WisdomEssenceMultiplier));
         }
-        else if (RarityRoll <= 75.f)  // 25% chance for Earth
+        else if (RarityRoll <= 75.f)  // 25% chance for Temperance
         {
             NewLog->EssenceRarity = "Temperance";
-            //UE_LOG(LogTemp, Warning, TEXT("Temperance"));
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->TemperanceEssenceMultiplier));
         }
-        else if (RarityRoll <= 95.f)  // 20% chance for Wind
+        else if (RarityRoll <= 95.f)  // 20% chance for Justice
         {
             NewLog->EssenceRarity = "Justice";
-            //UE_LOG(LogTemp, Warning, TEXT("Justice"));
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->JusticeEssenceMultiplier));
         }
-        else  // 5% chance for Fire
+        else  // 5% chance for Courage
         {
             NewLog->EssenceRarity = "Courage";
-            //UE_LOG(LogTemp, Warning, TEXT("Courage"));
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->CourageEssenceMultiplier));
         }
+
+        AddExperience(ExperienceGain);
 
         // Load the data table
         UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/Blueprints/UI/Inventory/DT_EssenceType.DT_EssenceType'"));
@@ -185,6 +194,18 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     //{
         //UE_LOG(LogTemp, Warning, TEXT("No log awarded"));
     //}
+}
+
+void UWoodcuttingAbility::AddExperience(float Amount)
+{
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+
+    UE_LOG(LogTemp, Warning, TEXT("Before add: %f"), IdleAttributeSet->GetWoodcutExp());
+    UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
+    UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
 }
 
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const

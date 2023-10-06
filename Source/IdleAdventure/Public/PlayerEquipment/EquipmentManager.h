@@ -2,11 +2,11 @@
 
 #pragma once
 
+#include "BonusManager.h"
 #include "CoreMinimal.h"
 #include <DataRegistrySource_DataTable.h>
 #include "UObject/NoExportTypes.h"
 #include "EquipmentManager.generated.h"
-
 
 
 USTRUCT(BlueprintType)
@@ -41,6 +41,9 @@ struct FEquipmentData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
     int32 LegendaryCost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+	FItemBonus ItemBonus;
 	
     FEquipmentData()
         : LevelRequired(0.0f)

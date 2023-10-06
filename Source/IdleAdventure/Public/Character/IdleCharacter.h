@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <GameFramework/SpringArmComponent.h>
+#include <Camera/CameraComponent.h>
 #include "Inventory/Inventory.h"
 #include "IdleCharacterBase.h"
 #include "IdleCharacter.generated.h"
@@ -36,8 +38,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 		UAnimMontage* WoodcutMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* CofferMontage;
 	//void BeginWoodcuttingAnim();
 
+		USpringArmComponent* SpringArm;
+		UCameraComponent* Camera;
 		
 
 private:

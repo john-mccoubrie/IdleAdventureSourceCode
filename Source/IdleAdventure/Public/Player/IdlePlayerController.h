@@ -88,6 +88,9 @@ public:
 	float WoodcuttingCastingDistance;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
+	float CofferCastingDistance;
+
+	UPROPERTY(EditAnywhere, Category = "Initial values")
 	FVector StaffEndLocation;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
@@ -141,8 +144,14 @@ private:
 	TObjectPtr<UInputAction> MoveAction;
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> ClickAction;
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> ZoomAction;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Zoom")
+	float MinZoomDistance = 300.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Zoom")
+	float MaxZoomDistance = 1000.0f;
 
 
 
@@ -152,14 +161,21 @@ private:
 	UFUNCTION()
 	void HandleClickAction(const FInputActionValue& InputActionValue);
 
+	UFUNCTION()
+	void HandleZoomAction(const FInputActionValue& InputActionValue);
+
 	void MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn);
 	void ClickTree(FHitResult TreeHit, APawn* PlayerPawn);
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);
 	void ResetTreeTimer(AIdleEffectActor* Tree);
 	void ResetWoodcuttingAbilityTimer();
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
+	void StartConversionAbility(APawn* PlayerPawn);
 
 	AActor* TargetTree = nullptr;
+	AActor* TargetCoffer = nullptr;
+	FHitResult CofferHitForCasting;
+	bool bHasPerformedCofferClick;
 
 
 
@@ -176,6 +192,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	bool bIsMovingToTarget = false;
+	bool bIsMovingToCoffer = false;
 	FVector TargetDestination;
 	void InterruptTreeCutting();
 

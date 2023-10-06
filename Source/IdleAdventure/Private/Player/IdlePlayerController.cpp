@@ -28,11 +28,14 @@ AIdlePlayerController::AIdlePlayerController()
 	bReplicates = true;
 
 	WoodcuttingCastingDistance = 400.0f;
+	CofferCastingDistance = 500.0f;
 	ZMultiplierStaffEndLoc = 80.f;
 	XMultiplierStaffEndLoc = 20.f;
 	YMultiplierStaffEndLoc = -20.f;
 	ZMultiplierTreeLoc = 0.f;
 	//YawRotationStaffMultiplier = 20.f;
+
+	bHasPerformedCofferClick = false;
 }
 
 void AIdlePlayerController::PlayerTick(float DeltaTime)
@@ -77,6 +80,33 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 			//UE_LOG(LogTemp, Warning, TEXT("StartWoodcutAbility"));
 			return;
 		}
+	}
+
+	//move to coffer
+	if (bIsMovingToCoffer && !bHasPerformedCofferClick && TargetCoffer)
+	{
+		APawn* ControlledPawn = GetPawn();
+
+		if (!ControlledPawn)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is null"));
+			return;
+		}
+
+		FVector CurrentLocation = ControlledPawn->GetActorLocation();
+		FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
+		FVector CofferLocation2D = FVector(TargetCoffer->GetActorLocation().X, TargetCoffer->GetActorLocation().Y, 0);
+
+		if (FVector::Distance(PawnLocation2D, CofferLocation2D) <= CofferCastingDistance)
+		{
+			
+			StartConversionAbility(ControlledPawn);
+			return;
+		}
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("one of the bools or targetcoffer is false"));
 	}
 }
 
@@ -139,6 +169,7 @@ void AIdlePlayerController::SetupInputComponent()
 	//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AIdlePlayerController::ClickTree);
 	//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AIdlePlayerController::OnCofferClicked);
 	EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AIdlePlayerController::HandleClickAction);
+	EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AIdlePlayerController::HandleZoomAction);
 }
 
 void AIdlePlayerController::Move(const FInputActionValue& InputActionValue)
@@ -173,8 +204,32 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("Coffer"))
 	{
+		if (bIsChoppingTree)
+		{
+			bIsChoppingTree = false;
+			bHasPerformedCofferClick = false;
+			InterruptTreeCutting();
+			ResetTreeTimer(CurrentTree);
+			ResetWoodcuttingAbilityTimer();
+			//OnCofferClicked(ClickResult, PlayerPawn);
+
+			//if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
+			//{
+				CurrentWoodcuttingAbilityInstance->bAbilityIsActive = false;
+				APlayerController* PC = GetWorld()->GetFirstPlayerController();
+				AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+				PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
+				UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
+			//}
+			//else
+			//{
+				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance is null ptr in PlayerController"));
+			//}
+			CurrentTree->SetLifeSpan(-1.0f);	
+		}
+		
 		OnCofferClicked(ClickResult, PlayerPawn);
-		bIsChoppingTree = false;
+		
 	}
 	else
 	{
@@ -182,6 +237,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		if (bIsChoppingTree)
 		{
 			bIsChoppingTree = false;
+			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
 			ResetTreeTimer(CurrentTree);
 			ResetWoodcuttingAbilityTimer();
@@ -200,6 +256,25 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			}
 			CurrentTree->SetLifeSpan(-1.0f);
 			//UE_LOG(LogTemp, Warning, TEXT("Tree life span: %f"), CurrentTree->GetLifeSpan());
+		}
+	}
+}
+
+void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActionValue)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Zoom action called"));
+	if (APawn* ControlledPawn = GetPawn<APawn>())
+	{
+		if (AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(ControlledPawn))
+		{
+			float CurrentArmLength = MyCharacter->SpringArm->TargetArmLength;
+
+			// Modify this zoom speed as desired
+			float ZoomSpeed = 100.0f;
+			float InputValue = InputActionValue.Get<float>();
+			float NewArmLength = FMath::Clamp(CurrentArmLength - InputValue * ZoomSpeed, MinZoomDistance, MaxZoomDistance);
+
+			MyCharacter->SpringArm->TargetArmLength = NewArmLength;  // Changed this to modify the SpringArm's TargetArmLength
 		}
 	}
 }
@@ -260,10 +335,13 @@ void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 void AIdlePlayerController::OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("CofferClicked"));
+	TargetCoffer = CofferHit.GetActor();
+	CofferHitForCasting = CofferHit;
+	bIsMovingToCoffer = true;
 	ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
-	if (ClickedCoffer)
+	if (PlayerPawn)
 	{
-		ClickedCoffer->CofferClicked(CofferHit);
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetCoffer->GetActorLocation());
 	}
 }
 
@@ -370,6 +448,22 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
 	}
+}
+
+void AIdlePlayerController::StartConversionAbility(APawn* PlayerPawn)
+{
+	bIsMovingToTarget = false;
+	bIsChoppingTree = false;
+	bHasPerformedCofferClick = true;
+	bIsMovingToCoffer = false;
+	FVector DirectionToTree = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
+	FRotator RotationTowardsCoffer = DirectionToTree.Rotation();
+
+	// Step 2: Set the character's rotation to face that direction
+	PlayerPawn->SetActorRotation(RotationTowardsCoffer);
+
+	ClickedCoffer->CofferClicked(CofferHitForCasting);
+	
 }
 
 

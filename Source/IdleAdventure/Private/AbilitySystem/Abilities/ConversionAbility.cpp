@@ -24,8 +24,14 @@ UConversionAbility::~UConversionAbility()
 
 void UConversionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Activated Conversion Ability"));
-	CovertEssenceToEXP();	
+	UE_LOG(LogTemp, Warning, TEXT("Activated Conversion Ability"));
+
+	AIdleCharacter* Character = Cast<AIdleCharacter>(ActorInfo->AvatarActor.Get());
+	UAnimMontage* AnimMontage = Character->CofferMontage;
+	//Character->PlayAnimMontage(AnimMontage);
+
+	CovertEssenceToEXP();
+
 }
 
 void UConversionAbility::CovertEssenceToEXP()

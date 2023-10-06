@@ -18,6 +18,7 @@ class IDLEADVENTURE_API AIdleActorManager : public AActor
 
 public:
 
+	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 	void ResetInstance();
 	// Function to spawn a tree at a specific location
@@ -29,6 +30,13 @@ public:
 	// Function to respawn a tree after it's been cut down
 	UFUNCTION()
 	void RespawnTree(FName TreeName); // Adjusted the parameter type
+
+	//Legendary Tree
+	void GetLegendaryTree();
+	void SelectNewLegendaryTree();
+	TArray<AIdleEffectActor*> AllIdleEffectActors;
+	AIdleEffectActor* LegendaryIdleEffectActor;
+	
 
 	static AIdleActorManager* GetInstance(UWorld* World);
 
