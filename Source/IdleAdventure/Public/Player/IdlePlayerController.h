@@ -147,6 +147,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> ZoomAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> RotateHorizontalAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> RotateVerticalAction;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Zoom")
 	float MinZoomDistance = 300.0f;
 
@@ -154,9 +160,16 @@ private:
 	float MaxZoomDistance = 1000.0f;
 
 
+	float VerticalRotation = 0.0f; // Current vertical rotation in degrees
+	float MaxVerticalRotation = 80.0f; // Maximum allowed vertical rotation in degrees
+	float MinVerticalRotation = -80.0f; // Minimum allowed vertical rotation in degrees
+
+
 
 	void Move(const FInputActionValue& InputActionValue);
 
+	void RotateHorizontal(const FInputActionValue& InputActionValue);
+	void RotateVertical(const FInputActionValue& InputActionValue);
 
 	UFUNCTION()
 	void HandleClickAction(const FInputActionValue& InputActionValue);

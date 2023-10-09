@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Chat/PhotonChatManager.h"
 #include <Leaderboard/LeaderboardManager.h>
+#include <Actor/CofferManager.h>
 #include <StoicStore/StoicStoreManager.h>
 #include <PlayFab/PlayFabManager.h>
 #include "IdleGameInstance.h"
 #include <Leaderboard/UpdatePlayerDisplayName.h>
 #include "GameFramework/GameModeBase.h"
 #include "IdleGameModeBase.generated.h"
-
 
 
 //class APhotonChatManager;
@@ -48,6 +48,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
 	ABonusManager* BonusManagerInstance;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Coffer Manager")
+	ACofferManager* CofferManagerInstance;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayFabManager")
 	//APlayFabManager* PlayFabManagerInstance;

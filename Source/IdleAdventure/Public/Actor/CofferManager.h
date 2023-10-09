@@ -15,16 +15,19 @@ class IDLEADVENTURE_API ACofferManager : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ACofferManager();
+	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
+	static ACofferManager* GetInstance(UWorld* World);
+	void ResetInstance();
 
 	TArray<ACoffer*> AllCoffers;
 	TArray<ACoffer*> ActiveCoffers;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+private:
+	static ACofferManager* CofferManagerSingletonInstance;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
+
+	
 
 };

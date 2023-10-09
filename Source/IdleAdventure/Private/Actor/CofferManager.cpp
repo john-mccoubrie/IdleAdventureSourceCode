@@ -1,7 +1,8 @@
 
-
-
 #include "Actor/CofferManager.h"
+#include "EngineUtils.h"
+
+ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
 // Sets default values
 ACofferManager::ACofferManager()
@@ -16,12 +17,40 @@ void ACofferManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (!CofferManagerSingletonInstance)
+	{
+		CofferManagerSingletonInstance = this;
+	}
+
 }
 
-// Called every frame
-void ACofferManager::Tick(float DeltaTime)
+void ACofferManager::BeginDestroy()
 {
-	Super::Tick(DeltaTime);
-
+	Super::BeginDestroy();
+	
+	ResetInstance();
 }
+
+ACofferManager* ACofferManager::GetInstance(UWorld* World)
+{
+    if (!CofferManagerSingletonInstance)
+    {
+        for (TActorIterator<ACofferManager> It(World); It; ++It)
+        {
+            CofferManagerSingletonInstance = *It;
+            break;
+        }
+        if (!CofferManagerSingletonInstance)
+        {
+            CofferManagerSingletonInstance = World->SpawnActor<ACofferManager>();
+        }
+    }
+    return CofferManagerSingletonInstance;
+}
+
+void ACofferManager::ResetInstance()
+{
+    CofferManagerSingletonInstance = nullptr;
+}
+
 

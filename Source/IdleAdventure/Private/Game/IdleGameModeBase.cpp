@@ -51,6 +51,8 @@ void AIdleGameModeBase::BeginPlay()
      BonusManagerInstance = GetWorld()->SpawnActor<ABonusManager>(ABonusManager::StaticClass());
      // Spawn the PlayFabManager singleton instance
      APlayFabManager* PlayFabManagerInstance = GetWorld()->SpawnActor<APlayFabManager>(APlayFabManager::StaticClass());
+     //Spawn the CofferManager singleton instance
+     CofferManagerInstance = GetWorld()->SpawnActor<ACofferManager>(ACofferManager::StaticClass());
 }
 
 void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID)

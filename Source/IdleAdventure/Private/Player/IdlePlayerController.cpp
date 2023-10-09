@@ -170,6 +170,8 @@ void AIdlePlayerController::SetupInputComponent()
 	//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AIdlePlayerController::OnCofferClicked);
 	EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AIdlePlayerController::HandleClickAction);
 	EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AIdlePlayerController::HandleZoomAction);
+	EnhancedInputComponent->BindAction(RotateHorizontalAction, ETriggerEvent::Triggered, this, &AIdlePlayerController::RotateHorizontal);
+	EnhancedInputComponent->BindAction(RotateVerticalAction, ETriggerEvent::Triggered, this, &AIdlePlayerController::RotateVertical);
 }
 
 void AIdlePlayerController::Move(const FInputActionValue& InputActionValue)
@@ -187,6 +189,50 @@ void AIdlePlayerController::Move(const FInputActionValue& InputActionValue)
 		ControlledPawn->AddMovementInput(RightDirection, InputAxisVector.X);
 	}
 }
+
+void AIdlePlayerController::RotateHorizontal(const FInputActionValue& InputActionValue)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		USpringArmComponent* SpringArm = Cast<USpringArmComponent>(ControlledPawn->GetComponentByClass(USpringArmComponent::StaticClass()));
+		if (SpringArm)
+		{
+			float RotationSpeed = 100.0f; // Adjust this value for rotation speed
+			float InputValue = InputActionValue.Get<float>();
+			SpringArm->AddWorldRotation(FRotator(0, InputValue * RotationSpeed * GetWorld()->GetDeltaSeconds(), 0));
+		}
+	}
+}
+
+void AIdlePlayerController::RotateVertical(const FInputActionValue& InputActionValue)
+{
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		USpringArmComponent* SpringArm = Cast<USpringArmComponent>(ControlledPawn->GetComponentByClass(USpringArmComponent::StaticClass()));
+		if (SpringArm)
+		{
+			float RotationSpeed = 100.0f; // Adjust this value for rotation speed
+			float InputValue = InputActionValue.Get<float>();
+
+			// Calculate the proposed new vertical rotation
+			float ProposedVerticalRotation = VerticalRotation + InputValue * RotationSpeed * GetWorld()->GetDeltaSeconds();
+
+			// Clamp the proposed vertical rotation within bounds
+			ProposedVerticalRotation = FMath::Clamp(ProposedVerticalRotation, MinVerticalRotation, MaxVerticalRotation);
+
+			// Calculate the difference that we should actually rotate
+			float ActualRotationDifference = ProposedVerticalRotation - VerticalRotation;
+
+			// Apply the rotation difference to the spring arm
+			SpringArm->AddLocalRotation(FRotator(ActualRotationDifference, 0, 0));
+
+			// Update our current vertical rotation
+			VerticalRotation = ProposedVerticalRotation;
+		}
+	}
+}
+
+
 
 void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActionValue)
 {
