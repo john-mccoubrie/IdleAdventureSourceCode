@@ -114,10 +114,20 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Initial values")
 	float RollRotationStaffMultiplier;
 
+
+	//Niagara system
 	void SpawnTreeCutEffect();
 	void EndTreeCutEffect();
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* MouseClickEffectSystem;
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* TreeClickEffectSystem;
+	UNiagaraComponent* MouseClickEffect;
+	UNiagaraComponent* TreeClickEffect;
+
 
 
 	UFUNCTION()

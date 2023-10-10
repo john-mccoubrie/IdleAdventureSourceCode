@@ -253,7 +253,7 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
             [this]() {
                 if (UpdatePlayerDisplayNameInstance->HasDisplayName())
                 {
-                    UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
+                    UGameplayStatics::OpenLevel(this, TEXT("Map1"));
                 }
                 else
                 {

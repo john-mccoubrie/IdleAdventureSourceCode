@@ -46,7 +46,7 @@ void AInventory::AddItem(UItem* Item)
             EssenceCount.FindOrAdd(EssenceType);
         }
 
-        // ... rest of your code ...
+        EssenceCountForDurationCalc++;
 
         Items.Add(Item);
         boolOnItemAdded.Broadcast(true);
@@ -56,7 +56,7 @@ void AInventory::AddItem(UItem* Item)
         EssenceCount.FindOrAdd(Item->EssenceRarity) += 1;
         for (const auto& EssenceEntry : EssenceCount)
         {
-            UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
+            //UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
         }
         //UE_LOG(LogTemp, Warning, TEXT("Item Added in Inventory class"));
     }
@@ -67,7 +67,7 @@ void AInventory::RemoveItem(UItem* Item)
     Items.Remove(Item);
     boolOnItemAdded.Broadcast(false);
     OnItemRemoved.Broadcast(Item->EssenceRarity);
-
+    EssenceCountForDurationCalc = 0;
 
     TransferAndClearEssenceCounts();
     /*
@@ -91,7 +91,7 @@ void AInventory::TransferAndClearEssenceCounts()
     for (const auto& EssenceEntry : EssenceCount)
     {
         EssenceAddedToCoffer.FindOrAdd(EssenceEntry.Key) += EssenceEntry.Value;
-        UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
+        //UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
     }
 
     TArray<FEssenceCoffer> EssenceCofferArray;
@@ -111,7 +111,7 @@ void AInventory::TransferAndClearEssenceCounts()
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedDataString);
     FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-    UE_LOG(LogTemp, Log, TEXT("Updating PlayFab with essence data: %s"), *UpdatedDataString);
+    //UE_LOG(LogTemp, Log, TEXT("Updating PlayFab with essence data: %s"), *UpdatedDataString);
 
     // Create a request to update the PlayFab user data
     PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
@@ -165,7 +165,7 @@ void AInventory::OnGetDataFailure(const PlayFab::FPlayFabCppError& Error)
 
 void AInventory::OnUpdateDataSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Successfully updated user data on PlayFab."));
+    //UE_LOG(LogTemp, Warning, TEXT("Successfully updated user data on PlayFab."));
 
     /*
     // Create an array of FEssenceCoffer to be broadcasted

@@ -84,6 +84,8 @@ public:
 
         PlayFabClientPtr clientAPI = nullptr;
 
+        float EssenceCountForDurationCalc;
+
 
     // List of items in the inventory
     UPROPERTY(EditAnywhere, Category = "Inventory")

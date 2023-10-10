@@ -19,15 +19,15 @@ public:
 	virtual void BeginDestroy() override;
 	static ACofferManager* GetInstance(UWorld* World);
 	void ResetInstance();
+	void SetUpAllCoffers();
+	bool CheckIfCofferIsActive(ACoffer* CofferToCheck);
+	int32 CheckNumOfActiveCoffers();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CofferManager")
 	TArray<ACoffer*> AllCoffers;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CofferManager")
 	TArray<ACoffer*> ActiveCoffers;
 
 private:
 	static ACofferManager* CofferManagerSingletonInstance;
-
-
-
-	
-
 };

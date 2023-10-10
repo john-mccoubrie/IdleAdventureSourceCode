@@ -221,7 +221,7 @@ void APlayFabManager::LoadPlayerEquipmentInventory()
 
 void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnSuccessFetchInventoryCalled"));
+    //UE_LOG(LogTemp, Warning, TEXT("OnSuccessFetchInventoryCalled"));
 
     auto PlayerEquipmentDataString = Result.Data[TEXT("PlayerEquipmentInventory")].Value;
     //auto DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
@@ -243,7 +243,7 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
             }
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
+        //UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
         OnInventoryLoaded.Broadcast(DataTableRowNames);
     }
     else
@@ -278,7 +278,7 @@ void APlayFabManager::OnSuccessUpdateEssence(const PlayFab::ClientModels::FUpdat
 {
     //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     //OnPurchaseCompleted.Broadcast(true);
-    UE_LOG(LogTemp, Log, TEXT("Successfully updated essence count on PlayFab"));
+    //UE_LOG(LogTemp, Log, TEXT("Successfully updated essence count on PlayFab"));
 
     // Create an array of FEssenceCoffer to be broadcasted
     TArray<FEssenceCoffer> EssenceCofferArray;
@@ -312,7 +312,7 @@ void APlayFabManager::OnErrorUpdateEssence(const PlayFab::FPlayFabCppError& Erro
 
 void APlayFabManager::OnSuccessUpdateInventory(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Log, TEXT("Successfully updated player equipment inventory on PlayFab"));
+    //UE_LOG(LogTemp, Log, TEXT("Successfully updated player equipment inventory on PlayFab"));
     //LoadPlayerEquipmentInventory();
 }
 
@@ -345,7 +345,7 @@ bool APlayFabManager::UpdateEssenceAddedToCofferOnPlayFab()
         TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedDataString);
         FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-        UE_LOG(LogTemp, Log, TEXT("Updating PlayFab with essence data: %s"), *UpdatedDataString);
+        //UE_LOG(LogTemp, Log, TEXT("Updating PlayFab with essence data: %s"), *UpdatedDataString);
 
         // Create a request to update the PlayFab user data
         PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
@@ -400,14 +400,14 @@ FString APlayFabManager::ConvertToPlayFabFormat(const TArray<FEquipmentData>& Eq
         Writer->WriteObjectEnd();
 
         // Log the name being written
-        UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Writing EquipmentData.Name: %s"), *EquipmentData.Name);
+        //UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Writing EquipmentData.Name: %s"), *EquipmentData.Name);
     }
     Writer->WriteArrayEnd();
 
     Writer->Close();
 
     // Log the final output string
-    UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Final OutputString: %s"), *OutputString);
+    //UE_LOG(LogTemp, Warning, TEXT("ConvertToPlayFabFormat: Final OutputString: %s"), *OutputString);
 
     return OutputString;
 }
@@ -417,12 +417,12 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
     TArray<FName> OutputArray;
     TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(PlayFabData);
 
-    UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Input PlayFabData: %s"), *PlayFabData);
+    //UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Input PlayFabData: %s"), *PlayFabData);
 
     TArray<TSharedPtr<FJsonValue>> JsonArray;
     if (FJsonSerializer::Deserialize(Reader, JsonArray))
     {
-        UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Successfully deserialized PlayFabData."));
+        //UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Successfully deserialized PlayFabData."));
         for (TSharedPtr<FJsonValue> Value : JsonArray)
         {
             TSharedPtr<FJsonObject> Object = Value->AsObject();
@@ -430,7 +430,7 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
             {
                 FName DataTableRowName = FName(*Object->GetStringField(TEXT("DataTableRowName")));
                 OutputArray.Add(DataTableRowName);
-                UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Added DataTableRowName: %s"), *DataTableRowName.ToString());
+                //UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Added DataTableRowName: %s"), *DataTableRowName.ToString());
             }
             else
             {
@@ -443,6 +443,6 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
         UE_LOG(LogTemp, Error, TEXT("ConvertFromPlayFabFormat: Failed to deserialize PlayFabData."));
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Number of items in OutputArray: %d"), OutputArray.Num());
+    //UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Number of items in OutputArray: %d"), OutputArray.Num());
     return OutputArray;
 }

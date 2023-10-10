@@ -4,6 +4,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystem/Abilities/ConversionAbility.h>
+#include <Actor/CofferManager.h>
 
 ACoffer::ACoffer()
 {
@@ -16,30 +17,38 @@ ACoffer::ACoffer()
 
 void ACoffer::CofferClicked(FHitResult CofferHit)
 {
-   
     APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (!PlayerController) return;
 
-
-    //Range between the player and the tree (if it's clickable)
-    //float InRange = 800.f;
-    APawn* PlayerPawn = PlayerController->GetPawn();
-    if (!PlayerPawn) return;
-
-    //Calculate the current distance between the player and the tree
-    //FVector PlayerLocation = PlayerPawn->GetActorLocation();
-    //FVector ObjectLocation = CofferHit.GetActor()->GetActorLocation();
-    //float Distance = FVector::Distance(PlayerLocation, ObjectLocation);
+    //if the coffer is already active, return
+    //if there are more than 3 coffers, return
+    //broadcast to the UI
+    //remove the coffer when its inactive in ondurationeffect removed in conversion ability
+    //check essence count for coffer potentially
 
     //reference to the clicked coffer
     ACoffer* ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
 
-    //if the clicked coffer is in range grant the conversion ability
-    //if (ClickedCoffer && Distance <= InRange)
-    //{
-        AIdlePlayerState* PS = PlayerController->GetPlayerState<AIdlePlayerState>();
-        PS->ActivateAbility(UConversionAbility::StaticClass());
-    //}
+    ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
+    
+    /*
+    if (CofferManager->CheckIfCofferIsActive(ClickedCoffer))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("This coffer is already active"));
+        return;
+    }
+    if (CofferManager->CheckNumOfActiveCoffers() >= 3.0f)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("There are 3 coffers already active"));
+        return;
+    }
+    */
+
+    //UE_LOG(LogTemp, Warning, TEXT("Conditions set, adding coffer and activating conversion ability"));
+    CofferManager->ActiveCoffers.Add(ClickedCoffer);
+    UE_LOG(LogTemp, Warning, TEXT("Added Coffer: %s"), *ClickedCoffer->GetName());
+    AIdlePlayerState* PS = PlayerController->GetPlayerState<AIdlePlayerState>();
+    PS->ActivateAbility(UConversionAbility::StaticClass());  
 }
 
 // Starts the timer on the coffer, decrementing by 1 every second based on the conversion abilities gameplay effect duration

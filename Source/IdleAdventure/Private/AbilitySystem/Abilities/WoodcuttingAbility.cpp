@@ -104,7 +104,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
     AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
     Character->EssenceCount++;
     //UE_LOG(LogTemp, Warning, TEXT("Essence Added to inventory"));
-    UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
+    //UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
     UItem* Essence = NewObject<UItem>();
     Character->CharacterInventory->AddItem(Essence); 
 }
@@ -202,10 +202,10 @@ void UWoodcuttingAbility::AddExperience(float Amount)
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
 
-    UE_LOG(LogTemp, Warning, TEXT("Before add: %f"), IdleAttributeSet->GetWoodcutExp());
-    UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
+    //UE_LOG(LogTemp, Warning, TEXT("Before add: %f"), IdleAttributeSet->GetWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
-    UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
 }
 
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const

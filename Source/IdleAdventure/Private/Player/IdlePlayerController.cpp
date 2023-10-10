@@ -245,6 +245,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
+		TreeClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeClickEffectSystem, ClickResult.Location);
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
 	}
@@ -279,6 +280,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 	}
 	else
 	{
+		MouseClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MouseClickEffectSystem, ClickResult.Location);
 		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 		if (bIsChoppingTree)
 		{
@@ -455,6 +457,10 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	FVector DirectionToTree = (TargetTree->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
 	FRotator RotationTowardsTree = DirectionToTree.Rotation();
 
+	// Preserve the current Pitch and Roll of the character
+	RotationTowardsTree.Pitch = PlayerPawn->GetActorRotation().Pitch;
+	RotationTowardsTree.Roll = PlayerPawn->GetActorRotation().Roll;
+
 	// Step 2: Set the character's rotation to face that direction
 	PlayerPawn->SetActorRotation(RotationTowardsTree);
 
@@ -502,11 +508,26 @@ void AIdlePlayerController::StartConversionAbility(APawn* PlayerPawn)
 	bIsChoppingTree = false;
 	bHasPerformedCofferClick = true;
 	bIsMovingToCoffer = false;
-	FVector DirectionToTree = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
-	FRotator RotationTowardsCoffer = DirectionToTree.Rotation();
+
+	// Step 1: Calculate direction to the tree from the character's current location
+	FVector DirectionToCoffer = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
+	FRotator RotationTowardsCoffer = DirectionToCoffer.Rotation();
+
+	// Preserve the current Pitch and Roll of the character
+	RotationTowardsCoffer.Pitch = PlayerPawn->GetActorRotation().Pitch;
+	RotationTowardsCoffer.Roll = PlayerPawn->GetActorRotation().Roll;
 
 	// Step 2: Set the character's rotation to face that direction
 	PlayerPawn->SetActorRotation(RotationTowardsCoffer);
+
+	/*
+	FVector DirectionToCoffer = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
+	FRotator RotationTowardsCoffer = DirectionToCoffer.Rotation();
+
+	// Step 2: Set the character's rotation to face that direction
+	PlayerPawn->SetActorRotation(RotationTowardsCoffer);
+
+	*/
 
 	ClickedCoffer->CofferClicked(CofferHitForCasting);
 	
