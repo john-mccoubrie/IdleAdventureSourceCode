@@ -20,6 +20,13 @@ struct FEssenceCoffer
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
     int32 Value;
+
+    FEssenceCoffer()
+        : Value(0)
+
+    {
+
+    }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, FName, RowName);

@@ -33,6 +33,7 @@ void UConversionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 	CovertEssenceToEXP();
 
+
 }
 
 void UConversionAbility::CovertEssenceToEXP()
@@ -54,8 +55,8 @@ void UConversionAbility::CovertEssenceToEXP()
 
 	//Set new duraiton based on the amount of essence in the player's inventory
 	float NewDuration = Character->CharacterInventory->EssenceCountForDurationCalc * 10.0f;
-	UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->CharacterInventory->EssenceCountForDurationCalc);
-	UE_LOG(LogTemp, Warning, TEXT("New Duration: %f"), NewDuration);
+	//UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->CharacterInventory->EssenceCountForDurationCalc);
+	//UE_LOG(LogTemp, Warning, TEXT("New Duration: %f"), NewDuration);
 	// Remove the old effect (cannot edit existing const effect)
 	PS->AbilitySystemComponent->RemoveActiveGameplayEffect(EffectHandle);
 
@@ -67,8 +68,9 @@ void UConversionAbility::CovertEssenceToEXP()
 	FActiveGameplayEffectHandle NewEffectHandle = PS->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*NewEffectSpecHandle.Data.Get());
 	
 	float CofferDuration = PS->AbilitySystemComponent->GetActiveGameplayEffect(NewEffectHandle)->GetDuration();
-	UE_LOG(LogTemp, Warning, TEXT("Coffer Duration: %f"), CofferDuration);
-	ClickedCoffer->StartExperienceTimer(CofferDuration);
+	//UE_LOG(LogTemp, Warning, TEXT("Coffer Duration: %f"), CofferDuration);
+	//ClickedCoffer->StartExperienceTimer(CofferDuration);
+	CofferManager->StartExperienceTimer(CofferDuration);
 		
 	// Built in delegate that calls "OnDurationEffectRemoved" When the conversion gameplay effect's duration automatically removes it
 	FOnActiveGameplayEffectRemoved_Info* WaitEffectRemovedDelegate = PS->AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(NewEffectHandle);
@@ -78,9 +80,7 @@ void UConversionAbility::CovertEssenceToEXP()
 	UItem* Essence = NewObject<UItem>();
 	Character->CharacterInventory->RemoveItem(Essence);
 	Character->EssenceCount = 0;
-	//UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
-			
-	
+	//UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);	
 }
 
 void UConversionAbility::OnDurationEffectRemoved(const FGameplayEffectRemovalInfo& RemovalInfo, float CofferDuration, ACoffer* ClickedCoffer)
@@ -90,10 +90,12 @@ void UConversionAbility::OnDurationEffectRemoved(const FGameplayEffectRemovalInf
 	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 	ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
 
+	CofferManager->RemoveActiveCoffer(ClickedCoffer);
+
 	// Get all ACoffer instances
 	TArray<AActor*> TempCoffers;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACoffer::StaticClass(), TempCoffers);
-	CofferManager->ActiveCoffers.Remove(ClickedCoffer);
+	//CofferManager->ActiveCoffers.Remove(ClickedCoffer);
 	UE_LOG(LogTemp, Warning, TEXT("Removed Coffer: %s"), *ClickedCoffer->GetName());
 	//UE_LOG(LogTemp, Warning, TEXT("Active Coffers: %d"), PS->ActiveCoffers.Num());
 }

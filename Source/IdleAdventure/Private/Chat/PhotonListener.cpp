@@ -46,7 +46,7 @@ void PhotonListener::connectReturn(int errorCode, const ExitGames::Common::JStri
 {
     if (errorCode == ExitGames::Chat::ErrorCode::OK)
     {
-        //UE_LOG(LogTemp, Warning, TEXT("Successfully connected and authenticated with Photon Chat!"));
+        UE_LOG(LogTemp, Warning, TEXT("Successfully connected and authenticated with Photon Chat!"));
         //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Successfully connected and authenticated with Photon Chat!"));
 
         if (Owner)

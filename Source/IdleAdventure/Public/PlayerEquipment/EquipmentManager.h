@@ -4,7 +4,7 @@
 
 #include "BonusManager.h"
 #include "CoreMinimal.h"
-#include <DataRegistrySource_DataTable.h>
+#include "Engine/DataTable.h" 
 #include "UObject/NoExportTypes.h"
 #include "EquipmentManager.generated.h"
 
@@ -22,6 +22,9 @@ struct FEquipmentData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	USkeletalMesh* Mesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* Icon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	FName SocketName;
@@ -46,14 +49,17 @@ struct FEquipmentData : public FTableRowBase
 	FItemBonus ItemBonus;
 	
     FEquipmentData()
-        : LevelRequired(0.0f)
+        : Name(TEXT(""))
+		, LevelRequired(0.0f)
         , Mesh(nullptr)
+		, Icon(nullptr)
         , SocketName(NAME_None)
         , WisdomCost(0)
         , TemperanceCost(0)
         , JusticeCost(0)
         , CourageCost(0)
         , LegendaryCost(0)
+		, ItemBonus()
     {
     }
 };

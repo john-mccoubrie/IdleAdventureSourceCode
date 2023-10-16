@@ -20,6 +20,13 @@ struct FEssenceData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FText Description;
+
+    FEssenceData()
+        : Name(TEXT(""))  // Initialize the Name as an empty string
+        , Icon(nullptr)  // Initialize Icon as nullptr
+        , Description(FText::GetEmpty())  // Initialize Description as an empty FText
+    {
+    }
 };
 //UCLASS(Abstract, BlueprintType, Blueprintable, EditInlineNew, DefaultToInstanced)
 UCLASS()

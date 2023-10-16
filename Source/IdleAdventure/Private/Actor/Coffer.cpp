@@ -20,55 +20,66 @@ void ACoffer::CofferClicked(FHitResult CofferHit)
     APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (!PlayerController) return;
 
-    //if the coffer is already active, return
-    //if there are more than 3 coffers, return
-    //broadcast to the UI
-    //remove the coffer when its inactive in ondurationeffect removed in conversion ability
-    //check essence count for coffer potentially
-
-    //reference to the clicked coffer
-    ACoffer* ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
+    ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
 
     ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
-    
-    /*
-    if (CofferManager->CheckIfCofferIsActive(ClickedCoffer))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("This coffer is already active"));
-        return;
-    }
-    if (CofferManager->CheckNumOfActiveCoffers() >= 3.0f)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("There are 3 coffers already active"));
-        return;
-    }
-    */
-
-    //UE_LOG(LogTemp, Warning, TEXT("Conditions set, adding coffer and activating conversion ability"));
-    CofferManager->ActiveCoffers.Add(ClickedCoffer);
-    UE_LOG(LogTemp, Warning, TEXT("Added Coffer: %s"), *ClickedCoffer->GetName());
+    CofferManager->AddActiveCoffer(ClickedCoffer);
+  
     AIdlePlayerState* PS = PlayerController->GetPlayerState<AIdlePlayerState>();
     PS->ActivateAbility(UConversionAbility::StaticClass());  
 }
 
-// Starts the timer on the coffer, decrementing by 1 every second based on the conversion abilities gameplay effect duration
+/*
 void ACoffer::StartExperienceTimer(float Duration)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("StartExperienceTimer called"));
-    TotalExperienceTime = Duration;
-    RemainingExperienceTime = Duration;
-    GetWorld()->GetTimerManager().SetTimer(ExperienceTimerHandle, this, &ACoffer::DecrementExperienceTime, 1.0f, true);
-}
+    // If a timer is already active, simply add to the remaining time
+    if (GetWorld()->GetTimerManager().IsTimerActive(ExperienceTimerHandle))
+    {
+        RemainingExperienceTime += Duration;
+    }
+    else // If no timer is active, set the values fresh
+    {
+        UE_LOG(LogTemp, Error, TEXT("Duration: %f"), Duration);
+        TotalExperienceTime = Duration;
+        RemainingExperienceTime = Duration;
+        UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
+        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), TotalExperienceTime);
 
+        // Start a new timer
+        GetWorld()->GetTimerManager().SetTimer(ExperienceTimerHandle, this, &ACoffer::DecrementExperienceTime, 1.0f, true);
+    }
+}
+*/
+
+
+
+/*
 void ACoffer::DecrementExperienceTime()
 {
     //UE_LOG(LogTemp, Warning, TEXT("DecrementExperienceTimer called"));
+    ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
     RemainingExperienceTime -= 1.0f;
     //broadcasts the decreasing timer to the UI elements
-    OnCofferExpCount.Broadcast(RemainingExperienceTime / TotalExperienceTime);
+    //OnCofferExpCount.Broadcast(RemainingExperienceTime / TotalExperienceTime);
+    CofferManager->UpdateProgressBar(this, RemainingExperienceTime / TotalExperienceTime);
     if (RemainingExperienceTime <= 0.0f)
     {
+        //CofferManager->ProgressBarIndex--; this is handled in the manager now
+        //UE_LOG(LogTemp, Warning, TEXT("ProgressBarIndex equals: %i"), CofferManager->ProgressBarIndex);
+        //Remove ClickedCoffer from array?
+        CofferManager->RemoveActiveCoffer(ClickedCoffer);
         GetWorld()->GetTimerManager().ClearTimer(ExperienceTimerHandle);
     }
+}
+*/
+void ACoffer::AddExperienceTime(float AdditionalTime)
+{
+    //UE_LOG(LogTemp, Warning, TEXT("Additional Time Called in AddExp: %f"), AdditionalTime);
+    //UE_LOG(LogTemp, Warning, TEXT("Total Time Called in AddExp: %f"), TotalExperienceTime);
+    ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
+    //GetWorld()->GetTimerManager().ClearTimer(ExperienceTimerHandle);
+    //TotalExperienceTime = RemainingExperienceTime + AdditionalTime;
+    //RemainingExperienceTime += AdditionalTime;
+    //CofferManager->UpdateProgressBar(this, RemainingExperienceTime / TotalExperienceTime);
 }
 

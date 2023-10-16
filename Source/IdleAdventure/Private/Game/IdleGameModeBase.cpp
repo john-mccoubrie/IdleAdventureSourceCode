@@ -35,12 +35,15 @@ void AIdleGameModeBase::BeginPlay()
     LeaderboardManagerInstance = NewObject<ULeaderboardManager>();
     BeginUpdateLeaderboard();
     // Retrieve the game instance
-     PhotonChatManagerInstance = GetWorld()->SpawnActor<APhotonChatManager>();
-     IdleGameInstance = Cast<UIdleGameInstance>(GetGameInstance());
+     //PhotonChatManagerInstance = GetWorld()->SpawnActor<APhotonChatManager>();
+    PhotonChatManagerInstance = GetWorld()->SpawnActor<APhotonChatManager>();
+
+    IdleGameInstance = Cast<UIdleGameInstance>(GetGameInstance());
      if (IdleGameInstance)
      {
-         ExitGames::Common::JString TempLoginData = IdleGameInstance->StoredLoginData;
-         ConnectToChat(TempLoginData);
+         //ExitGames::Common::JString TempLoginData = IdleGameInstance->StoredLoginData;
+         //ConnectToChat(TempLoginData);
+         ConnectToChat(IdleGameInstance->StoredPlayFabUserID, IdleGameInstance->StoredPhotonToken);
      }
      
      //BonusManagerInstance = NewObject<UBonusManager>();
@@ -49,6 +52,15 @@ void AIdleGameModeBase::BeginPlay()
      StoicStoreManagerInstance = GetWorld()->SpawnActor<AStoicStoreManager>(AStoicStoreManager::StaticClass());
      //Spawn the Bonus manager instnace
      BonusManagerInstance = GetWorld()->SpawnActor<ABonusManager>(ABonusManager::StaticClass());
+     //Spawn the Game Chat Manager (Message of the day)
+     GameChatManagerInstance = GetWorld()->SpawnActor<AGameChatManager>(AGameChatManager::StaticClass());
+     
+     // Spawn the Sound manager instance
+     if (SoundManagerBlueprint)
+     {
+         SoundManagerInstance = GetWorld()->SpawnActor<ASoundManager>(SoundManagerBlueprint);
+     }
+
      // Spawn the PlayFabManager singleton instance
      APlayFabManager* PlayFabManagerInstance = GetWorld()->SpawnActor<APlayFabManager>(APlayFabManager::StaticClass());
      //Spawn the CofferManager singleton instance
@@ -56,12 +68,11 @@ void AIdleGameModeBase::BeginPlay()
      CofferManagerInstance->SetUpAllCoffers();
 }
 
-void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID)
+void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID, ExitGames::Common::JString& photonToken)
 {
-    //OnMapLoaded();
     if (PhotonChatManagerInstance)
     {
-        PhotonChatManagerInstance->ConnectToChat(userID);
+        PhotonChatManagerInstance->ConnectToChat(userID, photonToken);
         //UE_LOG(LogTemp, Warning, TEXT("Connect to chat called in IdleGameMode"));
         //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Connect to chat called in IdleGameMode"));
     }

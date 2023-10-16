@@ -62,11 +62,16 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     JusticeEssenceMultiplier = ItemBonus.JusticeEssenceMultiplier;
     CourageEssenceMultiplier = ItemBonus.CourageWisdomEssenceMultiplier;
 
-    UE_LOG(LogTemp, Warning, TEXT("Applied Essence Bonuses:"));
-    UE_LOG(LogTemp, Warning, TEXT("Wisdom Essence Multiplier: %f"), WisdomEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Temperance Essence Multiplier: %f"), TemperanceEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Justice Essence Multiplier: %f"), JusticeEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Courage Essence Multiplier: %f"), CourageEssenceMultiplier);
+    WisdomYieldMultiplier = ItemBonus.WisdomYieldMultiplier;
+    TemperanceYieldMultiplier = ItemBonus.TemperanceYieldMultiplier;
+    JusticeYieldMultiplier = ItemBonus.JusticeYieldMultiplier;
+    CourageYieldMultiplier = ItemBonus.CourageYieldMultiplier;
+
+    //UE_LOG(LogTemp, Warning, TEXT("Applied Essence Bonuses:"));
+    //UE_LOG(LogTemp, Warning, TEXT("Wisdom Essence Multiplier: %f"), WisdomEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Temperance Essence Multiplier: %f"), TemperanceEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Justice Essence Multiplier: %f"), JusticeEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Courage Essence Multiplier: %f"), CourageEssenceMultiplier);
 }
 
 void ABonusManager::RemoveEssenceBonus()
@@ -76,10 +81,15 @@ void ABonusManager::RemoveEssenceBonus()
     JusticeEssenceMultiplier = 1.0f;
     CourageEssenceMultiplier = 1.0f;
 
-    UE_LOG(LogTemp, Warning, TEXT("REMOVING Applied Essence Bonuses:"));
-    UE_LOG(LogTemp, Warning, TEXT("Wisdom Essence Multiplier: %f"), WisdomEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Temperance Essence Multiplier: %f"), TemperanceEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Justice Essence Multiplier: %f"), JusticeEssenceMultiplier);
-    UE_LOG(LogTemp, Warning, TEXT("Courage Essence Multiplier: %f"), CourageEssenceMultiplier);
+    WisdomYieldMultiplier = 1;
+    TemperanceYieldMultiplier = 1;
+    JusticeYieldMultiplier = 1;
+    CourageYieldMultiplier = 1;
+
+    //UE_LOG(LogTemp, Warning, TEXT("REMOVING Applied Essence Bonuses:"));
+    //UE_LOG(LogTemp, Warning, TEXT("Wisdom Essence Multiplier: %f"), WisdomEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Temperance Essence Multiplier: %f"), TemperanceEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Justice Essence Multiplier: %f"), JusticeEssenceMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("Courage Essence Multiplier: %f"), CourageEssenceMultiplier);
 }
 

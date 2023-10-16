@@ -223,24 +223,45 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
 {
     //UE_LOG(LogTemp, Warning, TEXT("OnSuccessFetchInventoryCalled"));
 
-    auto PlayerEquipmentDataString = Result.Data[TEXT("PlayerEquipmentInventory")].Value;
+    auto PlayerEquipmentDataString = Result.Data.FindRef(TEXT("PlayerEquipmentInventory")).Value;
+    if (PlayerEquipmentDataString.IsEmpty())
+    {
+        UE_LOG(LogTemp, Error, TEXT("PlayerEquipmentInventory is empty or not found."));
+    }
     //auto DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
     DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
 
     if (Character)
     {
         UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
-
+        UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/Character/Equipment/DT_PlayerEquipment.DT_PlayerEquipment")));
+        if (!EquipmentDataTable)
+        {
+            UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null."));
+            return;
+        }
         for (const FName& DataTableRowName : DataTableRowNames)
         {
-            UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/Character/Equipment/DT_Equipment")));
-            FEquipmentData* EquipmentData = EquipmentDataTable->FindRow<FEquipmentData>(DataTableRowName, TEXT("LookupEquipmentData"));
-            DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
-
-            if (EquipmentData)
+            if (DataTableRowName.IsNone())
             {
-                PlayerEquipment->AddEquipmentItem(*EquipmentData);
+                UE_LOG(LogTemp, Error, TEXT("Invalid DataTableRowName."));
+                return;
             }
+            if (EquipmentDataTable)
+            {
+                FEquipmentData* EquipmentData = EquipmentDataTable->FindRow<FEquipmentData>(DataTableRowName, TEXT("LookupEquipmentData"));
+                //DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
+
+                if (EquipmentData)
+                {
+                    PlayerEquipment->AddEquipmentItem(*EquipmentData);
+                }
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager"));
+            }
+            
         }
 
         //UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());

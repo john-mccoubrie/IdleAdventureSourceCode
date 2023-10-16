@@ -91,4 +91,68 @@ int32 ACofferManager::CheckNumOfActiveCoffers()
     return ActiveCoffers.Num();
 }
 
+void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
+{
+    if (ActiveCoffers.Num() < 3)
+    {
+        ActiveCoffers.Add(NewCoffer);
+        OnActiveCofferCountChanged.Broadcast(NewCoffer);
+    }
+}
+
+void ACofferManager::RemoveActiveCoffer(ACoffer* CofferToRemove)
+{
+    ActiveCoffers.Remove(CofferToRemove);
+    if (CofferProgressBarMapping.Contains(CofferToRemove))
+    {
+        CofferProgressBarMapping.Remove(CofferToRemove);
+    }
+    //OnActiveCofferCountChanged.Broadcast(ActiveCoffers.Num());
+}
+
+void ACofferManager::UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRatio)
+{
+    //if (CofferProgressBarMapping.Contains(UpdatedCoffer))
+    //{
+        //int32 ProgressBarID = CofferProgressBarMapping[UpdatedCoffer];
+    //OnCofferClicked.Clear();
+    UE_LOG(LogTemp, Error, TEXT("ProgressRatio: %f"), ProgressRatio);
+    //OnCofferClicked.Broadcast(UpdatedCoffer, ProgressRatio);
+    //}
+}
+
+void ACofferManager::StartExperienceTimer(float Duration)
+{
+    // If a timer is already active, simply add to the remaining time
+    if (GetWorld()->GetTimerManager().IsTimerActive(ExperienceTimerHandle))
+    {
+        RemainingExperienceTime += Duration;
+        //TotalExperienceTime += Duration;
+    }
+    else // If no timer is active, set the values fresh
+    {
+        UE_LOG(LogTemp, Error, TEXT("Duration: %f"), Duration);
+        TotalExperienceTime = 500;
+        RemainingExperienceTime = Duration;
+        UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
+        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), TotalExperienceTime);
+
+        // Start a new timer
+        GetWorld()->GetTimerManager().SetTimer(ExperienceTimerHandle, this, &ACofferManager::DecrementExperienceTime, 1.0f, true);
+    }
+}
+
+void ACofferManager::DecrementExperienceTime()
+{
+    RemainingExperienceTime -= 1.0f;
+    float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f); // Clamp the value
+    UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);
+    OnCofferClicked.Broadcast(progress);
+
+    if (RemainingExperienceTime <= 0.0f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(ExperienceTimerHandle);
+    }
+}
+
 

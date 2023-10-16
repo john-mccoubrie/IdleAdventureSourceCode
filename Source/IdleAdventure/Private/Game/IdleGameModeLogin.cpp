@@ -6,10 +6,9 @@
 
 void AIdleGameModeLogin::BeginPlay()
 {
-	
 }
 
 void AIdleGameModeLogin::LoadIdleForestLevel()
 {
-    UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
+    //UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
 }

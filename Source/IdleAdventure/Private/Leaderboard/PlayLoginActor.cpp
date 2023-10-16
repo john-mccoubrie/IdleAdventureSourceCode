@@ -36,7 +36,7 @@ void APlayLoginActor::BeginPlay()
         AIdleGameModeBase* GameMode = Cast<AIdleGameModeBase>(GetWorld()->GetAuthGameMode());
         if (GameMode)
         {
-            GameMode->ConnectToChat(PendingUserID);
+            //GameMode->ConnectToChat(PendingUserID);
             //UE_LOG(LogTemp, Warning, TEXT("Connected to chat called after level load"));
         }
         else
@@ -48,7 +48,7 @@ void APlayLoginActor::BeginPlay()
 
 void APlayLoginActor::OnSuccess(const PlayFab::ClientModels::FLoginResult& Result)
 {
-    UE_LOG(LogTemp, Log, TEXT("Congratulations, you made your first successful API call!"));
+    //UE_LOG(LogTemp, Log, TEXT("Congratulations, you made your first successful API call!"));
     LoadWoodcuttingExpFromPlayFab();
 }
 
@@ -99,7 +99,7 @@ void APlayLoginActor::OnGetLeaderboardSuccess(const PlayFab::ClientModels::FUpda
 
 void APlayLoginActor::OnGetLeaderboardError(const PlayFab::FPlayFabCppError& ErrorResult) const
 {
-    UE_LOG(LogTemp, Warning, TEXT("Failed!"));
+    //UE_LOG(LogTemp, Warning, TEXT("Failed!"));
 }
 
 void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()
@@ -229,18 +229,30 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
     // Convert std::wstring to ExitGames::Common::JString
     ExitGames::Common::JString jUserID = wstrUserID.c_str();
 
+    // Request Photon Authentication Token from PlayFab
+    PlayFab::ClientModels::FGetPhotonAuthenticationTokenRequest PhotonRequest;
+    PhotonRequest.PhotonApplicationId = L"abbf3a31-ccd8-4c23-8704-3ec991bc5d0b";
+    clientAPI->GetPhotonAuthenticationToken(PhotonRequest,
+        PlayFab::UPlayFabClientAPI::FGetPhotonAuthenticationTokenDelegate::CreateUObject(this, &APlayLoginActor::OnGetPhotonTokenSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnGetPhotonTokenError)
+    );
+
+
     bShouldConnectToChatAfterLevelLoad = true;
     PendingUserID = jUserID;
     IdleGameInstance = Cast<UIdleGameInstance>(GetGameInstance());
     if (IdleGameInstance)
     {
-        IdleGameInstance->StoredLoginData = jUserID;
-        UE_LOG(LogTemp, Warning, TEXT("Game instance stored data"));
+        IdleGameInstance->StoredPlayFabUserID = jUserID;
+        //IdleGameInstance->StoredPlayFabDisplayName = UpdatePlayerDisplayNameInstance->TestDisplayName;
+        //UE_LOG(LogTemp, Warning, TEXT("Stored PlayFabUserID in IdleGameInstance"));
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("IdleGameInstance is null"));
     }
+
+
 
     //check if the player has a display name set
     
@@ -253,6 +265,7 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
             [this]() {
                 if (UpdatePlayerDisplayNameInstance->HasDisplayName())
                 {
+                    //TestPhotonUserIDToPlayFabDisplayNameMap.Add(IdleGameInstance->StoredPlayFabUserID, UpdatePlayerDisplayNameInstance->TestDisplayName);
                     UGameplayStatics::OpenLevel(this, TEXT("Map1"));
                 }
                 else
@@ -290,7 +303,43 @@ void APlayLoginActor::HandleChatConnected()
 
 void APlayLoginActor::HandleUpdateDisplayNameSuccess()
 {
-    UGameplayStatics::OpenLevel(this, TEXT("IdleForest"));
+    UGameplayStatics::OpenLevel(this, TEXT("Map1"));
+}
+
+void APlayLoginActor::OnGetPhotonTokenSuccess(const PlayFab::ClientModels::FGetPhotonAuthenticationTokenResult& Result)
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnGetPhotonTokenSuccess"));
+    // Authenticate with Photon using the obtained token
+    // Note: You'll need to implement this method based on your Photon SDK usage (C++/Unreal SDK might have different API)
+    AuthenticateWithPhoton(Result.PhotonCustomAuthenticationToken);
+}
+
+void APlayLoginActor::OnGetPhotonTokenError(const PlayFab::FPlayFabCppError& ErrorResult)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to get Photon token: %s"), *ErrorResult.GenerateErrorReport());
+}
+
+void APlayLoginActor::AuthenticateWithPhoton(const FString& PhotonToken)
+{
+    ExitGames::Common::JString jPhotonToken(*PhotonToken);
+
+    IdleGameInstance = Cast<UIdleGameInstance>(GetGameInstance());
+    IdleGameInstance->StoredPhotonToken = jPhotonToken;
+    UE_LOG(LogTemp, Warning, TEXT("Photon Token stored in IdleGameInstance"));
+
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APhotonChatManager::StaticClass(), FoundActors);
+
+    // Check if we found any instances
+    if (FoundActors.Num() > 0)
+    {
+        // Cast the first found actor to APhotonChatManager and call the function
+        APhotonChatManager* PhotonChatManager = Cast<APhotonChatManager>(FoundActors[0]);
+        if (PhotonChatManager)
+        {
+            //PhotonChatManager->ConnectToChat(jPhotonToken);
+        }
+    }
 }
 
 

@@ -245,12 +245,14 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
+		bHasPerformedCofferClick = false;
 		TreeClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeClickEffectSystem, ClickResult.Location);
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("Coffer"))
 	{
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		if (bIsChoppingTree)
 		{
 			bIsChoppingTree = false;
@@ -550,9 +552,9 @@ void AIdlePlayerController::SpawnTreeCutEffect()
 	USkeletalMeshComponent* CharacterWeapon = ParticleCharacter->GetMesh();
 	StaffEndLocation = CharacterWeapon->GetSocketLocation(FName("StaffEndSocket"));
 	FVector TreeLocation = CurrentTree->GetActorLocation();
-	StaffEndLocation.Z -= ZMultiplierStaffEndLoc;
-	StaffEndLocation.X += XMultiplierStaffEndLoc;
-	StaffEndLocation.Y += YMultiplierStaffEndLoc;
+	//StaffEndLocation.Z -= ZMultiplierStaffEndLoc;
+	//StaffEndLocation.X += XMultiplierStaffEndLoc;
+	//StaffEndLocation.Y += YMultiplierStaffEndLoc;
 	TreeLocation.Z += ZMultiplierTreeLoc;
 	
 	

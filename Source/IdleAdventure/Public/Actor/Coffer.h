@@ -8,6 +8,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCofferExpCount, float, OnCofferPercent);
 
+
 class USphereComponent;
 class UAbilitySystemComponent;
 
@@ -29,16 +30,21 @@ public:
 	void CofferClicked(FHitResult CofferHit);
 	TMap<APlayerController*, int32> PlayersCofferUsage;
 
-	void StartExperienceTimer(float Duration);
+	//void StartExperienceTimer(float Duration);
 
-	FTimerHandle ExperienceTimerHandle;
-	float TotalExperienceTime;
-	float RemainingExperienceTime;
+	//FTimerHandle ExperienceTimerHandle;
+	//float TotalExperienceTime;
+	//float RemainingExperienceTime;
 
-	void DecrementExperienceTime();
+	//void DecrementExperienceTime();
+	void AddExperienceTime(float AdditionalTime);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnCofferExpCount OnCofferExpCount;
+
+	ACoffer* ClickedCoffer;
+
+	
 
 private:
 	TArray<APlayerController*> PlayersWhoUsedCoffer;

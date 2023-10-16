@@ -134,7 +134,7 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
 		if (MyPlayLoginActor)
 		{
-			MyPlayLoginActor->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
+			//MyPlayLoginActor->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
 		}
 	}
 
@@ -184,8 +184,8 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		relativeExp = totalExp - expForCurrentLevel;
 		progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 
-		UEquipmentManager& EquipmentManager = UEquipmentManager::Get();
-		EquipmentManager.UnlockEquipment(IdleAttributeSet->GetWoodcuttingLevel());
+		//UEquipmentManager& EquipmentManager = UEquipmentManager::Get();
+		//EquipmentManager.UnlockEquipment(IdleAttributeSet->GetWoodcuttingLevel());
 		//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
 
 		// Broadcast level up delegate

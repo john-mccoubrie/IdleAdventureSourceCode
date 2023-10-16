@@ -70,7 +70,7 @@ public:
     UFUNCTION()
     void HandleUpdateDisplayNameSuccess();
 
-    APhotonChatManager* PhotonChatManagerInstance;
+    //APhotonChatManager* PhotonChatManagerInstance;
     AIdleGameModeBase* IdleGameMode;
     UIdleGameInstance* IdleGameInstance;
 
@@ -82,5 +82,10 @@ public:
     UUpdatePlayerDisplayName* UpdatePlayerDisplayNameInstance;
 
     PlayFabClientPtr clientAPI = nullptr;
+
+    //Photon Chat Authentication
+    void OnGetPhotonTokenSuccess(const PlayFab::ClientModels::FGetPhotonAuthenticationTokenResult& Result);
+    void OnGetPhotonTokenError(const PlayFab::FPlayFabCppError& ErrorResult);
+    void AuthenticateWithPhoton(const FString& PhotonToken);
 
 };

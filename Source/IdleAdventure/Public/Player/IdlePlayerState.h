@@ -37,6 +37,14 @@ struct FGameplayAbilityInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Ability Info")
 		int32 InputID;
+
+		FGameplayAbilityInfo()
+			: Level(0)
+			, InputID(0)
+
+		{
+
+		}
 };
 
 

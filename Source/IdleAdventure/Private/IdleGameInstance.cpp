@@ -8,7 +8,7 @@
 UIdleGameInstance::UIdleGameInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	//PhotonChatManager = ObjectInitializer.CreateDefaultSubobject<APhotonChatManager>(this, TEXT("PhotonChatManager"));
+
 }
 
 void UIdleGameInstance::Init()
@@ -24,6 +24,8 @@ void UIdleGameInstance::Init()
         // Set the location and rotation for the spawn
         FVector Location = FVector::ZeroVector;
         FRotator Rotation = FRotator::ZeroRotator;
+
+        
 
         // Spawn the actor
         /*

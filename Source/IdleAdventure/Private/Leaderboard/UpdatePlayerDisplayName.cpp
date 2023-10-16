@@ -1,6 +1,7 @@
 
 #include "Leaderboard/UpdatePlayerDisplayName.h"
 #include "PlayFab.h"
+#include "IdleGameInstance.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <Kismet/GameplayStatics.h>
@@ -55,6 +56,29 @@ void UUpdatePlayerDisplayName::OnUpdateDisplayNameError(const PlayFab::FPlayFabC
 void UUpdatePlayerDisplayName::OnGetPlayerProfileSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result)
 {
     bHasDisplayName = !Result.PlayerProfile.Get()->DisplayName.IsEmpty();
+    TestDisplayName = Result.PlayerProfile.Get()->DisplayName;
+    if (bHasDisplayName)
+    {
+        // If you have a display name, set it as the Photon nickname.
+        TArray<AActor*> FoundActors;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), APhotonChatManager::StaticClass(), FoundActors);
+
+        // Check if we found any instances
+        if (FoundActors.Num() > 0)
+        {
+            // Cast the first found actor to APhotonChatManager and call the function
+            APhotonChatManager* PhotonChatManager = Cast<APhotonChatManager>(FoundActors[0]);
+            if (PhotonChatManager)
+            {
+                //PhotonChatManager->ConnectToChat(jPhotonToken);
+                PhotonChatManager->SetPhotonNickNameToPlayFabDisplayName(Result.PlayerProfile.Get()->DisplayName);
+            }
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No DisplayName Set!"));
+    }
 }
 
 void UUpdatePlayerDisplayName::OnGetPlayerProfileError(const PlayFab::FPlayFabCppError& Error)

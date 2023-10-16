@@ -27,6 +27,18 @@ struct FItemBonus
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CourageWisdomEssenceMultiplier = 1.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int WisdomYieldMultiplier = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int TemperanceYieldMultiplier = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int JusticeYieldMultiplier = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int CourageYieldMultiplier = 1;
+
 };
 
 
@@ -51,6 +63,11 @@ public:
     float TemperanceEssenceMultiplier;
     float JusticeEssenceMultiplier;
     float CourageEssenceMultiplier;
+
+    int WisdomYieldMultiplier;
+    int TemperanceYieldMultiplier;
+    int JusticeYieldMultiplier;
+    int CourageYieldMultiplier;
 
 private:
     static ABonusManager* BonusManagerSingletonInstance;

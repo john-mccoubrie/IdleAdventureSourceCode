@@ -5,15 +5,17 @@
 #include "Core/PlayFabClientAPI.h"
 #include "Chat-cpp/inc/Listener.h"
 #include <Chat/PhotonListener.h>
+#include "EngineUtils.h"
 
 
-
+//APhotonChatManager* APhotonChatManager::PhotonChatManagerSingletonInstance = nullptr;
 
 APhotonChatManager::APhotonChatManager()
 {
     PrimaryActorTick.bCanEverTick = true;
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    UE_LOG(LogTemp, Warning, TEXT("PhotonChatManager created"));
 }
 
 APhotonChatManager::~APhotonChatManager()
@@ -25,25 +27,27 @@ APhotonChatManager::~APhotonChatManager()
 void APhotonChatManager::InitializeUserID(FString initUserID)
 {
     UserID = ExitGames::Common::JString(*initUserID); // convert Fstring to Jstring
-    ConnectToChat(UserID);
+    //ConnectToChat(UserID);
 }
 
-void APhotonChatManager::ConnectToChat(ExitGames::Common::JString& userID)
+void APhotonChatManager::ConnectToChat(ExitGames::Common::JString& userID, ExitGames::Common::JString& photonToken)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("ConnectToChat Called from PhotonChatManager"));
-
+    UE_LOG(LogTemp, Warning, TEXT("PhotonChatManager connecting to chat..."));
     chatListener = new PhotonListener();
     chatListener->Owner = this;
-    GetDisplayName();
+    //GetDisplayName();
+
     static const ExitGames::Common::JString appID = L"abbf3a31-ccd8-4c23-8704-3ec991bc5d0b";
     static const ExitGames::Common::JString appVersion = L"1.0";
     chatClient = new ExitGames::Chat::Client(*chatListener, appID, appVersion);
+
     if (chatClient)
     {
         chatClient->setRegion(L"US");
-        chatClient->connect(ExitGames::Chat::AuthenticationValues().setUserID(userID));
-        //chatClient->service();
-        //UE_LOG(LogTemp, Warning, TEXT("chatClient succesful in ConnectToChat"));
+        ExitGames::Common::JString params = "username=" + userID + "&token=" + photonToken;
+        ExitGames::Chat::AuthenticationValues playFabAuthenticationValues;
+        playFabAuthenticationValues.setType(ExitGames::Chat::CustomAuthenticationType::CUSTOM).setParameters(params);
+        chatClient->connect(playFabAuthenticationValues);
     }
     else
     {
@@ -64,12 +68,47 @@ void APhotonChatManager::Tick(float DeltaTime)
     }
     
 }
+//Singleton Setup
+/*
+
+void APhotonChatManager::BeginPlay()
+{
+    Super::BeginPlay();
+    if (!PhotonChatManagerSingletonInstance)
+    {
+        PhotonChatManagerSingletonInstance = this;
+    }
+}
 
 void APhotonChatManager::BeginDestroy()
 {
     Super::BeginDestroy();
-    //UE_LOG(LogTemp, Warning, TEXT("PhotonChatManager is being destroyed!"));
+    ResetInstance();
 }
+
+APhotonChatManager* APhotonChatManager::GetInstance(UWorld* World)
+{
+    if (!PhotonChatManagerSingletonInstance)
+    {
+        for (TActorIterator<APhotonChatManager> It(World); It; ++It)
+        {
+            PhotonChatManagerSingletonInstance = *It;
+            break;
+        }
+        if (!PhotonChatManagerSingletonInstance)
+        {
+            PhotonChatManagerSingletonInstance = World->SpawnActor<APhotonChatManager>();
+        }
+    }
+    return PhotonChatManagerSingletonInstance;
+}
+
+void APhotonChatManager::ResetInstance()
+{
+    PhotonChatManagerSingletonInstance = nullptr;
+}
+
+*/
 
 void APhotonChatManager::SubscribeToChannel()
 {
@@ -88,6 +127,20 @@ void APhotonChatManager::SubscribeToChannel()
     }
 }
 
+void APhotonChatManager::SetPhotonNickNameToPlayFabDisplayName(const FString& ChatDisplayName)
+{
+    if (chatClient)
+    {
+        ExitGames::Common::JString jNewNickname(*ChatDisplayName);
+        //chatClient->Set
+        //chatClient->getLocalUser().setName(jNewNickname);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("chatClient is null ptr in SetPhotonNickname"));
+    }
+}
+
 void APhotonChatManager::SendPublicMessage(FString const &message)
 {
     if (chatClient)
@@ -95,41 +148,63 @@ void APhotonChatManager::SendPublicMessage(FString const &message)
         
         ExitGames::Common::JString jMessage(*message); // Convert FString to JString
         chatClient->opPublishMessage(L"Global", jMessage);
-
+        //GetDisplayName();
     }
 }
 
 void APhotonChatManager::ReceivePublicMessage(const FString& sender, const FString& message)
 {
-    //OnPublicMessageReceived.Broadcast(sender, message);
-    //GetDisplayName();
-    OnPublicMessageReceived.Broadcast(DisplayName, message);
-    //UE_LOG(LogTemp, Warning, TEXT("Messaged received in global channel"));
-}
+    
+    FString displayName;
 
-void APhotonChatManager::GetDisplayName()
-{
-    PlayFab::ClientModels::FGetLeaderboardAroundPlayerRequest Request;
-    Request.StatisticName = "EXP";  // This is the name of the leaderboard you want to retrieve.
-    Request.MaxResultsCount = 1;    // Set to 1 to only retrieve the data for the current player.
-
-    clientAPI->GetLeaderboardAroundPlayer(Request,
-        PlayFab::UPlayFabClientAPI::FGetLeaderboardAroundPlayerDelegate::CreateUObject(this, &APhotonChatManager::OnGetDisplayNameSuccess),
-        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APhotonChatManager::OnGetDisplayNameError)
-    );
-}
-
-void APhotonChatManager::OnGetDisplayNameSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result)
-{
-    if (Result.Leaderboard.Num() > 0)
+    // Check if the sender's display name is in our map.
+    if (PhotonUserIDToPlayFabDisplayNameMap.Contains(sender))
     {
-        const auto& PlayerData = Result.Leaderboard[0];
-        DisplayName = PlayerData.DisplayName;
-        //UE_LOG(LogTemp, Warning, TEXT("DisplayName: %s"), *DisplayName);
+        displayName = *PhotonUserIDToPlayFabDisplayNameMap.Find(sender);
+        OnPublicMessageReceived.Broadcast(displayName, message);
+        UE_LOG(LogTemp, Warning, TEXT("sender's display name is in our map"));
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("No leaderboard data received."));
+        // If not, fetch the display name from PlayFab.
+        GetDisplayName(sender, message);
+        UE_LOG(LogTemp, Warning, TEXT("sender's display name NOT in map...setting now"));
+    }
+}
+
+void APhotonChatManager::GetDisplayName(const FString& sender, const FString& message)
+{
+    PlayFab::ClientModels::FGetPlayerProfileRequest Request;
+    Request.PlayFabId = sender; // Assume sender is the PlayFabID
+
+    clientAPI->GetPlayerProfile(Request,
+        PlayFab::UPlayFabClientAPI::FGetPlayerProfileDelegate::CreateUObject(this, &APhotonChatManager::OnGetDisplayNameSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APhotonChatManager::OnGetDisplayNameError)
+    );
+
+    // Store sender and message for use in the success callback.
+    PendingMessageSender = sender;
+    PendingMessageContent = message;
+    UE_LOG(LogTemp, Warning, TEXT("Storing pending sender key: %s"), *PendingMessageSender);
+}
+
+void APhotonChatManager::OnGetDisplayNameSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result)
+{
+    if (Result.PlayerProfile)
+    {
+        DisplayName = Result.PlayerProfile->DisplayName;
+
+        // Store the display name in our map.
+        PhotonUserIDToPlayFabDisplayNameMap.Add(PendingMessageSender, DisplayName);
+        UE_LOG(LogTemp, Warning, TEXT("Key added to map: %s"), *PendingMessageSender);
+        UE_LOG(LogTemp, Warning, TEXT("DisplayName added to map: %s"), *PendingMessageSender);
+
+        // Broadcast the message now that we have the display name.
+        OnPublicMessageReceived.Broadcast(DisplayName, PendingMessageContent);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No player profile data received."));
     }
 }
 

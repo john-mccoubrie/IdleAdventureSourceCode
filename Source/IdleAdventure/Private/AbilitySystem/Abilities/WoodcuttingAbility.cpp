@@ -31,7 +31,6 @@ void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
     //UE_LOG(LogTemp, Warning, TEXT("Activate ability wca"));
     OnTreeLifespanChanged.AddDynamic(this, &UWoodcuttingAbility::SetDuration);
-    bIsTreeBeingChopped = false;
     if (bAbilityIsActive)
     {
         UE_LOG(LogTemp, Warning, TEXT("WoodcuttingAbility is already active."));
@@ -61,8 +60,6 @@ void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
     //int32 delegateCount = AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnTarget.GetAllocatedSize();
     //UE_LOG(LogTemp, Warning, TEXT("Number of Delegate Bindings: %d"), delegateCount);
 
-    bIsTreeBeingChopped = true;
-
     PC->CurrentWoodcuttingAbilityInstance = this;
 }
 
@@ -84,6 +81,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     Character->StopAnimMontage(AnimMontage);
 
     UWorld* World = GetWorld();
+
     AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(World);
     IdleActorManager->SelectNewLegendaryTree();
     //EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -112,7 +110,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
 void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle)
 {
     //UE_LOG(LogTemp, Warning, TEXT("Periodic delegate called on target"));
-    //Unbind the delegate once the tree is chopped down
+
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
@@ -149,31 +147,37 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         UItem* NewLog = NewObject<UItem>();
         float RarityRoll = FMath::RandRange(0.f, 100.f);
 
+        //Default Essence to add multiper
+        int EssenceToAdd = 1;
         if (RarityRoll <= 50.f)  // 50% chance for Wisdom
         {
             NewLog->EssenceRarity = "Wisdom";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->WisdomEssenceMultiplier));
+            EssenceToAdd *= BonusManager->WisdomYieldMultiplier;
         }
         else if (RarityRoll <= 75.f)  // 25% chance for Temperance
         {
             NewLog->EssenceRarity = "Temperance";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->TemperanceEssenceMultiplier));
+            EssenceToAdd *= BonusManager->TemperanceYieldMultiplier;
         }
         else if (RarityRoll <= 95.f)  // 20% chance for Justice
         {
             NewLog->EssenceRarity = "Justice";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->JusticeEssenceMultiplier));
+            EssenceToAdd *= BonusManager->JusticeYieldMultiplier;
         }
         else  // 5% chance for Courage
         {
             NewLog->EssenceRarity = "Courage";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->CourageEssenceMultiplier));
+            EssenceToAdd *= BonusManager->CourageYieldMultiplier;
         }
 
         AddExperience(ExperienceGain);
 
         // Load the data table
-        UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Script/Engine.DataTable'/Game/Blueprints/UI/Inventory/DT_EssenceType.DT_EssenceType'"));
+        UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/UI/Inventory/DT_EssenceTypes.DT_EssenceTypes"));
         if (EssenceDataTable)
         {
             // Get the log data based on the essence rarity
@@ -186,9 +190,11 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 NewLog->ItemDescription = EssenceData->Description;
             }
         }
-
         AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
-        Character->CharacterInventory->AddItem(NewLog);
+        for (int i = 0; i < EssenceToAdd; ++i)
+        {
+            Character->CharacterInventory->AddItem(NewLog);
+        }
     }
     //else
     //{

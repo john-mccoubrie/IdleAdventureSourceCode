@@ -44,12 +44,14 @@ class IDLEADVENTURE_API APhotonChatManager : public AActor
 
 public:
 	void InitializeUserID(FString initUserID);
-	void ConnectToChat(ExitGames::Common::JString& userID);
+	void ConnectToChat(ExitGames::Common::JString& userID, ExitGames::Common::JString& photonToken);
 	virtual void Tick(float DeltaTime) override;
 	//virtual void BeginPlay() override;
-	// Called when the actor is being destroyed
-	virtual void BeginDestroy() override;
+	//virtual void BeginDestroy() override;
+	//static APhotonChatManager* GetInstance(UWorld* World);
+	//void ResetInstance();
 	void SubscribeToChannel();
+	void SetPhotonNickNameToPlayFabDisplayName(const FString& ChatDisplayName);
 
 	UFUNCTION(BlueprintCallable, Category = "Photon")
 	void SendPublicMessage(FString const &message);
@@ -64,9 +66,9 @@ public:
 	FOnChatConnected OnChatConnected;
 
 	//UFUNCTION(BlueprintCallable, Category = "Photon")
-	void GetDisplayName();
+	void GetDisplayName(const FString& sender, const FString& message);
 	//UFUNCTION(BlueprintCallable, Category = "Photon")
-	void OnGetDisplayNameSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result);
+	void OnGetDisplayNameSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result);
 	//UFUNCTION(BlueprintCallable, Category = "Photon")
 	void OnGetDisplayNameError(const PlayFab::FPlayFabCppError& ErrorResult) const;
 
@@ -78,5 +80,9 @@ private:
 	ExitGames::Chat::Client* chatClient;
 	FTimerHandle ServiceChatClientTimerHandle;
 	PlayFabClientPtr clientAPI = nullptr;
+	TMap<FString, FString> PhotonUserIDToPlayFabDisplayNameMap;
+	FString PendingMessageSender;
+	FString PendingMessageContent;
+	//static APhotonChatManager* PhotonChatManagerSingletonInstance;
 	
 };

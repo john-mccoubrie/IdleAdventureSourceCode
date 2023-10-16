@@ -20,12 +20,15 @@ public:
 
 	UIdleGameInstance(const FObjectInitializer& ObjectInitializer);
 	virtual void Init() override;
+	//virtual void BeginPlay();
 	//virtual void BeginDestroy() override;
 
 	void ConnectToChat(ExitGames::Common::JString& userID);
 
 	//UPROPERTY(BlueprintReadOnly, Category = "Photon")
-	ExitGames::Common::JString StoredLoginData;
+	ExitGames::Common::JString StoredPlayFabUserID;
+	ExitGames::Common::JString StoredPhotonToken;
+	ExitGames::Common::JString StoredPlayFabDisplayName;
 
 	/*
 	UPROPERTY(BlueprintReadOnly, Category = "Photon")

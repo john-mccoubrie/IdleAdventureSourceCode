@@ -12,7 +12,8 @@ TArray<FEquipmentData> UEquipmentManager::GetUnlockedEquipment() const
 
 UEquipmentManager::UEquipmentManager()
 {
-    static ConstructorHelpers::FObjectFinder<UDataTable> DataTable(TEXT("/Game/Blueprints/Character/Equipment/DT_Equipment"));
+    //previously was "DT_Equipment" I might have messed up the AllEquipmentDataTable vs Unlocked data, etc.
+    static ConstructorHelpers::FObjectFinder<UDataTable> DataTable(TEXT("/Game/Blueprints/Character/Equipment/DT_PlayerEquipment.DT_PlayerEquipment"));
     if (DataTable.Succeeded())
     {
         AllEquipmentDataTable = DataTable.Object;

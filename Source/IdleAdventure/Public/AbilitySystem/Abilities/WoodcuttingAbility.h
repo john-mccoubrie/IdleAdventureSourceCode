@@ -55,8 +55,6 @@ public:
 
 	FTimerHandle StackingTimerHandle;
 
-	bool bIsTreeBeingChopped = false;
-
 	void StopCutDownTimer();
 	FTimerHandle StopWoodcuttingTimerHandle;
 	FActiveGameplayEffectHandle ActiveEffectHandle;

@@ -40,6 +40,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "EventDispatchers")
 	FOnUpdateDisplayNameSuccess OnUpdateDisplayNameSuccessDelegate;
 
+	UIdleGameInstance* IdleGameInstance;
+
+	FString TestDisplayName;
+
 private:
 	PlayFabClientPtr clientAPI = nullptr;
 };

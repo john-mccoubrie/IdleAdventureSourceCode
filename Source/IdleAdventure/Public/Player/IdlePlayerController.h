@@ -125,8 +125,11 @@ public:
 	UNiagaraSystem* MouseClickEffectSystem;
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* TreeClickEffectSystem;
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* CofferClickEffectSystem;
 	UNiagaraComponent* MouseClickEffect;
 	UNiagaraComponent* TreeClickEffect;
+	UNiagaraComponent* CofferClickEffect;
 
 
 
