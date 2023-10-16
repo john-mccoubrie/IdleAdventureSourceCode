@@ -9,6 +9,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NavigationSystem.h"
+#include "EngineUtils.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SplineComponent.h"
@@ -258,7 +259,17 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			bIsChoppingTree = false;
 			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
-			ResetTreeTimer(CurrentTree);
+			//ResetTreeTimer(CurrentTree);
+			AIdleActorManager* TreeManager = nullptr;
+			for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
+			{
+				TreeManager = *It;
+				break; // Exit the loop once the Tree Manager is found
+			}
+			if (TreeManager)
+			{
+				TreeManager->ResetTreeTimer(CurrentTree);
+			}
 			ResetWoodcuttingAbilityTimer();
 			//OnCofferClicked(ClickResult, PlayerPawn);
 
@@ -289,7 +300,17 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			bIsChoppingTree = false;
 			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
-			ResetTreeTimer(CurrentTree);
+			//ResetTreeTimer(CurrentTree);
+			AIdleActorManager* TreeManager = nullptr;
+			for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
+			{
+				TreeManager = *It;
+				break; // Exit the loop once the Tree Manager is found
+			}
+			if (TreeManager)
+			{
+				TreeManager->ResetTreeTimer(CurrentTree);
+			}
 			ResetWoodcuttingAbilityTimer();
 
 			if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)

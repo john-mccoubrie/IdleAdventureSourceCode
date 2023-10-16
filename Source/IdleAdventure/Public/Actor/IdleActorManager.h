@@ -9,6 +9,7 @@ struct FTreeRespawnInfo
 {
 	FVector Location;
 	FRotator Rotation;
+	AIdleEffectActor* TreeActor;
 };
 
 UCLASS()
@@ -23,13 +24,15 @@ public:
 	void ResetInstance();
 	// Function to spawn a tree at a specific location
 	void SpawnTree(FVector Location, FRotator Rotation);
+	void StartTreeCountdown(AIdleEffectActor* Tree, float TreeLifeSpan);
+	void OnCountdownFinished(AIdleEffectActor* Tree);
+	void ResetTreeTimer(AIdleEffectActor* Tree);
+	void RespawnTree(AIdleEffectActor* Tree);
+	FTimerHandle CountdownTimerHandle;
 
 	// Function to handle tree cutting
 	void CutTree(AIdleEffectActor* Tree);
 
-	// Function to respawn a tree after it's been cut down
-	UFUNCTION()
-	void RespawnTree(FName TreeName); // Adjusted the parameter type
 
 	//Legendary Tree
 	void GetLegendaryTree();
@@ -42,7 +45,6 @@ public:
 
 	FVector RespawnLocation;
 	FRotator RespawnRotation;
-	AIdleEffectActor* TreeToRespawn;
 	UPROPERTY(EditAnywhere, Category = "Actors")
 	TArray<AIdleEffectActor*> CutTrees;
 

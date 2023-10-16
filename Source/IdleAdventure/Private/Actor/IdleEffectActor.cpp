@@ -64,7 +64,15 @@ void AIdleEffectActor::SetTreeLifespan(AIdleEffectActor* Tree)
 					GameplayEffectInstance->DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(TotalDuration));
 					
 					//Set the tree life span (Actor call)
-					Tree->SetLifeSpan(TotalDuration);
+					//Tree->SetLifeSpan(TotalDuration);
+					AIdleActorManager* TreeManager = nullptr;
+
+					for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
+					{
+						TreeManager = *It;
+						break; // Exit the loop once the Tree Manager is found
+					}
+					//TreeManager->StartTreeCountdown(Tree, TotalDuration);
 				}
 				
 				else

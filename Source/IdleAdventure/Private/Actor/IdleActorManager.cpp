@@ -25,24 +25,11 @@ void AIdleActorManager::ResetInstance()
     Instance = nullptr;
 }
 
-void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
+void AIdleActorManager::StartTreeCountdown(AIdleEffectActor* Tree, float TreeLifeSpan)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("CutTree called for tree: %s"), *Tree->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("StartTreeCountdownTimer: %f"), TreeLifeSpan);
 
-    if (TreeChoppingStates.Contains(Tree->GetFName()) && TreeChoppingStates[Tree->GetFName()])
-    {
-        //UE_LOG(LogTemp, Warning, TEXT("Tree is already being chopped! in ActorManager"));
-        return;
-    }
-
-    TreeChoppingStates.Add(Tree->GetFName(), true);
-    
-    FTreeRespawnInfo RespawnInfo;
-    RespawnInfo.Location = Tree->GetActorLocation();
-    RespawnInfo.Rotation = Tree->GetActorRotation();
-
-    TreeRespawnMap.Add(Tree->GetFName(), RespawnInfo);
-
+    // Check if a timer already exists for the tree
     if (TreeTimers.Contains(Tree->GetFName()))
     {
         FTimerHandle& ExistingTimerHandle = TreeTimers[Tree->GetFName()];
@@ -53,49 +40,133 @@ void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
         }
     }
 
-    FTimerHandle LocalTreeTimerHandle;
-    float TimeUntilRespawn = Tree->TotalDuration + 10;
-
-    GetWorld()->GetTimerManager().SetTimer(LocalTreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::RespawnTree, Tree->GetFName()), TimeUntilRespawn, false);
-    float TimeRemainingBeforeReset = GetWorld()->GetTimerManager().GetTimerRemaining(LocalTreeTimerHandle);
-    //UE_LOG(LogTemp, Warning, TEXT("ActorManagerTimer: %f"), TimeRemainingBeforeReset);
-    //UE_LOG(LogTemp, Warning, TEXT("set timer called for %s"), Tree->GetFName().ToString());
-
-    TreeTimers.Add(Tree->GetFName(), LocalTreeTimerHandle);
+    // Set up a new timer to call OnCountdownFinished after the specified duration
+    FTimerHandle NewTimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(NewTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TreeLifeSpan, false);
+    TreeTimers.Add(Tree->GetFName(), NewTimerHandle);
 }
 
-void AIdleActorManager::RespawnTree(FName TreeName)
+void AIdleActorManager::OnCountdownFinished(AIdleEffectActor* Tree)
 {
-    if (TreeRespawnMap.Contains(TreeName))
+    UE_LOG(LogTemp, Warning, TEXT("OnCountdownFinished"));
+    if (Tree)
     {
-        FTreeRespawnInfo RespawnInfo = TreeRespawnMap[TreeName];
+        // Hide the tree
+        Tree->SetActorHiddenInGame(true);
+        // Disable the tree's collision
+        Tree->SetActorEnableCollision(false);
+        //Disable input for the tree
+        Tree->DisableInput(nullptr);
 
 
-        APlayerController* PC = GetWorld()->GetFirstPlayerController();
-        AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-        // Spawn the tree without specifying a name
-        AIdleEffectActor* NewTree = GetWorld()->SpawnActor<AIdleEffectActor>(PS->TreeBlueprintClass, RespawnInfo.Location, RespawnInfo.Rotation);
-        //GetWorld()->SpawnActor<AIdleEffectActor>(TreeName->GetClass(), RespawnInfo.Location, RespawnInfo.Rotation);
-        //UE_LOG(LogTemp, Warning, TEXT("Tree respawn called"));
+        UE_LOG(LogTemp, Warning, TEXT("Hide Tree: %s"), *Tree->GetName());
 
-        if (NewTree)
+        
+        float RespawnDelay = 5.0f;
+        FTimerHandle NewTimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(NewTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::RespawnTree, Tree), RespawnDelay, false);
+        TreeTimers.Add(Tree->GetFName(), NewTimerHandle);
+    }
+}
+
+void AIdleActorManager::ResetTreeTimer(AIdleEffectActor* Tree)
+{
+    if (!Tree) return; // Ensure the tree is valid
+
+    FName TreeName = Tree->GetFName();
+
+    if (TreeTimers.Contains(TreeName))
+    {
+        FTimerHandle& ExistingTimerHandle = TreeTimers[TreeName];
+        if (ExistingTimerHandle.IsValid())
         {
-            // Increment the counter for each new tree spawned
-            TreeCounterName++;
-
-            // Create a unique name for the new tree using the counter
-            FString UniqueName = FString::Printf(TEXT("NewTree_%d"), TreeCounterName);
-            NewTree->Rename(*UniqueName);
-
-            TreeRespawnMap.Remove(TreeName);
-            //UE_LOG(LogTemp, Warning, TEXT("Tree removed: %s"), *TreeName.ToString());
-            TreeChoppingStates.Add(*UniqueName, false);
-            //UE_LOG(LogTemp, Warning, TEXT("Tree added: %s"), *UniqueName);
+            GetWorld()->GetTimerManager().ClearTimer(ExistingTimerHandle);
+            ExistingTimerHandle.Invalidate();
+            UE_LOG(LogTemp, Warning, TEXT("Timer invalidated for tree: %s"), *TreeName.ToString());
         }
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("Does not contain Tree: %s"), *TreeName.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("No timer found for tree: %s"), *TreeName.ToString());
+    }
+}
+
+void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
+{
+    UE_LOG(LogTemp, Warning, TEXT("CutTree called for tree and added to respawninfo: %s"), *Tree->GetName());
+
+    //if (TreeChoppingStates.Contains(Tree->GetFName()) && TreeChoppingStates[Tree->GetFName()])
+    //{
+        //UE_LOG(LogTemp, Warning, TEXT("Tree is already being chopped! in ActorManager"));
+        //return;
+    //}
+
+    TreeChoppingStates.Add(Tree->GetFName(), true);
+    
+    FTreeRespawnInfo RespawnInfo;
+    RespawnInfo.Location = Tree->GetActorLocation();
+    RespawnInfo.Rotation = Tree->GetActorRotation();
+    RespawnInfo.TreeActor = Tree;
+
+    TreeRespawnMap.Add(Tree->GetFName(), RespawnInfo);
+
+    if (TreeTimers.Contains(Tree->GetFName()))
+    {
+        FTimerHandle& ExistingTimerHandle = TreeTimers[Tree->GetFName()];
+        if (ExistingTimerHandle.IsValid())
+        {
+            GetWorld()->GetTimerManager().ClearTimer(ExistingTimerHandle);
+            ExistingTimerHandle.Invalidate();
+            UE_LOG(LogTemp, Warning, TEXT("ExistingTimerHandle Invalidated in respawn tree"));
+        }
+    }
+
+    FTimerHandle LocalTreeTimerHandle;
+    float TimeUntilRespawn = Tree->TotalDuration;
+
+    GetWorld()->GetTimerManager().SetTimer(LocalTreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TimeUntilRespawn, false);
+    UE_LOG(LogTemp, Warning, TEXT("TimeUntilRespawn: %f"), TimeUntilRespawn);
+
+    TreeTimers.Add(Tree->GetFName(), LocalTreeTimerHandle);
+}
+
+void AIdleActorManager::RespawnTree(AIdleEffectActor* Tree)
+{
+    if (Tree && TreeRespawnMap.Contains(Tree->GetFName()))
+    {
+        FTreeRespawnInfo RespawnInfo = TreeRespawnMap[Tree->GetFName()];
+
+        // Unhide the tree
+        RespawnInfo.TreeActor->SetActorHiddenInGame(false);
+        UE_LOG(LogTemp, Warning, TEXT("Respawned Tree: %s"), *Tree->GetName());
+
+        // Enable the tree's collision
+        RespawnInfo.TreeActor->SetActorEnableCollision(true);
+
+        // Enable input for the tree
+        RespawnInfo.TreeActor->EnableInput(nullptr); // Pass nullptr if the tree doesn't have a specific player controller
+
+        // Update tree state
+        TreeChoppingStates.Add(Tree->GetFName(), false);
+
+        // Remove the tree's respawn info since it has respawned
+        TreeRespawnMap.Remove(Tree->GetFName());
+
+        // Clear the timer associated with this tree
+        if (TreeTimers.Contains(Tree->GetFName()))
+        {
+            FTimerHandle& TimerHandle = TreeTimers[Tree->GetFName()];
+            if (TimerHandle.IsValid())
+            {
+                GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+                TimerHandle.Invalidate();
+            }
+            TreeTimers.Remove(Tree->GetFName());
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to respawn tree: %s"), Tree ? *Tree->GetName() : TEXT("nullptr"));
     }
 }
 
