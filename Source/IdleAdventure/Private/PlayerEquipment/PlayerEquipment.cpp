@@ -22,10 +22,49 @@ UPlayerEquipment::UPlayerEquipment()
 
 void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Entering EquipItem"));
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     AActor* Owner = GetOwner();
+
+    USkeletalMeshComponent* CurrentlyEquippedMesh = nullptr;
+    FString CurrentlyEquippedItemName = "";
+
+    if (EquippedItemMeshes.Contains(ItemData.SocketName.ToString()))
+    {
+        CurrentlyEquippedMesh = EquippedItemMeshes[ItemData.SocketName.ToString()];
+        CurrentlyEquippedItemName = EquippedItemNames[ItemData.SocketName.ToString()];
+    }
+
+    if (CurrentlyEquippedMesh)
+    {
+        if (CurrentlyEquippedItemName != ItemData.Name)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("The socket name is the same"));
+
+            FEquipmentData* OldItemDataPtr = GetEquipmentDataByName(CurrentlyEquippedItemName);
+            if (!OldItemDataPtr)
+            {
+                UE_LOG(LogTemp, Error, TEXT("Failed to fetch old item data for item: %s"), *CurrentlyEquippedItemName);
+                return;
+            }
+
+            FEquipmentData OldItemData = *OldItemDataPtr;
+            UnequipCurrentItem(OldItemData, CurrentlyEquippedMesh);
+
+            ApplyEquipmentEffects(ItemData);
+        }
+        else
+        {
+            return;
+        }
+    }
+    else
+    {
+        ApplyEquipmentEffects(ItemData);
+        UE_LOG(LogTemp, Warning, TEXT("Equipped item is in a different socket than the item you're equipping"));
+    }
 
     USkeletalMeshComponent* CharacterMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
 
@@ -39,7 +78,6 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
         for (auto& Row : UEquipmentManager::Get().AllEquipmentDataTable->GetRowMap())
         {
             FEquipmentData* EquipmentData = (FEquipmentData*)Row.Value;
-            //UE_LOG(LogTemp, Warning, TEXT("Player Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
             if (EquipmentData->Name == ItemData.Name)
             {
                 bItemExistsInTable = true;
@@ -60,20 +98,17 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
         UE_LOG(LogTemp, Warning, TEXT("Player level too low, cannot equip"));
         return;
     }
-    
-    
-     // Create a new Skeletal Mesh Component for the item
-     USkeletalMeshComponent* ItemMesh = NewObject<USkeletalMeshComponent>(Owner);
 
-     ItemMesh->SetSkeletalMesh(ItemData.Mesh);
-     ItemMesh->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ItemData.SocketName);
-     ItemMesh->RegisterComponent();  // Register the component with the game engine
+    USkeletalMeshComponent* ItemMesh = NewObject<USkeletalMeshComponent>(Owner);
+    ItemMesh->SetSkeletalMesh(ItemData.Mesh);
+    ItemMesh->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, ItemData.SocketName);
+    ItemMesh->RegisterComponent();
 
-     // Store a reference to the currently equipped item mesh
-     EquippedItemMesh = ItemMesh;
+    EquippedItemMeshes.Add(ItemData.SocketName.ToString(), ItemMesh);
+    EquippedItemMesh = ItemMesh;
+    EquippedItemNames.Add(ItemData.SocketName.ToString(), ItemData.Name);
 
-     // Apply any effects associated with the item
-     ApplyEquipmentEffects(ItemData);       
+    UE_LOG(LogTemp, Warning, TEXT("Exiting EquipItem"));
 }
 
 
@@ -101,29 +136,50 @@ bool UPlayerEquipment::CanEquipItem(const FEquipmentData& ItemData)
 }
 
 
-void UPlayerEquipment::UnequipCurrentItem()
+void UPlayerEquipment::UnequipCurrentItem(const FEquipmentData& ItemData, USkeletalMeshComponent* MeshToDestroy)
 {
-	if (EquippedItemMesh)
-	{
-		EquippedItemMesh->DestroyComponent();
-		EquippedItemMesh = nullptr;
-
-		// Remove any effects associated with the previously equipped item
-		RemoveEquipmentEffects();
-	}
+    UE_LOG(LogTemp, Warning, TEXT("Entering UnequipItem for Item: %s"), *ItemData.Name);
+    if (MeshToDestroy)
+    {
+        MeshToDestroy->DestroyComponent();
+        RemoveEquipmentEffects(ItemData);
+        UE_LOG(LogTemp, Warning, TEXT("Exiting UnequipItem for Item: %s"), *ItemData.Name);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MeshToDestroy is null ptr"));
+    }
 }
 
 void UPlayerEquipment::ApplyEquipmentEffects(const FEquipmentData& ItemData)
 {
+    UE_LOG(LogTemp, Error, TEXT("Applying Equipment Effects for Item: %s"), *ItemData.Name);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
-    BonusManager->ApplyExperienceBonus(ItemData.ItemBonus.ExperienceMultiplier);
     BonusManager->ApplyEssenceBonus(ItemData.ItemBonus);
 }
 
-void UPlayerEquipment::RemoveEquipmentEffects()
+void UPlayerEquipment::RemoveEquipmentEffects(const FEquipmentData& ItemData)
 {
+    UE_LOG(LogTemp, Error, TEXT("Removing Equipment Effects for Item: %s"), *ItemData.Name);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
-    BonusManager->RemoveEssenceBonus();
+    BonusManager->RemoveEssenceBonus(ItemData.ItemBonus);
+}
+
+FEquipmentData* UPlayerEquipment::GetEquipmentDataByName(const FString& ItemName)
+{
+    if (UEquipmentManager::Get().AllEquipmentDataTable)
+    {
+        static const FString ContextString(TEXT("General"));
+        for (auto& Row : UEquipmentManager::Get().AllEquipmentDataTable->GetRowMap())
+        {
+            FEquipmentData* EquipmentData = (FEquipmentData*)Row.Value;
+            if (EquipmentData->Name == ItemName)
+            {
+                return EquipmentData;
+            }
+        }
+    }
+    return nullptr;
 }
 
 

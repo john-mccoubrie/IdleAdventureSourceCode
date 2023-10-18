@@ -10,6 +10,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayerEquipment/BonusManager.h>
+#include <Chat/GameChatManager.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -50,6 +51,17 @@ void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
     PC->SpawnTreeCutEffect();
 
 
+
+    if (PC->CurrentTree->Tags.Contains("Legendary"))
+    {
+        bIsChoppingLegendaryTree = true;
+        GetLegendaryEssence();
+    }
+    else
+    {
+        bIsChoppingLegendaryTree = false;
+    }
+
     //FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
     //const FGameplayEffectSpecHandle EffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(PC->WoodcuttingGameplayEffect, 1.f, EffectContextHandle);
     //ActiveEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
@@ -79,11 +91,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     PS->AbilitySystemComponent->RemoveActiveGameplayEffect(PC->WoodcuttingEffectHandle);
     UAnimMontage* AnimMontage = Character->WoodcutMontage;
     Character->StopAnimMontage(AnimMontage);
-
-    UWorld* World = GetWorld();
-
-    AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(World);
-    IdleActorManager->SelectNewLegendaryTree();
+    
     //EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
@@ -100,16 +108,30 @@ void UWoodcuttingAbility::SetDuration(float TotalDuration)
 void UWoodcuttingAbility::AddEssenceToInventory()
 {
     AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
-    Character->EssenceCount++;
-    //UE_LOG(LogTemp, Warning, TEXT("Essence Added to inventory"));
-    //UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
-    UItem* Essence = NewObject<UItem>();
-    Character->CharacterInventory->AddItem(Essence); 
+    if (Character->EssenceCount <= 24)
+    {
+        Character->EssenceCount++;
+        //UE_LOG(LogTemp, Warning, TEXT("Essence Added to inventory"));
+        //UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->EssenceCount);
+        UItem* Essence = NewObject<UItem>();
+        Character->CharacterInventory->AddItem(Essence);
+    }
+    else
+    {
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI("Inventory is full! Add your essence to the nearest coffer.");
+    }
+    
 }
 
 void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle)
 {
     //UE_LOG(LogTemp, Warning, TEXT("Periodic delegate called on target"));
+
+    if (bIsChoppingLegendaryTree)
+    {
+        return; // Exit the function if chopping a legendary tree
+    }
 
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
@@ -212,6 +234,49 @@ void UWoodcuttingAbility::AddExperience(float Amount)
     //UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
     //UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
+}
+
+void UWoodcuttingAbility::GetLegendaryEssence()
+{
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+
+    UItem* NewLog = NewObject<UItem>();
+    int EssenceToAdd = 1;
+
+    NewLog->EssenceRarity = "Legendary";
+    ExperienceGain = static_cast<float>(FMath::RoundToInt(1000.0f * BonusManager->LegendaryEssenceMultiplier));
+    EssenceToAdd *= BonusManager->LegendaryYieldMultiplier;
+
+    AddExperience(ExperienceGain);
+
+    // Load the data table
+    UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/UI/Inventory/DT_EssenceTypes.DT_EssenceTypes"));
+    if (EssenceDataTable)
+    {
+        // Get the log data based on the essence rarity
+        FEssenceData* EssenceData = EssenceDataTable->FindRow<FEssenceData>(NewLog->EssenceRarity, TEXT(""));
+        if (EssenceData)
+        {
+            // Set the log properties from the data table
+            NewLog->Name = EssenceData->Name;
+            NewLog->Icon = EssenceData->Icon;
+            NewLog->ItemDescription = EssenceData->Description;
+        }
+    }
+    AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+    for (int i = 0; i < EssenceToAdd; ++i)
+    {
+        Character->CharacterInventory->AddItem(NewLog);
+    }
+
+    UWorld* World = GetWorld();
+    AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(World);
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToUI("You receive a legendary essence!");
+    PC->CurrentTree->Tags.Remove("Legendary");
+    IdleActorManager->SelectNewLegendaryTree();
 }
 
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const

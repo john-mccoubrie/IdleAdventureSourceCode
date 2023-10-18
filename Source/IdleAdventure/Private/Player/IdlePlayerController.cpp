@@ -23,6 +23,7 @@
 #include <Actor/Coffer.h>
 #include "AIController.h"
 #include <Kismet/KismetMathLibrary.h>
+#include <Chat/GameChatManager.h>
 
 AIdlePlayerController::AIdlePlayerController()
 {
@@ -279,7 +280,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 				APlayerController* PC = GetWorld()->GetFirstPlayerController();
 				AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 				PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
-				UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
+				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
 			//}
 			//else
 			//{
@@ -319,7 +320,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 				APlayerController* PC = GetWorld()->GetFirstPlayerController();
 				AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 				PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
-				UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
+				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
 			}
 			else
 			{
@@ -522,6 +523,8 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
+		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+		GameChatManager->PostNotificationToUI("Inventory is full! Add your essence to the nearest coffer.");
 	}
 }
 

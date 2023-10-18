@@ -37,6 +37,7 @@ public:
 	//Legendary Tree
 	void GetLegendaryTree();
 	void SelectNewLegendaryTree();
+	void DeactivateCurrentLegendaryTree();
 	TArray<AIdleEffectActor*> AllIdleEffectActors;
 	AIdleEffectActor* LegendaryIdleEffectActor;
 	

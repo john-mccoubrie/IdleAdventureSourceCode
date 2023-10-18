@@ -26,7 +26,7 @@ public:
 	bool CanEquipItem(const FEquipmentData& ItemData);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void UnequipCurrentItem();
+	void UnequipCurrentItem(const FEquipmentData& ItemData, USkeletalMeshComponent* MeshToDestroy);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void EquipDefaultItem(const FEquipmentData& ItemData);
@@ -35,7 +35,9 @@ public:
 	void ApplyEquipmentEffects(const FEquipmentData& ItemData);
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void RemoveEquipmentEffects();
+	void RemoveEquipmentEffects(const FEquipmentData& ItemData);
+
+	FEquipmentData* GetEquipmentDataByName(const FString& ItemName);
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
 	USkeletalMeshComponent* EquippedItemMesh = nullptr;
@@ -53,6 +55,13 @@ public:
 	// Method to add an equipment item to the inventory
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddEquipmentItem(const FEquipmentData& ItemData);
+	FString EquippedItemName;
+
+	//FEquipmentData OldItemData;
+	//FEquipmentData* OldItemDataPtr;
+
+	TMap<FString, USkeletalMeshComponent*> EquippedItemMeshes;
+	TMap<FString, FString> EquippedItemNames;
 
 protected:
 	// Called when the game starts

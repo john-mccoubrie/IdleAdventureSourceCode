@@ -9,7 +9,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActiveCofferCountChanged, ACoffer*, ClickedCoffer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCofferClicked, float, ProgressRatio);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCofferClicked, float, ProgressRatio, float, TotalTime, float, RemainingTime);
 
 UCLASS()
 class IDLEADVENTURE_API ACofferManager : public AActor

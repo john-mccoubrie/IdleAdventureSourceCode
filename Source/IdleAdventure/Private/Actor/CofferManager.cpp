@@ -127,15 +127,17 @@ void ACofferManager::StartExperienceTimer(float Duration)
     if (GetWorld()->GetTimerManager().IsTimerActive(ExperienceTimerHandle))
     {
         RemainingExperienceTime += Duration;
-        //TotalExperienceTime += Duration;
+        TotalExperienceTime = RemainingExperienceTime;
+        UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
+        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
     }
     else // If no timer is active, set the values fresh
     {
         UE_LOG(LogTemp, Error, TEXT("Duration: %f"), Duration);
-        TotalExperienceTime = 500;
+        TotalExperienceTime = Duration;
         RemainingExperienceTime = Duration;
         UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
-        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), TotalExperienceTime);
+        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);  // Note: This should log RemainingExperienceTime, not TotalExperienceTime
 
         // Start a new timer
         GetWorld()->GetTimerManager().SetTimer(ExperienceTimerHandle, this, &ACofferManager::DecrementExperienceTime, 1.0f, true);
@@ -145,9 +147,9 @@ void ACofferManager::StartExperienceTimer(float Duration)
 void ACofferManager::DecrementExperienceTime()
 {
     RemainingExperienceTime -= 1.0f;
-    float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f); // Clamp the value
+    float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f);
     UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);
-    OnCofferClicked.Broadcast(progress);
+    OnCofferClicked.Broadcast(progress, TotalExperienceTime, RemainingExperienceTime);
 
     if (RemainingExperienceTime <= 0.0f)
     {

@@ -12,6 +12,7 @@
 #include <Kismet/GameplayStatics.h>
 #include <AbilitySystem/Abilities/ConversionAbilityRemoved.h>
 #include <Actor/CofferManager.h>
+#include <Chat/GameChatManager.h>
 
 UConversionAbility::UConversionAbility()
 {
@@ -75,7 +76,7 @@ void UConversionAbility::CovertEssenceToEXP()
 	// Built in delegate that calls "OnDurationEffectRemoved" When the conversion gameplay effect's duration automatically removes it
 	FOnActiveGameplayEffectRemoved_Info* WaitEffectRemovedDelegate = PS->AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(NewEffectHandle);
 	WaitEffectRemovedDelegate->AddUObject(this, &UConversionAbility::OnDurationEffectRemoved, CofferDuration, ClickedCoffer);
-				
+	
 	//reset the essence count for tracking inventory
 	UItem* Essence = NewObject<UItem>();
 	Character->CharacterInventory->RemoveItem(Essence);

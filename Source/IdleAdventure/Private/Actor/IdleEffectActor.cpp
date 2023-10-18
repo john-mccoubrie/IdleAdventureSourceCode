@@ -116,11 +116,24 @@ void AIdleEffectActor::ActivateLegendaryEffect()
 	{
 		LegendaryEffectParticle->SetAsset(LegendaryEffect);
 		LegendaryEffectParticle->Activate();
-		UE_LOG(LogTemp, Warning, TEXT("Activate legendary tree effect in IdleEffectActor"));
+		//UE_LOG(LogTemp, Warning, TEXT("Activate legendary tree effect in IdleEffectActor"));
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Legendary effect is null in IdleEffectActor"));
+	}
+}
+
+void AIdleEffectActor::DeactivateLegendaryEffect()
+{
+	if (LegendaryEffectParticle)
+	{
+		LegendaryEffectParticle->Deactivate();
+		//UE_LOG(LogTemp, Warning, TEXT("Deactivate legendary tree effect in IdleEffectActor"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Legendary effect particle is null in IdleEffectActor"));
 	}
 }
 

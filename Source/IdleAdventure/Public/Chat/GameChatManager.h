@@ -10,6 +10,7 @@
 #include "GameChatManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPostGameChat, FString, Message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPostGameNotification, FString, Message);
 
 UCLASS()
 class IDLEADVENTURE_API AGameChatManager : public AActor
@@ -26,9 +27,15 @@ public:
 	void OnGetMessageOfTheDaySuccess(const PlayFab::ClientModels::FGetTitleDataResult& Result);
 	void OnGetMessageOfTheDayFailure(const PlayFab::FPlayFabCppError& ErrorResult);
 	void PostMessageToUI(FString Message);
+	void PostNotificationToUI(FString Message);
 
+	//Message from playfab
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
 	FOnPostGameChat OnPostGameChat;
+
+	//In game warnings
+	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
+	FOnPostGameChat FOnPostGameNotification;
 
 private:
 	static AGameChatManager* GameChatManagerSingletonInstance;

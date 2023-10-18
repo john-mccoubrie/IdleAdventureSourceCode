@@ -59,6 +59,7 @@ public:
 		
 
 		void ActivateLegendaryEffect();
+		void DeactivateLegendaryEffect();
 		//Legendary Tree
 		// Niagara system component for the legendary effect
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")

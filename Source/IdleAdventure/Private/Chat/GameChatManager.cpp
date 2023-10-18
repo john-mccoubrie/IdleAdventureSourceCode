@@ -88,7 +88,12 @@ void AGameChatManager::OnGetMessageOfTheDayFailure(const PlayFab::FPlayFabCppErr
 void AGameChatManager::PostMessageToUI(FString Message)
 {
     OnPostGameChat.Broadcast(Message);
-    UE_LOG(LogTemp, Warning, TEXT("MOTD broadcasted to UI"));
+    //UE_LOG(LogTemp, Warning, TEXT("MOTD broadcasted to UI"));
+}
+
+void AGameChatManager::PostNotificationToUI(FString Message)
+{
+    FOnPostGameNotification.Broadcast(Message);
 }
 
 

@@ -3,6 +3,7 @@
 #include "NiagaraComponent.h"
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
+#include <Chat/GameChatManager.h>
 
 AIdleActorManager* AIdleActorManager::Instance = nullptr;
 
@@ -117,7 +118,7 @@ void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
         {
             GetWorld()->GetTimerManager().ClearTimer(ExistingTimerHandle);
             ExistingTimerHandle.Invalidate();
-            UE_LOG(LogTemp, Warning, TEXT("ExistingTimerHandle Invalidated in respawn tree"));
+            //UE_LOG(LogTemp, Warning, TEXT("ExistingTimerHandle Invalidated in respawn tree"));
         }
     }
 
@@ -125,7 +126,7 @@ void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
     float TimeUntilRespawn = Tree->TotalDuration;
 
     GetWorld()->GetTimerManager().SetTimer(LocalTreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TimeUntilRespawn, false);
-    UE_LOG(LogTemp, Warning, TEXT("TimeUntilRespawn: %f"), TimeUntilRespawn);
+    //UE_LOG(LogTemp, Warning, TEXT("TimeUntilRespawn: %f"), TimeUntilRespawn);
 
     TreeTimers.Add(Tree->GetFName(), LocalTreeTimerHandle);
 }
@@ -138,7 +139,7 @@ void AIdleActorManager::RespawnTree(AIdleEffectActor* Tree)
 
         // Unhide the tree
         RespawnInfo.TreeActor->SetActorHiddenInGame(false);
-        UE_LOG(LogTemp, Warning, TEXT("Respawned Tree: %s"), *Tree->GetName());
+        //UE_LOG(LogTemp, Warning, TEXT("Respawned Tree: %s"), *Tree->GetName());
 
         // Enable the tree's collision
         RespawnInfo.TreeActor->SetActorEnableCollision(true);
@@ -185,9 +186,12 @@ void AIdleActorManager::GetLegendaryTree()
     {
         int32 RandomIndex = FMath::RandRange(0, AllIdleEffectActors.Num() - 1);
         LegendaryIdleEffectActor = AllIdleEffectActors[RandomIndex];
+        LegendaryIdleEffectActor->Tags.Add("Legendary");
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI("A Legendary Tree spawned in the world...");
 
         // Log the name of the LegendaryIdleEffectActor to the output log
-        UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
+        //UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
 
         // Check if the actor is valid before trying to call a method on it
         if (LegendaryIdleEffectActor)
@@ -209,20 +213,24 @@ void AIdleActorManager::GetLegendaryTree()
 
 void AIdleActorManager::SelectNewLegendaryTree()
 {
+    DeactivateCurrentLegendaryTree();
     // Ensure there is at least one IdleEffectActor in the level
     if (AllIdleEffectActors.Num() > 0)
     {
         int32 RandomIndex = FMath::RandRange(0, AllIdleEffectActors.Num() - 1);
         LegendaryIdleEffectActor = AllIdleEffectActors[RandomIndex];
+        LegendaryIdleEffectActor->Tags.Add("Legendary");
 
         // Log the name of the LegendaryIdleEffectActor to the output log
-        UE_LOG(LogTemp, Warning, TEXT("New LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
+        //UE_LOG(LogTemp, Warning, TEXT("New LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
 
         // Check if the actor is valid before trying to call a method on it
         if (LegendaryIdleEffectActor)
         {
             // Activate the legendary effect particle system
             LegendaryIdleEffectActor->ActivateLegendaryEffect();
+            AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+            GameChatManager->PostNotificationToUI("A Legendary Tree spawned in the world...");
         }
         else
         {
@@ -236,6 +244,14 @@ void AIdleActorManager::SelectNewLegendaryTree()
     }
 }
 
+void AIdleActorManager::DeactivateCurrentLegendaryTree()
+{
+    if (LegendaryIdleEffectActor)
+    {
+        LegendaryIdleEffectActor->DeactivateLegendaryEffect();
+        LegendaryIdleEffectActor->Tags.Remove("Legendary");
+    }
+}
 
 AIdleActorManager* AIdleActorManager::GetInstance(UWorld* World)
 {

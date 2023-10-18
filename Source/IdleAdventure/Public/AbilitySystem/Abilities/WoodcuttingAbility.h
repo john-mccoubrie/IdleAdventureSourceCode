@@ -39,6 +39,8 @@ public:
 
 	void CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle);
 	void AddExperience(float Amount);
+	void GetLegendaryEssence();
+	bool bIsChoppingLegendaryTree;
 
 	void GainExperience(const FGameplayAbilityActorInfo* ActorInfo);
 	void OnGameplayEffectRemoved(const FActiveGameplayEffect& Effect);
