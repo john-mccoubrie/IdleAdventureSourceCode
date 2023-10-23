@@ -31,7 +31,7 @@ public:
 
     virtual void Tick(float DeltaSeconds) override;
 
-    void UpdateLeaderboard(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel);
+    void SavePlayerStatsToPlayFab(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel);
 
     void OnGetLeaderboardSuccess(const PlayFab::ClientModels::FUpdatePlayerStatisticsResult& result) const;
     void OnGetLeaderboardError(const PlayFab::FPlayFabCppError& ErrorResult) const;

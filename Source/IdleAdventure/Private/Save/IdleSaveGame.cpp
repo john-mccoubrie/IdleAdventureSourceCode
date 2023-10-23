@@ -10,7 +10,7 @@ void UIdleSaveGame::SaveGame(int32 WoodcuttingExp, int32 PlayerLevel)
 	SaveGameInstance->WoodcuttingExp = WoodcuttingExp;
 	SaveGameInstance->PlayerLevel = PlayerLevel; 
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, "WoodcuttingSaveSlot", 0);
-	//UE_LOG(LogTemp, Warning, TEXT("Saved WoodcuttingExp: %d, PlayerLevel: %d"), WoodcuttingExp, PlayerLevel);
+	UE_LOG(LogTemp, Warning, TEXT("Saved WoodcuttingExp: %d, PlayerLevel: %d"), WoodcuttingExp, PlayerLevel);
 }
 
 void UIdleSaveGame::LoadGame(int32& WoodcuttingExp, int32& PlayerLevel) 

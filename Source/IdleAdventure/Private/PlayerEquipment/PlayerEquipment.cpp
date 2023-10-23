@@ -65,8 +65,12 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
         ApplyEquipmentEffects(ItemData);
         UE_LOG(LogTemp, Warning, TEXT("Equipped item is in a different socket than the item you're equipping"));
     }
-
     USkeletalMeshComponent* CharacterMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
+    if (!Owner || !CharacterMesh)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Owner or CharacterMesh is not initialized!"));
+        return;
+    }
 
     // Create variables to hold whether the item exists and if the player level is high enough
     bool bItemExistsInTable = false;

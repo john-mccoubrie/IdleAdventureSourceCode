@@ -134,7 +134,8 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
 		if (MyPlayLoginActor)
 		{
-			//MyPlayLoginActor->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
+			//this updates the player exp values on playfab -- need to change the way this flows
+			MyPlayLoginActor->SavePlayerStatsToPlayFab(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
 		}
 	}
 
@@ -180,7 +181,10 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 		// Recalculate relativeExp and progress
 		expForCurrentLevel = expForNextLevel;
-		expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(2, IdleAttributeSet->GetWoodcuttingLevel() - 1);
+
+		const float ExpGrowthRate = 1.15f;
+
+		expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(1.15f, IdleAttributeSet->GetWoodcuttingLevel() - 1);
 		relativeExp = totalExp - expForCurrentLevel;
 		progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 

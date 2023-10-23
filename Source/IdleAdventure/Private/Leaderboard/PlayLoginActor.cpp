@@ -64,9 +64,10 @@ void APlayLoginActor::Tick(float DeltaTime)
     
 }
 
-void APlayLoginActor::UpdateLeaderboard(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel)
+//Called from playerstate "Checkforlevelup" need to change to a completely new save system
+void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Update Leaderboard called"));
+    UE_LOG(LogTemp, Warning, TEXT("Update Leaderboard called"));
     
     //PlayFabClientPtr ClientPtr = IPlayFabModuleInterface::Get().GetClientAPI();
 
@@ -94,12 +95,12 @@ void APlayLoginActor::UpdateLeaderboard(const FString& PlayerName, int32 Woodcut
 
 void APlayLoginActor::OnGetLeaderboardSuccess(const PlayFab::ClientModels::FUpdatePlayerStatisticsResult& result) const
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Update Successful!"));
+    UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Successful!"));
 }
 
 void APlayLoginActor::OnGetLeaderboardError(const PlayFab::FPlayFabCppError& ErrorResult) const
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Failed!"));
+    UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Failed!"));
 }
 
 void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()
@@ -118,6 +119,7 @@ void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()
 
 void APlayLoginActor::OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerStatisticsResult& Result) const
 {
+    UE_LOG(LogTemp, Warning, TEXT("Loaded Woodcutting Exp from playfab"));
     int32 LoadedExp = 0;
     int32 LoadedPlayerLevel = 0;
 
@@ -141,7 +143,7 @@ void APlayLoginActor::OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerSt
 
 void APlayLoginActor::OnLoadExpError(const PlayFab::FPlayFabCppError& ErrorResult) const
 {
-    UE_LOG(LogTemp, Warning, TEXT("Failed to load WoodcuttingExp from PlayFab!"));
+    UE_LOG(LogTemp, Error, TEXT("Failed to load WoodcuttingExp from PlayFab!"));
 }
 
 void APlayLoginActor::GetPlayerLeaderboardPosition()

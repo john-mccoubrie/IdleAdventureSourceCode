@@ -73,11 +73,13 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     TemperanceEssenceMultiplier *= ItemBonus.TemperanceEssenceMultiplier;
     JusticeEssenceMultiplier *= ItemBonus.JusticeEssenceMultiplier;
     CourageEssenceMultiplier *= ItemBonus.CourageWisdomEssenceMultiplier;
+    LegendaryEssenceMultiplier *= ItemBonus.LegendaryEssenceMultiplier;
 
     WisdomYieldMultiplier += (ItemBonus.WisdomYieldMultiplier);
     TemperanceYieldMultiplier += (ItemBonus.TemperanceYieldMultiplier);
     JusticeYieldMultiplier += (ItemBonus.JusticeYieldMultiplier);
     CourageYieldMultiplier += (ItemBonus.CourageYieldMultiplier);
+    LegendaryYieldMultiplier += (ItemBonus.LegendaryYieldMultiplier);
 
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);
@@ -121,11 +123,13 @@ void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
     TemperanceEssenceMultiplier /= ItemBonus.TemperanceEssenceMultiplier;
     JusticeEssenceMultiplier /= ItemBonus.JusticeEssenceMultiplier;
     CourageEssenceMultiplier /= ItemBonus.CourageWisdomEssenceMultiplier;
+    LegendaryEssenceMultiplier /= ItemBonus.LegendaryEssenceMultiplier;
 
     WisdomYieldMultiplier -= (ItemBonus.WisdomYieldMultiplier);
     TemperanceYieldMultiplier -= (ItemBonus.TemperanceYieldMultiplier);
     JusticeYieldMultiplier -= (ItemBonus.JusticeYieldMultiplier);
     CourageYieldMultiplier -= (ItemBonus.CourageYieldMultiplier);
+    LegendaryYieldMultiplier -= (ItemBonus.LegendaryYieldMultiplier);
 
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);

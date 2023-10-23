@@ -16,9 +16,6 @@ struct FItemBonus
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FString Name;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float ExperienceMultiplier = 1.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
