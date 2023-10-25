@@ -24,6 +24,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		USphereComponent* SphereComponent;
 
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+		UStaticMeshComponent* CofferMeshComponent;
+
 	UPROPERTY()
 		UAbilitySystemComponent* AbilitySystemComponent;
 

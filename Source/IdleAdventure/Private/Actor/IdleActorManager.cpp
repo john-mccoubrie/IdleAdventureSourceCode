@@ -4,6 +4,7 @@
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 #include <Chat/GameChatManager.h>
+#include <Test/TestManager.h>
 
 AIdleActorManager* AIdleActorManager::Instance = nullptr;
 
@@ -49,7 +50,7 @@ void AIdleActorManager::StartTreeCountdown(AIdleEffectActor* Tree, float TreeLif
 
 void AIdleActorManager::OnCountdownFinished(AIdleEffectActor* Tree)
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnCountdownFinished"));
+    //UE_LOG(LogTemp, Warning, TEXT("OnCountdownFinished"));
     if (Tree)
     {
         // Hide the tree
@@ -60,10 +61,10 @@ void AIdleActorManager::OnCountdownFinished(AIdleEffectActor* Tree)
         Tree->DisableInput(nullptr);
 
 
-        UE_LOG(LogTemp, Warning, TEXT("Hide Tree: %s"), *Tree->GetName());
+        //UE_LOG(LogTemp, Warning, TEXT("Hide Tree: %s"), *Tree->GetName());
 
-        
-        float RespawnDelay = 5.0f;
+        ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+        float RespawnDelay = TestManager->CurrentSettings.TreeRespawnDelay;
         FTimerHandle NewTimerHandle;
         GetWorld()->GetTimerManager().SetTimer(NewTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::RespawnTree, Tree), RespawnDelay, false);
         TreeTimers.Add(Tree->GetFName(), NewTimerHandle);
@@ -94,7 +95,7 @@ void AIdleActorManager::ResetTreeTimer(AIdleEffectActor* Tree)
 
 void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
 {
-    UE_LOG(LogTemp, Warning, TEXT("CutTree called for tree and added to respawninfo: %s"), *Tree->GetName());
+    //UE_LOG(LogTemp, Warning, TEXT("CutTree called for tree and added to respawninfo: %s"), *Tree->GetName());
 
     //if (TreeChoppingStates.Contains(Tree->GetFName()) && TreeChoppingStates[Tree->GetFName()])
     //{
@@ -124,6 +125,7 @@ void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
 
     FTimerHandle LocalTreeTimerHandle;
     float TimeUntilRespawn = Tree->TotalDuration;
+    UE_LOG(LogTemp, Warning, TEXT("Total Duration: %f"), Tree->TotalDuration);
 
     GetWorld()->GetTimerManager().SetTimer(LocalTreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TimeUntilRespawn, false);
     //UE_LOG(LogTemp, Warning, TEXT("TimeUntilRespawn: %f"), TimeUntilRespawn);

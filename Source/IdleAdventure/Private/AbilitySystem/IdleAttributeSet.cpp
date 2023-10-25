@@ -5,9 +5,9 @@ UIdleAttributeSet::UIdleAttributeSet()
 {
     
 	InitWoodcutExp(0.f);
-	InitMaxWoodcutExp(100.f);
+	InitMaxWoodcutExp(500.f);
 	InitWoodcuttingLevel(1.f);
-    InitXPToNextLevel(100.f);
+    InitXPToNextLevel(500.f);
     
     //WoodcutExp.SetCurrentValue(0.f);
     //MaxWoodcutExp.SetCurrentValue(100.f);

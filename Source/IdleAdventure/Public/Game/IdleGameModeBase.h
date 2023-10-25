@@ -8,14 +8,13 @@
 #include <Actor/CofferManager.h>
 #include <Chat/GameChatManager.h>
 #include <StoicStore/StoicStoreManager.h>
+#include <Test/TestManager.h>
 #include <Sound/SoundManager.h>
 #include <PlayFab/PlayFabManager.h>
 #include "IdleGameInstance.h"
 #include <Leaderboard/UpdatePlayerDisplayName.h>
 #include "GameFramework/GameModeBase.h"
 #include "IdleGameModeBase.generated.h"
-
-
 
 
 //class APhotonChatManager;
@@ -59,6 +58,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Coffer Manager")
 	ACofferManager* CofferManagerInstance;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Test Manager")
+	ATestManager* TestManagerInstance;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Sound")
 	ASoundManager* SoundManagerInstance;

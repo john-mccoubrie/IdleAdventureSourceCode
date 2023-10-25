@@ -8,11 +8,16 @@
 
 ACoffer::ACoffer()
 {
-	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    // Create and set SphereComponent as the root
+    SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+    SphereComponent->ComponentTags.Add(FName("Coffer"));
+    SetRootComponent(SphereComponent);
 
-	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-	RootComponent = SphereComponent;
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+
+    // Assuming you have a mesh component, set it up and attach it
+    CofferMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
+    CofferMeshComponent->SetupAttachment(RootComponent);
 }
 
 void ACoffer::CofferClicked(FHitResult CofferHit)

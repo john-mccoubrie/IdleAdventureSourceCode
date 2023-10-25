@@ -13,6 +13,7 @@
 #include <AbilitySystem/Abilities/ConversionAbilityRemoved.h>
 #include <Actor/CofferManager.h>
 #include <Chat/GameChatManager.h>
+#include <Test/TestManager.h>
 
 UConversionAbility::UConversionAbility()
 {
@@ -53,9 +54,10 @@ void UConversionAbility::CovertEssenceToEXP()
 	FGameplayEffectContextHandle EffectContextHandle = PS->AbilitySystemComponent->MakeEffectContext();
 	const FGameplayEffectSpecHandle EffectSpecHandle = PS->AbilitySystemComponent->MakeOutgoingSpec(PC->ConversionGameplayEffect, 1.f, EffectContextHandle);
 	FActiveGameplayEffectHandle EffectHandle = PS->AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
-
+	ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+	float RespawnMultiplier = TestManager->CurrentSettings.EssenceAddToCofferMultiply;
 	//Set new duraiton based on the amount of essence in the player's inventory
-	float NewDuration = Character->CharacterInventory->EssenceCountForDurationCalc * 10.0f;
+	float NewDuration = Character->CharacterInventory->EssenceCountForDurationCalc * RespawnMultiplier;
 	//UE_LOG(LogTemp, Warning, TEXT("EssenceCount: %f"), Character->CharacterInventory->EssenceCountForDurationCalc);
 	//UE_LOG(LogTemp, Warning, TEXT("New Duration: %f"), NewDuration);
 	// Remove the old effect (cannot edit existing const effect)

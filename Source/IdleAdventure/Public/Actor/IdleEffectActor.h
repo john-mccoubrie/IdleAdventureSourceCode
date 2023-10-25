@@ -9,7 +9,9 @@
 #include "IdleEffectActor.generated.h"
 
 class UGameplayEffect;
-class USphereComponent;
+//class USphereComponent;
+//class UBoxComponent;
+class UCapsuleComponent;
 class AbilitySystemComponent;
 class UGameplayAbility;
 class UWoodcuttingAbility;
@@ -22,8 +24,14 @@ class IDLEADVENTURE_API AIdleEffectActor : public AActor
 protected:
 	virtual void BeginPlay() override;
 
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//USphereComponent* SphereComponent;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//UBoxComponent* BoxComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		USphereComponent* SphereComponent;
+	UCapsuleComponent* CapsuleComponent;
 
 
 public:	

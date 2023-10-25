@@ -124,6 +124,9 @@ void AIdlePlayerState::InitializePlayerValues()
 
 void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 {
+	ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+	float NextLevelExpGrowthRate = TestManager->CurrentSettings.LevelUpMultiplier;
+
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
 	FString PlayerName = TEXT("PlayerName");
 
@@ -143,14 +146,14 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 	OnExpGained.Broadcast(IdleAttributeSet->GetWoodcutExp());
 
 	// Current level's required experience
-	float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(2, IdleAttributeSet->GetWoodcuttingLevel() - 2);
+	float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
 
 	// Next level's required experience
-	float expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(2, IdleAttributeSet->GetWoodcuttingLevel() - 1);
-	
+	float expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 1);
+
 	// Player's total experience
 	float totalExp = IdleAttributeSet->GetWoodcutExp();
-	
+
 	// Experience relative to the current level
 	float relativeExp = totalExp - expForCurrentLevel;
 
@@ -182,9 +185,8 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		// Recalculate relativeExp and progress
 		expForCurrentLevel = expForNextLevel;
 
-		const float ExpGrowthRate = 1.15f;
 
-		expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(1.15f, IdleAttributeSet->GetWoodcuttingLevel() - 1);
+		expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 1);
 		relativeExp = totalExp - expForCurrentLevel;
 		progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 
@@ -194,9 +196,10 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 		// Broadcast level up delegate
 		WhenLevelUp.Broadcast(progress);
-		
+
 	}
 }
+
 
 void AIdlePlayerState::UpdateXPThreshold()
 {

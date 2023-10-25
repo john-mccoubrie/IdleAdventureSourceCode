@@ -2,6 +2,7 @@
 #include "Actor/CofferManager.h"
 #include "EngineUtils.h"
 #include <Kismet/GameplayStatics.h>
+#include <Test/TestManager.h>
 
 ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
@@ -146,9 +147,11 @@ void ACofferManager::StartExperienceTimer(float Duration)
 
 void ACofferManager::DecrementExperienceTime()
 {
-    RemainingExperienceTime -= 1.0f;
+    ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+    RemainingExperienceTime -= TestManager->CurrentSettings.CofferMeterReductionRate;
+    //RemainingExperienceTime -= 1.0f;
     float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f);
-    UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);
+    //UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);
     OnCofferClicked.Broadcast(progress, TotalExperienceTime, RemainingExperienceTime);
 
     if (RemainingExperienceTime <= 0.0f)

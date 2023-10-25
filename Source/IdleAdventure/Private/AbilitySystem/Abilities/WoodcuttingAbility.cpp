@@ -11,6 +11,7 @@
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayerEquipment/BonusManager.h>
 #include <Chat/GameChatManager.h>
+#include <Test/TestManager.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -159,8 +160,11 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
     //uncomment this to return to normal algorithm
     RandomRoll = 1;
-    if (RandomRoll <= ChanceToYield)
+    ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+    //if (RandomRoll <= ChanceToYield)
+    if(TestManager->CurrentSettings.EssenceYieldSpeed <= ChanceToYield)
     {
+        //UE_LOG(LogTemp, Warning, TEXT("EssenceYieldSpeed Value: %f"), TestManager->CurrentSettings.EssenceYieldSpeed);
         // Award the log
         //UE_LOG(LogTemp, Warning, TEXT("Get log in woodcuttingability!"));
         //AddEssenceToInventory();
@@ -246,7 +250,12 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     int EssenceToAdd = 1;
 
     NewLog->EssenceRarity = "Legendary";
-    ExperienceGain = static_cast<float>(FMath::RoundToInt(1000.0f * BonusManager->LegendaryEssenceMultiplier));
+
+    //Test values (originally 1000)
+    ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+    float LegendaryExpGain = TestManager->CurrentSettings.LegendaryExpAmount;
+    
+    ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->LegendaryEssenceMultiplier));
     EssenceToAdd *= BonusManager->LegendaryYieldMultiplier;
 
     AddExperience(ExperienceGain);

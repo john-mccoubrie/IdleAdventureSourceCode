@@ -29,8 +29,8 @@ AIdlePlayerController::AIdlePlayerController()
 {
 	bReplicates = true;
 
-	WoodcuttingCastingDistance = 400.0f;
-	CofferCastingDistance = 500.0f;
+	WoodcuttingCastingDistance = 600.0f; //if these are too close the player won't get past the collision mesh
+	CofferCastingDistance = 600.0f; //if these are too close the player won't get past the collision mesh
 	ZMultiplierStaffEndLoc = 80.f;
 	XMultiplierStaffEndLoc = 20.f;
 	YMultiplierStaffEndLoc = -20.f;

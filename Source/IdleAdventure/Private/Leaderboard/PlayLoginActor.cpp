@@ -67,7 +67,7 @@ void APlayLoginActor::Tick(float DeltaTime)
 //Called from playerstate "Checkforlevelup" need to change to a completely new save system
 void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Update Leaderboard called"));
+    //UE_LOG(LogTemp, Warning, TEXT("Update Leaderboard called"));
     
     //PlayFabClientPtr ClientPtr = IPlayFabModuleInterface::Get().GetClientAPI();
 
@@ -95,12 +95,12 @@ void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 
 
 void APlayLoginActor::OnGetLeaderboardSuccess(const PlayFab::ClientModels::FUpdatePlayerStatisticsResult& result) const
 {
-    UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Successful!"));
+    //UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Successful!"));
 }
 
 void APlayLoginActor::OnGetLeaderboardError(const PlayFab::FPlayFabCppError& ErrorResult) const
 {
-    UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Failed!"));
+    //UE_LOG(LogTemp, Warning, TEXT("Update leaderboard Failed!"));
 }
 
 void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()

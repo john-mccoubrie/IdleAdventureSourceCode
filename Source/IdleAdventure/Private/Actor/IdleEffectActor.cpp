@@ -5,10 +5,13 @@
 #include "Components/StaticMeshComponent.h"
 #include <Player/IdlePlayerState.h>
 #include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include <Player/IdlePlayerController.h>
 #include <AbilitySystem/Abilities/WoodcuttingAbility.h>
 #include <Character/IdleCharacter.h>
 #include <Actor/IdleActorManager.h>
+#include <Test/TestManager.h>
 
 AIdleEffectActor::AIdleEffectActor()
 {
@@ -16,11 +19,22 @@ AIdleEffectActor::AIdleEffectActor()
 
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
 
-	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-	RootComponent = SphereComponent;
+	//SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
+	//RootComponent = SphereComponent;
+
+	//BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
+	//RootComponent = BoxComponent;
+
+	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
+	RootComponent = CapsuleComponent;
+	CapsuleComponent->ComponentTags.Add(FName("Tree"));
+	CapsuleComponent->SetRelativeLocation(FVector(0.0f, 50.0f, CapsuleComponent->GetUnscaledCapsuleHalfHeight()));
+	//BoxComponent->SetBoxExtent(FVector(50.0f, 50.0f, 50.0f));
+	//BoxComponent->SetVisibility(true);
 
 	TreeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TreeMeshComponent"));
 	TreeMeshComponent->SetupAttachment(RootComponent);
+	
 
 	// Initialize and attach the Niagara system component
 	LegendaryEffectParticle = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LegendaryEffectParticle"));
@@ -53,7 +67,11 @@ void AIdleEffectActor::SetTreeLifespan(AIdleEffectActor* Tree)
 				FActiveGameplayEffectHandle WoodcuttingActiveEffectHandle = PC->CurrentWoodcuttingAbilityInstance->GetActiveEffectHandle();
 
 				//Get a random duration between 5 and 15 (will add a level multiplier or tree multiplier on this later)
-				TotalDuration = FMath::RandRange(MinDuration, MaxDuration);
+				//TotalDuration = FMath::RandRange(MinDuration, MaxDuration);
+
+				//Testing
+				ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+				TotalDuration = FMath::RandRange(TestManager->CurrentSettings.TreeCutTimeMin, TestManager->CurrentSettings.TreeCutTimeMax);
 				
 				//Create new instance of a gameplay effect
 				
