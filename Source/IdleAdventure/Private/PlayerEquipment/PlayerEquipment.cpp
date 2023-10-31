@@ -9,14 +9,12 @@
 #include <Character/IdleCharacter.h>
 #include <Kismet/GameplayStatics.h>
 #include "PlayerEquipment/BonusManager.h"
+#include <Chat/GameChatManager.h>
 
 // Sets default values for this component's properties
 UPlayerEquipment::UPlayerEquipment()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	// ...
 }
 
 
@@ -94,12 +92,16 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
     if (!bItemExistsInTable)
     {
         UE_LOG(LogTemp, Warning, TEXT("Item not found in data table, cannot equip"));
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI(TEXT("Item not found in data table, cannot equip"));
         return;
     }
 
     if (!bPlayerLevelIsHighEnough)
     {
         UE_LOG(LogTemp, Warning, TEXT("Player level too low, cannot equip"));
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"));
         return;
     }
 
@@ -135,7 +137,11 @@ bool UPlayerEquipment::CanEquipItem(const FEquipmentData& ItemData)
             }
         }
     }
-
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    if (!GameChatManager) {
+        UE_LOG(LogTemp, Error, TEXT("GameChatManager is null!"));
+    }
+    GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"));
     return false;
 }
 
@@ -214,6 +220,9 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
     if (!PlayFabManager->UpdatePlayFabEssenceCount(ItemData))
     {
         UE_LOG(LogTemp, Warning, TEXT("Insufficient essence to purchase the item"));
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        FString formattedMessage = FString::Printf(TEXT("Insufficient essence to purchase %s"), *ItemData.Name);
+        GameChatManager->PostNotificationToUI(formattedMessage);
         return false;
     }
 

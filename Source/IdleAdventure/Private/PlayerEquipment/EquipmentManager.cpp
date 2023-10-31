@@ -13,14 +13,14 @@ TArray<FEquipmentData> UEquipmentManager::GetUnlockedEquipment() const
 UEquipmentManager::UEquipmentManager()
 {
     //previously was "DT_Equipment" I might have messed up the AllEquipmentDataTable vs Unlocked data, etc.
-    static ConstructorHelpers::FObjectFinder<UDataTable> DataTable(TEXT("/Game/Blueprints/Character/Equipment/DT_PlayerEquipment.DT_PlayerEquipment"));
+    static ConstructorHelpers::FObjectFinder<UDataTable> DataTable(TEXT("/Game/Blueprints/DataTables/DT_PlayerEquipment.DT_PlayerEquipment"));
     if (DataTable.Succeeded())
     {
         AllEquipmentDataTable = DataTable.Object;
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Failed to load data table"));
+        UE_LOG(LogTemp, Error, TEXT("Failed to load data table in Equipment Manager"));
     }
 }
 

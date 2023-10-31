@@ -34,7 +34,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, FName, RowName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FboolOnItemAdded, bool, bItemAdded);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceTransferred, const TArray<FEssenceCoffer>&, EssenceCofferArray);
 
-
 UCLASS()
 class IDLEADVENTURE_API AInventory : public AActor
 {
@@ -53,6 +52,8 @@ public:
     // Remove an item from the inventory
     UFUNCTION(BlueprintCallable, Category = "Inventory")
         void RemoveItem(UItem* Item);
+
+        void CheckInventorySize();
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory")
         FOnItemAdded OnItemAdded;

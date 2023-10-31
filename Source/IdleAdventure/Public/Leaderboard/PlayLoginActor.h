@@ -13,6 +13,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExpLoaded, int32, LoadedExp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeeklyExpLoaded, int32, WeeklyLoadedExp);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerLevelLoaded, int32, LoadedPlayerLevel);
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeaderboardDataReceived, int32, Player);
 
@@ -31,20 +32,25 @@ public:
 
     virtual void Tick(float DeltaSeconds) override;
 
-    void SavePlayerStatsToPlayFab(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel);
+    void SavePlayerStatsToPlayFab(const FString& PlayerName, int32 GlobalExp, int32 WeeklyExp, int32 PlayerLevel);
 
     void OnGetLeaderboardSuccess(const PlayFab::ClientModels::FUpdatePlayerStatisticsResult& result) const;
     void OnGetLeaderboardError(const PlayFab::FPlayFabCppError& ErrorResult) const;
 
     void LoadWoodcuttingExpFromPlayFab();
-    void OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerStatisticsResult& result) const;
+    void OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerStatisticsResult& result);
     void OnLoadExpError(const PlayFab::FPlayFabCppError& ErrorResult) const;
     void GetPlayerLeaderboardPosition();
     void OnGetPlayerLeaderboardPositionSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result);
     void OnGetPlayerLeaderboardPositionError(const PlayFab::FPlayFabCppError& ErrorResult) const;
 
+    int32 CurrentWeeklyExp = 0;
+
     UPROPERTY(BlueprintAssignable, Category = "PlayFab")
     FOnExpLoaded OnExpLoaded;
+
+    UPROPERTY(BlueprintAssignable, Category = "PlayFab")
+    FOnWeeklyExpLoaded OnWeeklyExpLoaded;
 
     UPROPERTY(BlueprintAssignable, Category = "PlayFab")
     FOnPlayerLevelLoaded OnPlayerLevelLoaded;

@@ -8,6 +8,7 @@
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 #include <PlayFab/PlayFabManager.h>
+#include <Chat/GameChatManager.h>
 
 // Sets default values
 AStoicStoreManager::AStoicStoreManager()
@@ -35,6 +36,8 @@ bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
                 // If purchase is successful, add item to player equipment inventory
                 return true;
                 UE_LOG(LogTemp, Warning, TEXT("Purchase successfull in stoic store manager"));
+                AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+                GameChatManager->PostNotificationToUI(TEXT("You purchased this item."));
             }
             else
             {

@@ -32,6 +32,9 @@ AIdleGameModeBase::AIdleGameModeBase()
 
 void AIdleGameModeBase::BeginPlay()
 {
+    //Spawn the Game Chat Manager (Message of the day)
+    GameChatManagerInstance = GetWorld()->SpawnActor<AGameChatManager>(AGameChatManager::StaticClass());
+
     LeaderboardManagerInstance = NewObject<ULeaderboardManager>();
     BeginUpdateLeaderboard();
     // Retrieve the game instance
@@ -54,8 +57,6 @@ void AIdleGameModeBase::BeginPlay()
      StoicStoreManagerInstance = GetWorld()->SpawnActor<AStoicStoreManager>(AStoicStoreManager::StaticClass());
      //Spawn the Bonus manager instnace
      BonusManagerInstance = GetWorld()->SpawnActor<ABonusManager>(ABonusManager::StaticClass());
-     //Spawn the Game Chat Manager (Message of the day)
-     GameChatManagerInstance = GetWorld()->SpawnActor<AGameChatManager>(AGameChatManager::StaticClass());
      
      // Spawn the Sound manager instance
      if (SoundManagerBlueprint)

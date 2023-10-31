@@ -7,6 +7,7 @@
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <PlayerEquipment/PlayerEquipment.h>
+#include <Chat/GameChatManager.h>
 
 //Define the static member variable
 APlayFabManager* APlayFabManager::SingletonInstance = nullptr;
@@ -67,6 +68,9 @@ bool APlayFabManager::PurchaseEquipment(const FString& EquipmentName, const FEqu
     if (DataTableRowNames.Contains(FName(*EquipmentName)))
     {
         // Item already exists, do not proceed with purchase
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        FString formattedMessage = FString::Printf(TEXT("You already purchased the %s"), *EquipmentName);
+        GameChatManager->PostNotificationToUI(formattedMessage);
         UE_LOG(LogTemp, Warning, TEXT("in playfab manager, Item already exists in inventory: %s"), *EquipmentName);
         return false;
     }
@@ -234,10 +238,10 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
     if (Character)
     {
         UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
-        UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/Character/Equipment/DT_PlayerEquipment.DT_PlayerEquipment")));
+        UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/DataTables/DT_PlayerEquipment.DT_PlayerEquipment")));
         if (!EquipmentDataTable)
         {
-            UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null."));
+            UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager."));
             return;
         }
         for (const FName& DataTableRowName : DataTableRowNames)

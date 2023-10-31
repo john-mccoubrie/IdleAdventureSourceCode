@@ -21,6 +21,7 @@ void AGameChatManager::BeginPlay()
     }
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
     GetMessageOfTheDay();
+    PostNotificationToUI(TEXT("Welcome to StoicScape!"));
 }
 
 void AGameChatManager::BeginDestroy()
@@ -93,7 +94,28 @@ void AGameChatManager::PostMessageToUI(FString Message)
 
 void AGameChatManager::PostNotificationToUI(FString Message)
 {
-    FOnPostGameNotification.Broadcast(Message);
+    // Check if the delegate is bound to any function
+    if (FOnPostGameNotification.IsBound())
+    {
+        FOnPostGameNotification.Broadcast(Message);
+        UE_LOG(LogTemp, Warning, TEXT("Notification posted to UI: %s"), *Message);
+    }
+    else
+    {
+        // If not bound, delay the broadcasting by using a timer
+        UE_LOG(LogTemp, Warning, TEXT("Delegate not bound, delaying notification."));
+
+        // Use a lambda to capture the 'Message' and call this function again
+        FTimerDelegate TimerDel;
+        TimerDel.BindLambda([this, Message]()
+            {
+                PostNotificationToUI(Message);
+            });
+
+        // Set the timer for a delay (e.g., 1 second)
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, 1.0f, false);
+    }
 }
 
 

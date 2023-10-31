@@ -23,10 +23,10 @@ void ULeaderboardManager::StartTimer()
     if (CachedWorld)
     {
         //CachedWorld->GetTimerManager().SetTimer(TimerHandle_FetchLeaderboardData, this, &ULeaderboardManager::FetchLeaderboardData, 5.0f, true);
-        CachedWorld->GetTimerManager().SetTimer(TimerHandle_FetchLeaderboardData, this, &ULeaderboardManager::FetchLeaderboardData, 5.0f, false);
+        CachedWorld->GetTimerManager().SetTimer(TimerHandle_FetchLeaderboardData, this, &ULeaderboardManager::FetchAllLeaderboards, 5.0f, false);
     }
 }
-
+/*
 void ULeaderboardManager::FetchLeaderboardData()
 {
     PlayFab::ClientModels::FGetLeaderboardAroundPlayerRequest Request;
@@ -38,39 +38,68 @@ void ULeaderboardManager::FetchLeaderboardData()
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &ULeaderboardManager::OnGetPlayerLeaderboardPositionError)
     );
 }
+*/
+
+void ULeaderboardManager::FetchLeaderboardDataForStatistic(const FLeaderboardDetails& Details)
+{
+    PlayFab::ClientModels::FGetLeaderboardAroundPlayerRequest Request;
+    Request.StatisticName = Details.StatisticName;
+    Request.MaxResultsCount = 7;
+
+    clientAPI->GetLeaderboardAroundPlayer(Request,
+        PlayFab::UPlayFabClientAPI::FGetLeaderboardAroundPlayerDelegate::CreateLambda(Details.SuccessCallback),
+        PlayFab::FPlayFabErrorDelegate::CreateLambda(Details.ErrorCallback)
+    );
+}
+
+void ULeaderboardManager::FetchAllLeaderboards()
+{
+    FLeaderboardDetails GlobalDetails = {
+        "EXP",
+        [this](const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result) { OnGetPlayerLeaderboardPositionSuccess(Result, "Global"); },
+        [this](const PlayFab::FPlayFabCppError& ErrorResult) { OnGetPlayerLeaderboardPositionError(ErrorResult); },
+        "Global"
+    };
+
+    FLeaderboardDetails WeeklyDetails = {
+        "WeeklyEXP",
+        [this](const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result) { OnGetPlayerLeaderboardPositionSuccess(Result, "Weekly"); },
+        [this](const PlayFab::FPlayFabCppError& ErrorResult) { OnGetPlayerLeaderboardPositionError(ErrorResult); },
+        "Weekly"
+    };
+
+    FetchLeaderboardDataForStatistic(GlobalDetails);
+    FetchLeaderboardDataForStatistic(WeeklyDetails);
+}
 
 void ULeaderboardManager::UpdateLeaderboard()
 {
 
 }
 
-void ULeaderboardManager::OnGetPlayerLeaderboardPositionSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result)
+void ULeaderboardManager::OnGetPlayerLeaderboardPositionSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result, const FString& LeaderboardType)
 {
-    //Players need to set a display name
+    // Players need to set a display name
     TArray<FPlayerLeaderboardData> LeaderboardDataArray;
-    //UE_LOG(LogTemp, Warning, TEXT("Retreived leaderboard"));
+
     for (const auto& PlayerData : Result.Leaderboard)
     {
         FPlayerLeaderboardData DataEntry;
         DataEntry.PlayerName = PlayerData.DisplayName;
-        
         DataEntry.Rank = PlayerData.Position + 1;  // 0-based to 1-based
         DataEntry.Exp = PlayerData.StatValue;
 
         LeaderboardDataArray.Add(DataEntry);
-        //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %s"), *PlayerData.DisplayName);
-        //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %d"), PlayerData.Rank);
-        //UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %d"), PlayerData.Exp);
     }
-  
-    OnLeaderboardDataReceived.Broadcast(LeaderboardDataArray);
 
-    /*
-    //UE_LOG(LogTemp, Warning, TEXT("Retreived leaderboard"));
-    int32 PlayerRank = Result.Leaderboard[0].Position;
-    UE_LOG(LogTemp, Warning, TEXT("Leaderboard position: %d"), PlayerRank + 1);
-    OnLeaderboardDataReceived.Broadcast(PlayerRank + 1);
-    */
+    if (LeaderboardType == "Global")
+    {
+        OnGlobalLeaderboardDataReceived.Broadcast(LeaderboardDataArray);
+    }
+    else if (LeaderboardType == "Weekly")
+    {
+        OnWeeklyLeaderboardDataReceived.Broadcast(LeaderboardDataArray);
+    }
 }
 
 void ULeaderboardManager::OnGetPlayerLeaderboardPositionError(const PlayFab::FPlayFabCppError& ErrorResult) const

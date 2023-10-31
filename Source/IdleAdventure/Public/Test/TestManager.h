@@ -43,7 +43,24 @@ struct FGameSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float EssenceAddToCofferMultiply;
+
+	FGameSettings();
 };
+
+inline FGameSettings::FGameSettings()
+{
+	EssenceYieldSpeed = 1.0f; // Replace with your desired default value
+	LevelUpMultiplier = 1.0f; // Replace with your desired default value
+	CofferMeterReductionRate = 1.0f; // Replace with your desired default value
+	EquipmentBonusAmout = 1.0f; // Replace with your desired default value
+	EssenceYieldAmount = 1.0f; // Replace with your desired default value
+	LegendaryExpAmount = 1.0f; // Replace with your desired default value
+	TreeCutTimeMin = 1.0f; // Replace with your desired default value
+	TreeCutTimeMax = 1.0f; // Replace with your desired default value
+	TreeRespawnDelay = 1.0f; // Replace with your desired default value
+	CofferDropOffTime = 1.0f; // Replace with your desired default value
+	EssenceAddToCofferMultiply = 1.0f; // Replace with your desired default value
+}
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSettingsChanged, FGameSettings, NewSettings);
 

@@ -3,6 +3,7 @@
 #include "EngineUtils.h"
 #include <Kismet/GameplayStatics.h>
 #include <Test/TestManager.h>
+#include <Chat/GameChatManager.h>
 
 ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
@@ -149,6 +150,8 @@ void ACofferManager::DecrementExperienceTime()
 {
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     RemainingExperienceTime -= TestManager->CurrentSettings.CofferMeterReductionRate;
+    UE_LOG(LogTemp, Error, TEXT("CurrentSettings.CofferMeterReductionRate: %f"), TestManager->CurrentSettings.CofferMeterReductionRate);
+    UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
     //RemainingExperienceTime -= 1.0f;
     float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f);
     //UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);

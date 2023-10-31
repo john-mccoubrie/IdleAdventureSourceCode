@@ -31,6 +31,10 @@ public:
 		FGameplayAttributeData WoodcutExp;
 	ATTRIBUTE_ACCESSORS(UIdleAttributeSet, WoodcutExp);
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_WeeklyWoodcutExp, Category = "Skills")
+	FGameplayAttributeData WeeklyWoodcutExp;
+	ATTRIBUTE_ACCESSORS(UIdleAttributeSet, WeeklyWoodcutExp);
+
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxWoodcutExp, Category = "Skills")
 		FGameplayAttributeData MaxWoodcutExp;
 	ATTRIBUTE_ACCESSORS(UIdleAttributeSet, MaxWoodcutExp);
@@ -46,6 +50,9 @@ public:
 
 	UFUNCTION()
 		void OnRep_WoodcutExp(const FGameplayAttributeData& OldWoodcutExp) const;
+
+	UFUNCTION()
+		void OnRep_WeeklyWoodcutExp(const FGameplayAttributeData& OldWeeklyWoodcutExp) const;
 
 	UFUNCTION()
 		void OnRep_MaxWoodcutExp(const FGameplayAttributeData& OldMaxWoodcutExp) const;

@@ -18,8 +18,7 @@ ATestManager::ATestManager()
     CurrentSettings.TreeCutTimeMax = 15.0f;
     CurrentSettings.TreeRespawnDelay = 5.0f;
     CurrentSettings.CofferDropOffTime = 10.0f;
-    UE_LOG(LogTemp, Warning, TEXT("Default values set"));
-
+    CurrentSettings.EssenceAddToCofferMultiply = 10.f;
 }
 
 void ATestManager::ChangeSettings(FGameSettings NewSettings)

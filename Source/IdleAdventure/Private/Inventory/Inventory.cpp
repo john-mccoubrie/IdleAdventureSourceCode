@@ -6,6 +6,8 @@
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <Kismet/GameplayStatics.h>
+#include <Chat/GameChatManager.h>
+#include <Player/IdlePlayerController.h>
 
 
 // Sets default values
@@ -15,7 +17,6 @@ AInventory::AInventory()
 	PrimaryActorTick.bCanEverTick = true;
 
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-    //UE_LOG(LogTemp, Warning, TEXT("Inventory class constructor called"));
 }
 
 void AInventory::BeginPlay()
@@ -26,7 +27,6 @@ void AInventory::BeginPlay()
     //Delay the PlayFab data pull by 3 seconds to allow level to load
     FTimerHandle PlayFabPullDelayTimerHandle;
     GetWorld()->GetTimerManager().SetTimer(PlayFabPullDelayTimerHandle, this, &AInventory::RequestPlayFabData, 3.0f, false);
-
 }
 
 void AInventory::AddItem(UItem* Item)
@@ -51,6 +51,7 @@ void AInventory::AddItem(UItem* Item)
         Items.Add(Item);
         boolOnItemAdded.Broadcast(true);
         OnItemAdded.Broadcast(Item->EssenceRarity);
+        CheckInventorySize();
         AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
         Character->EssenceCount++;
         EssenceCount.FindOrAdd(Item->EssenceRarity) += 1;
@@ -83,6 +84,21 @@ void AInventory::RemoveItem(UItem* Item)
         EssenceCount.Remove(Item->EssenceRarity);
     }
     */
+}
+
+void AInventory::CheckInventorySize()
+{
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (Character->EssenceCount == 24)
+    {
+        AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+        //PC->InterruptTreeCutting();
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Inventory"));
+
+        //TODO:
+        //Stop wooductting animation, tree timers, etc.
+    }
 }
 
 void AInventory::TransferAndClearEssenceCounts()
@@ -120,8 +136,23 @@ void AInventory::TransferAndClearEssenceCounts()
         PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &AInventory::OnUpdateDataSuccess),
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &AInventory::OnUpdateDataFailure)
     );
+    
 
-    // Clear the EssenceCount map
+    // Format the message with the counts of each essence type from the current transfer
+    FString formattedMessage = FString::Printf(
+        TEXT("You added %d Wisdom essence, %d Temperance essence, %d Justice essence, %d Courage essence, and %d Legendary essence to the coffer"),
+        EssenceCount.FindOrAdd(FName(TEXT("Wisdom"))),
+        EssenceCount.FindOrAdd(FName(TEXT("Temperance"))),
+        EssenceCount.FindOrAdd(FName(TEXT("Justice"))),
+        EssenceCount.FindOrAdd(FName(TEXT("Courage"))),
+        EssenceCount.FindOrAdd(FName(TEXT("Legendary")))
+    );
+
+    // Send the formatted message to the game chat manager
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToUI(formattedMessage);
+
+
     EssenceCount.Empty();
 
     for (const auto& EssenceEntry : EssenceAddedToCoffer)

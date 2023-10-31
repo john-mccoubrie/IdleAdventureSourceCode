@@ -29,6 +29,14 @@ struct FPlayerLeaderboardData
 	}
 };
 
+struct FLeaderboardDetails
+{
+	FString StatisticName;
+	TFunction<void(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult&)> SuccessCallback;
+	TFunction<void(const PlayFab::FPlayFabCppError&)> ErrorCallback;
+	FString LeaderboardType;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLeaderboardDataReceived, const TArray<FPlayerLeaderboardData>&, PlayFabLeaderboardData);
 /**
  * 
@@ -51,16 +59,20 @@ public:
 	int32 Exp = 0;
 
 	// Methods to interact with PlayFab
-	void FetchLeaderboardData();
+	void FetchLeaderboardDataForStatistic(const FLeaderboardDetails& Details);
+	void FetchAllLeaderboards();
 	void UpdateLeaderboard();
 
 	//UFUNCTION()
-	void OnGetPlayerLeaderboardPositionSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result);
+	void OnGetPlayerLeaderboardPositionSuccess(const PlayFab::ClientModels::FGetLeaderboardAroundPlayerResult& Result, const FString& LeaderboardType);
 
 	void OnGetPlayerLeaderboardPositionError(const PlayFab::FPlayFabCppError& ErrorResult) const;
 
 	UPROPERTY(BlueprintAssignable, Category = "PlayFab")
-	FOnLeaderboardDataReceived OnLeaderboardDataReceived;
+	FOnLeaderboardDataReceived OnGlobalLeaderboardDataReceived;
+
+	UPROPERTY(BlueprintAssignable, Category = "PlayFab")
+	FOnLeaderboardDataReceived OnWeeklyLeaderboardDataReceived;
 
 private:
 	PlayFabClientPtr clientAPI = nullptr;

@@ -128,6 +128,8 @@ public:
 		UFUNCTION()
 		void OnPlayFabExpLoaded(int32 LoadedExp);
 		UFUNCTION()
+		void OnPlayFabWeeklyExpLoaded(int32 LoadedWeeklyExp);
+		UFUNCTION()
 		void OnPlayFabPlayerLevelLoaded(int32 LoadedPlayerLevel);
 
 		UPROPERTY(EditAnywhere, Category = "Tree")
@@ -142,4 +144,5 @@ private:
 		bool bHasBoundToPlayFabDelegate = false;
 		int32 LocalWoodcuttingExp = 0;
 		int32 LocalPlayerLevel = 0;
+		int32 LocalWeeklyWoodcuttingExp = 0;
 };

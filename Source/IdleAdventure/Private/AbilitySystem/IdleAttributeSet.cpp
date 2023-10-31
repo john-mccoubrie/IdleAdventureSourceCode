@@ -5,6 +5,7 @@ UIdleAttributeSet::UIdleAttributeSet()
 {
     
 	InitWoodcutExp(0.f);
+    InitWeeklyWoodcutExp(0.f);
 	InitMaxWoodcutExp(500.f);
 	InitWoodcuttingLevel(1.f);
     InitXPToNextLevel(500.f);
@@ -20,6 +21,7 @@ void UIdleAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UIdleAttributeSet, WoodcutExp, COND_None, REPNOTIFY_Always);
+    DOREPLIFETIME_CONDITION_NOTIFY(UIdleAttributeSet, WeeklyWoodcutExp, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UIdleAttributeSet, MaxWoodcutExp, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UIdleAttributeSet, WoodcuttingLevel, COND_None, REPNOTIFY_Always);
     DOREPLIFETIME_CONDITION_NOTIFY(UIdleAttributeSet, XPToNextLevel, COND_None, REPNOTIFY_Always);
@@ -30,6 +32,12 @@ void UIdleAttributeSet::OnRep_WoodcutExp(const FGameplayAttributeData& OldWoodcu
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UIdleAttributeSet, WoodcutExp, OldWoodcutExp);
     OnEXPChanged.Broadcast();
 }
+
+void UIdleAttributeSet::OnRep_WeeklyWoodcutExp(const FGameplayAttributeData& OldWeeklyWoodcutExp) const
+{
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UIdleAttributeSet, WeeklyWoodcutExp, OldWeeklyWoodcutExp);
+}
+
 
 void UIdleAttributeSet::OnRep_MaxWoodcutExp(const FGameplayAttributeData& OldMaxWoodcutExp) const
 {

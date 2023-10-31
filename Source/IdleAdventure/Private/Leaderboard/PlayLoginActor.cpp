@@ -65,24 +65,26 @@ void APlayLoginActor::Tick(float DeltaTime)
 }
 
 //Called from playerstate "Checkforlevelup" need to change to a completely new save system
-void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 WoodcuttingExp, int32 PlayerLevel)
+void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 GlobalExp, int32 WeeklyExp, int32 PlayerLevel)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Update Leaderboard called"));
-    
-    //PlayFabClientPtr ClientPtr = IPlayFabModuleInterface::Get().GetClientAPI();
-
-    //Update PlayerExp
+    // Update Global PlayerExp
     PlayFab::ClientModels::FStatisticUpdate ExpStatisticsUpdate;
     ExpStatisticsUpdate.StatisticName = "EXP";
-    ExpStatisticsUpdate.Value = WoodcuttingExp;
+    ExpStatisticsUpdate.Value = GlobalExp;
 
-    //Update PlayerLevel
+    // Increment Weekly PlayerExp
+    PlayFab::ClientModels::FStatisticUpdate WeeklyExpStatisticsUpdate;
+    WeeklyExpStatisticsUpdate.StatisticName = "WeeklyEXP";
+    WeeklyExpStatisticsUpdate.Value = WeeklyExp;
+
+    // Update PlayerLevel
     PlayFab::ClientModels::FStatisticUpdate PlayerStatisticsUpdate;
     PlayerStatisticsUpdate.StatisticName = "PlayerLevel";
     PlayerStatisticsUpdate.Value = PlayerLevel;
 
     PlayFab::ClientModels::FUpdatePlayerStatisticsRequest Request;
     Request.Statistics.Add(ExpStatisticsUpdate);
+    Request.Statistics.Add(WeeklyExpStatisticsUpdate);
     Request.Statistics.Add(PlayerStatisticsUpdate);
 
     clientAPI->UpdatePlayerStatistics(Request,
@@ -109,6 +111,7 @@ void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()
 
     PlayFab::ClientModels::FGetPlayerStatisticsRequest Request;
     Request.StatisticNames.Add("EXP");
+    Request.StatisticNames.Add("WeeklyEXP");
     Request.StatisticNames.Add("PlayerLevel");
 
     clientAPI->GetPlayerStatistics(Request,
@@ -117,10 +120,11 @@ void APlayLoginActor::LoadWoodcuttingExpFromPlayFab()
     );
 }
 
-void APlayLoginActor::OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerStatisticsResult& Result) const
+void APlayLoginActor::OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerStatisticsResult& Result)
 {
     UE_LOG(LogTemp, Warning, TEXT("Loaded Woodcutting Exp from playfab"));
     int32 LoadedExp = 0;
+    int32 LoadedWeeklyExp = 0;
     int32 LoadedPlayerLevel = 0;
 
     for (const auto& Stat : Result.Statistics)
@@ -129,16 +133,20 @@ void APlayLoginActor::OnLoadExpSuccess(const PlayFab::ClientModels::FGetPlayerSt
         {
             LoadedExp = Stat.Value;
         }
+        else if (Stat.StatisticName == "WeeklyEXP")
+        {
+            LoadedWeeklyExp = Stat.Value;
+            //CurrentWeeklyExp = LoadedWeeklyExp;
+        }
         else if (Stat.StatisticName == "PlayerLevel")
         {
             LoadedPlayerLevel = Stat.Value;
         }
     }
 
-    // Now you have both LoadedExp and LoadedPlayerLevel
-    // You can use them as needed, for example:
     OnExpLoaded.Broadcast(LoadedExp);
-    OnPlayerLevelLoaded.Broadcast(LoadedPlayerLevel); // Assuming you have a similar delegate for PlayerLevel
+    OnWeeklyExpLoaded.Broadcast(LoadedWeeklyExp);
+    OnPlayerLevelLoaded.Broadcast(LoadedPlayerLevel);
 }
 
 void APlayLoginActor::OnLoadExpError(const PlayFab::FPlayFabCppError& ErrorResult) const

@@ -120,7 +120,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
     else
     {
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        GameChatManager->PostNotificationToUI("Inventory is full! Add your essence to the nearest coffer.");
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Woodcutting ability"));
     }
     
 }
@@ -237,6 +237,7 @@ void UWoodcuttingAbility::AddExperience(float Amount)
     //UE_LOG(LogTemp, Warning, TEXT("Before add: %f"), IdleAttributeSet->GetWoodcutExp());
     //UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Amount);
     //UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
 }
 
@@ -261,7 +262,7 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     AddExperience(ExperienceGain);
 
     // Load the data table
-    UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/UI/Inventory/DT_EssenceTypes.DT_EssenceTypes"));
+    UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/DataTables/DT_EssenceTypes.DT_EssenceTypes"));
     if (EssenceDataTable)
     {
         // Get the log data based on the essence rarity

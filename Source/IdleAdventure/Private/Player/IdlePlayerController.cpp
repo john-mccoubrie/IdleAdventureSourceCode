@@ -29,13 +29,28 @@ AIdlePlayerController::AIdlePlayerController()
 {
 	bReplicates = true;
 
-	WoodcuttingCastingDistance = 600.0f; //if these are too close the player won't get past the collision mesh
-	CofferCastingDistance = 600.0f; //if these are too close the player won't get past the collision mesh
-	ZMultiplierStaffEndLoc = 80.f;
-	XMultiplierStaffEndLoc = 20.f;
-	YMultiplierStaffEndLoc = -20.f;
-	ZMultiplierTreeLoc = 0.f;
-	//YawRotationStaffMultiplier = 20.f;
+	static ConstructorHelpers::FObjectFinder<UDataTable> DataTableObj(TEXT("/Game/Blueprints/DataTables/DT_PlayerDefaults.DT_PlayerDefaults"));
+	if (DataTableObj.Succeeded())
+	{
+		PlayerDefaultsTable = DataTableObj.Object;
+	}
+
+	// Access the data:
+	if (PlayerDefaultsTable)
+	{
+		FPlayerControllerDefaults* Defaults = PlayerDefaultsTable->FindRow<FPlayerControllerDefaults>(FName("PlayerDefaultsRow"), TEXT(""));
+		if (Defaults)
+		{
+			WoodcuttingCastingDistance = Defaults->WoodcuttingCastingDistance;
+			CofferCastingDistance = Defaults->CofferCastingDistance;
+			ZMultiplierStaffEndLoc = Defaults->ZMultiplierStaffEndLoc;
+			XMultiplierStaffEndLoc = Defaults->XMultiplierStaffEndLoc;
+			YMultiplierStaffEndLoc = Defaults->YMultiplierStaffEndLoc;
+			ZMultiplierTreeLoc = Defaults->ZMultiplierTreeLoc;
+			MinZoomDistance = Defaults->MinZoomDistance;
+			MaxZoomDistance = Defaults->MaxZoomDistance;
+		}
+	}
 
 	bHasPerformedCofferClick = false;
 }
@@ -44,22 +59,11 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	// 1. Check if PlayerTick is being called
-	//UE_LOG(LogTemp, Warning, TEXT("PlayerTick called"));
-
-	// 2. Check the value of TargetTree
-	//UE_LOG(LogTemp, Warning, TEXT("TargetTree is: %s"), TargetTree ? *TargetTree->GetName() : TEXT("Null"));
-
-	// 3. Check the boolean flags
-	//UE_LOG(LogTemp, Warning, TEXT("bIsMovingToTarget: %s, bIsChoppingTree: %s"),
-		//bIsMovingToTarget ? TEXT("True") : TEXT("False"),
-		//bIsChoppingTree ? TEXT("True") : TEXT("False"));
-
+	//Move towards Tree
 	if (bIsMovingToTarget && !bIsChoppingTree && TargetTree)
 	{
 		APawn* ControlledPawn = GetPawn();
 
-		// 4. Pawn null check
 		if (!ControlledPawn)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is null"));
@@ -68,23 +72,16 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 
 		FVector CurrentLocation = ControlledPawn->GetActorLocation();
 
-		// 5. Distance check
-		//UE_LOG(LogTemp, Warning, TEXT("Pawn location: %s, Tree location: %s"),
-			//*CurrentLocation.ToString(),
-			//*TargetTree->GetActorLocation().ToString());
-
 		FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
 		FVector TreeLocation2D = FVector(TargetTree->GetActorLocation().X, TargetTree->GetActorLocation().Y, 0);
 		if (FVector::Distance(PawnLocation2D, TreeLocation2D) <= WoodcuttingCastingDistance)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Arrived close to tree"));
 			StartWoodcuttingAbility(ControlledPawn);
-			//UE_LOG(LogTemp, Warning, TEXT("StartWoodcutAbility"));
 			return;
 		}
 	}
 
-	//move to coffer
+	//Move towards Coffer
 	if (bIsMovingToCoffer && !bHasPerformedCofferClick && TargetCoffer)
 	{
 		APawn* ControlledPawn = GetPawn();
@@ -105,10 +102,6 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 			StartConversionAbility(ControlledPawn);
 			return;
 		}
-	}
-	else
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("one of the bools or targetcoffer is false"));
 	}
 }
 
@@ -160,6 +153,7 @@ void AIdlePlayerController::BeginPlay()
 	InputModeData.SetHideCursorDuringCapture(false);
 	SetInputMode(InputModeData);
 }
+
 
 void AIdlePlayerController::SetupInputComponent()
 {
@@ -238,12 +232,9 @@ void AIdlePlayerController::RotateVertical(const FInputActionValue& InputActionV
 
 void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActionValue)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("HandleClickAction"));
 	FHitResult ClickResult;
 	GetHitResultUnderCursor(ECC_Visibility, false, ClickResult);
 	APawn* PlayerPawn = GetPawn<APawn>();
-
-	//UE_LOG(LogTemp, Warning, TEXT("Object clicked on: %s"), *ClickResult.GetActor()->GetName());
 
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
@@ -260,37 +251,9 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			bIsChoppingTree = false;
 			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
-			//ResetTreeTimer(CurrentTree);
-			AIdleActorManager* TreeManager = nullptr;
-			for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
-			{
-				TreeManager = *It;
-				break; // Exit the loop once the Tree Manager is found
-			}
-			if (TreeManager)
-			{
-				TreeManager->ResetTreeTimer(CurrentTree);
-			}
-			ResetWoodcuttingAbilityTimer();
-			//OnCofferClicked(ClickResult, PlayerPawn);
-
-			//if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
-			//{
-				CurrentWoodcuttingAbilityInstance->bAbilityIsActive = false;
-				APlayerController* PC = GetWorld()->GetFirstPlayerController();
-				AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-				PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
-				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
-			//}
-			//else
-			//{
-				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance is null ptr in PlayerController"));
-			//}
-			CurrentTree->SetLifeSpan(-1.0f);	
 		}
 		
-		OnCofferClicked(ClickResult, PlayerPawn);
-		
+		OnCofferClicked(ClickResult, PlayerPawn);	
 	}
 	else
 	{
@@ -301,33 +264,6 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			bIsChoppingTree = false;
 			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
-			//ResetTreeTimer(CurrentTree);
-			AIdleActorManager* TreeManager = nullptr;
-			for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
-			{
-				TreeManager = *It;
-				break; // Exit the loop once the Tree Manager is found
-			}
-			if (TreeManager)
-			{
-				TreeManager->ResetTreeTimer(CurrentTree);
-			}
-			ResetWoodcuttingAbilityTimer();
-
-			if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
-			{
-				CurrentWoodcuttingAbilityInstance->bAbilityIsActive = false;
-				APlayerController* PC = GetWorld()->GetFirstPlayerController();
-				AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-				PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
-				//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance is null ptr in PlayerController"));
-			}
-			CurrentTree->SetLifeSpan(-1.0f);
-			//UE_LOG(LogTemp, Warning, TEXT("Tree life span: %f"), CurrentTree->GetLifeSpan());
 		}
 	}
 }
@@ -342,7 +278,7 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 			float CurrentArmLength = MyCharacter->SpringArm->TargetArmLength;
 
 			// Modify this zoom speed as desired
-			float ZoomSpeed = 100.0f;
+			float ZoomSpeed = 300.0f;
 			float InputValue = InputActionValue.Get<float>();
 			float NewArmLength = FMath::Clamp(CurrentArmLength - InputValue * ZoomSpeed, MinZoomDistance, MaxZoomDistance);
 
@@ -370,6 +306,34 @@ void AIdlePlayerController::InterruptTreeCutting()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Interrupt Tree Cutting"));
 	bIsChoppingTree = false;
+
+
+	AIdleActorManager* TreeManager = nullptr;
+	for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
+	{
+		TreeManager = *It;
+		break; // Exit the loop once the Tree Manager is found
+	}
+	if (TreeManager)
+	{
+		TreeManager->ResetTreeTimer(CurrentTree);
+	}
+	ResetWoodcuttingAbilityTimer();
+
+	if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
+	{
+		CurrentWoodcuttingAbilityInstance->bAbilityIsActive = false;
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+		PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(CurrentWoodcuttingAbilityInstance);
+		//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance removed periodicgameplayeffectdelegate in playercontroller"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstance is null ptr in PlayerController"));
+	}
+	CurrentTree->SetLifeSpan(-1.0f);
+
 
 	AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(GetCharacter());
 	if (MyCharacter && WoodcuttingEffectHandle.IsValid())
@@ -498,13 +462,8 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	{
 		bIsChoppingTree = true;
 
-	
-	    //PS->ActivateAbility(CurrentWoodcuttingAbilityInstance->StaticClass());
 		PS->ActivateAbility(UWoodcuttingAbility::StaticClass());
-		//CurrentWoodcuttingAbilityInstance->ActivateAbility();
-		//UE_LOG(LogTemp, Warning, TEXT("ActivateAbility pc"));
 		
-
 		WoodcuttingEXPEffect();
 
 		AIdleEffectActor* MyIdleEffectActor = Cast<AIdleEffectActor>(TargetTree);
@@ -524,7 +483,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
 		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-		GameChatManager->PostNotificationToUI("Inventory is full! Add your essence to the nearest coffer.");
+		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer."));
 	}
 }
 
@@ -546,14 +505,6 @@ void AIdlePlayerController::StartConversionAbility(APawn* PlayerPawn)
 	// Step 2: Set the character's rotation to face that direction
 	PlayerPawn->SetActorRotation(RotationTowardsCoffer);
 
-	/*
-	FVector DirectionToCoffer = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
-	FRotator RotationTowardsCoffer = DirectionToCoffer.Rotation();
-
-	// Step 2: Set the character's rotation to face that direction
-	PlayerPawn->SetActorRotation(RotationTowardsCoffer);
-
-	*/
 
 	ClickedCoffer->CofferClicked(CofferHitForCasting);
 	

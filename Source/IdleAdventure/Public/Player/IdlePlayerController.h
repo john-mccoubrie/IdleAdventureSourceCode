@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
 #include "NiagaraComponent.h"
@@ -29,6 +30,49 @@ class UNiagaraSystem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTreeClickedDelegate, AIdleEffectActor*, TreeClickedParam);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPeriodFiredDelegate);
 
+
+
+USTRUCT(BlueprintType)
+struct FPlayerControllerDefaults : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float WoodcuttingCastingDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float CofferCastingDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float ZMultiplierStaffEndLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float XMultiplierStaffEndLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float YMultiplierStaffEndLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float ZMultiplierTreeLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float MinZoomDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float MaxZoomDistance;
+
+	FPlayerControllerDefaults()
+		: WoodcuttingCastingDistance(0.0f)
+		, CofferCastingDistance(0.0f)
+		, ZMultiplierStaffEndLoc(0.0f)
+		, XMultiplierStaffEndLoc(0.0f)
+		, YMultiplierStaffEndLoc(0.0f)
+		, ZMultiplierTreeLoc(0.0f)
+		, MinZoomDistance(0.0f)
+		, MaxZoomDistance(0.0f)
+	{
+	}
+};
 
 UCLASS()
 class IDLEADVENTURE_API AIdlePlayerController : public APlayerController
@@ -114,6 +158,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Initial values")
 	float RollRotationStaffMultiplier;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Defaults DataTable")
+	UDataTable* PlayerDefaultsTable;
 
 	//Niagara system
 	void SpawnTreeCutEffect();
@@ -141,6 +187,7 @@ public:
 
 	AIdleEffectActor* CurrentTree = nullptr;
 
+	void InterruptTreeCutting();
 
 protected:
 	virtual void BeginPlay() override;
@@ -166,11 +213,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> RotateVerticalAction;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zoom")
-	float MinZoomDistance = 300.0f;
+	UPROPERTY(EditAnywhere, Category = "Zoom")
+	float MinZoomDistance;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Zoom")
-	float MaxZoomDistance = 1000.0f;
+	UPROPERTY(EditAnywhere, Category = "Zoom")
+	float MaxZoomDistance;
 
 
 	float VerticalRotation = 0.0f; // Current vertical rotation in degrees
@@ -220,6 +267,6 @@ private:
 	bool bIsMovingToTarget = false;
 	bool bIsMovingToCoffer = false;
 	FVector TargetDestination;
-	void InterruptTreeCutting();
+	
 
 };
