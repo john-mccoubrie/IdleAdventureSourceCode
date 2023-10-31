@@ -234,11 +234,13 @@ void UWoodcuttingAbility::AddExperience(float Amount)
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
 
-    //UE_LOG(LogTemp, Warning, TEXT("Before add: %f"), IdleAttributeSet->GetWoodcutExp());
-    //UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
+    UE_LOG(LogTemp, Warning, TEXT("Global Before add: %f"), IdleAttributeSet->GetWoodcutExp());
+    UE_LOG(LogTemp, Warning, TEXT("Weekly Before add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
+    UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
     IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Amount);
-    //UE_LOG(LogTemp, Warning, TEXT("After add: %f"), IdleAttributeSet->GetWoodcutExp());
+    UE_LOG(LogTemp, Warning, TEXT("Global After add: %f"), IdleAttributeSet->GetWoodcutExp());
+    UE_LOG(LogTemp, Warning, TEXT("Weekly AFter add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
 }
 
 void UWoodcuttingAbility::GetLegendaryEssence()
@@ -259,7 +261,7 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->LegendaryEssenceMultiplier));
     EssenceToAdd *= BonusManager->LegendaryYieldMultiplier;
 
-    AddExperience(ExperienceGain);
+    //AddExperience(ExperienceGain);
 
     // Load the data table
     UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/DataTables/DT_EssenceTypes.DT_EssenceTypes"));

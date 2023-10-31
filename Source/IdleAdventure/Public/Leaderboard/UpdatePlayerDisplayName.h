@@ -40,7 +40,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "EventDispatchers")
 	FOnUpdateDisplayNameSuccess OnUpdateDisplayNameSuccessDelegate;
 
-	UIdleGameInstance* IdleGameInstance;
+	//UIdleGameInstance* IdleGameInstance;
 
 	FString TestDisplayName;
 
