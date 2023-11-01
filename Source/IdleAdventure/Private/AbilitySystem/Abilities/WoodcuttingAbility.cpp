@@ -83,7 +83,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     PS->AbilitySystemComponent->OnPeriodicGameplayEffectExecuteDelegateOnSelf.RemoveAll(this);
-    PC->bIsChoppingTree = false;
+    PC->CurrentPlayerState = EPlayerState::Idle;
     bAbilityIsActive = false;
 
     //Deactivate particle effect from the character

@@ -52,106 +52,70 @@ AIdlePlayerController::AIdlePlayerController()
 		}
 	}
 
-	bHasPerformedCofferClick = false;
+	CurrentPlayerState = EPlayerState::Idle;
 }
 
 void AIdlePlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	//Move towards Tree
-	if (bIsMovingToTarget && !bIsChoppingTree && TargetTree)
+	switch (CurrentPlayerState)
 	{
-		APawn* ControlledPawn = GetPawn();
-
-		if (!ControlledPawn)
+	case EPlayerState::MovingToTree:
+		if (TargetTree)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is null"));
-			return;
+			MoveTowardsTarget(TargetTree, WoodcuttingCastingDistance, [this](APawn* PlayerPawn) {
+				StartWoodcuttingAbility(PlayerPawn);
+				return;
+				});
 		}
+		break;
 
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-
-		FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
-		FVector TreeLocation2D = FVector(TargetTree->GetActorLocation().X, TargetTree->GetActorLocation().Y, 0);
-		if (FVector::Distance(PawnLocation2D, TreeLocation2D) <= WoodcuttingCastingDistance)
+	case EPlayerState::MovingToCoffer:
+		if (TargetCoffer)
 		{
-			StartWoodcuttingAbility(ControlledPawn);
-			return;
+			MoveTowardsTarget(TargetCoffer, CofferCastingDistance, [this](APawn* PlayerPawn) {
+				StartConversionAbility(PlayerPawn);
+				return;
+				});
 		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void AIdlePlayerController::MoveTowardsTarget(AActor* Target, float CastingDistance, TFunction<void(APawn*)> OnReachTarget)
+{
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is null"));
+		return;
 	}
 
-	//Move towards Coffer
-	if (bIsMovingToCoffer && !bHasPerformedCofferClick && TargetCoffer)
+	FVector CurrentLocation = ControlledPawn->GetActorLocation();
+	FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
+	FVector TargetLocation2D = FVector(Target->GetActorLocation().X, Target->GetActorLocation().Y, 0);
+
+	if (FVector::Distance(PawnLocation2D, TargetLocation2D) <= CastingDistance)
 	{
-		APawn* ControlledPawn = GetPawn();
-
-		if (!ControlledPawn)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ControlledPawn is null"));
-			return;
-		}
-
-		FVector CurrentLocation = ControlledPawn->GetActorLocation();
-		FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
-		FVector CofferLocation2D = FVector(TargetCoffer->GetActorLocation().X, TargetCoffer->GetActorLocation().Y, 0);
-
-		if (FVector::Distance(PawnLocation2D, CofferLocation2D) <= CofferCastingDistance)
-		{
-			
-			StartConversionAbility(ControlledPawn);
-			return;
-		}
+		OnReachTarget(ControlledPawn);
 	}
 }
 
 void AIdlePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	//UE_LOG(LogTemp, Warning, TEXT("AIdlePlayerController::BeginPlay() called"));
-
-	AIdleActorManager::GetInstance(GetWorld());
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-	AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(PS);
-
 	
-	FGameplayAbilityInfo WoodcuttingAbilityInfo;
-	WoodcuttingAbilityInfo.Ability = UWoodcuttingAbility::StaticClass();
-	WoodcuttingAbilityInfo.Level = 1;
-	WoodcuttingAbilityInfo.InputID = 0;
-
-	PS->GiveAbility(WoodcuttingAbilityInfo);
-	
-	if (!CurrentWoodcuttingAbilityInstance)
-	{
-		CurrentWoodcuttingAbilityInstance = NewObject<UWoodcuttingAbility>(this, UWoodcuttingAbility::StaticClass());
-		//UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingInstance created in playercontroller begin play"));
-	}
-	
-	FGameplayAbilityInfo ConversionAbilityInfo;
-	ConversionAbilityInfo.Ability = UConversionAbility::StaticClass();
-	ConversionAbilityInfo.Level = 1;
-	ConversionAbilityInfo.InputID = 0;
-	
-	//give the ability to the player state to create its instance
-	PS->GiveAbility(ConversionAbilityInfo);
-
-	check(IdleContext);
-
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	if (Subsystem)
-	{
-		Subsystem->AddMappingContext(IdleContext, 0);
-	}
-
-	bShowMouseCursor = true;
-	DefaultMouseCursor = EMouseCursor::Default;
-
-	FInputModeGameAndUI InputModeData;
-	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	InputModeData.SetHideCursorDuringCapture(false);
-	SetInputMode(InputModeData);
+	InitializeActorManager();
+    SetupPlayerState();
+    SetupAbilitySystemComponent();
+    InitializeWoodcuttingAbility();
+    InitializeConversionAbility();
+    SetupInputSubsystem();
+    ConfigureMouseCursor();
 }
 
 
@@ -168,6 +132,70 @@ void AIdlePlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(ZoomAction, ETriggerEvent::Started, this, &AIdlePlayerController::HandleZoomAction);
 	EnhancedInputComponent->BindAction(RotateHorizontalAction, ETriggerEvent::Triggered, this, &AIdlePlayerController::RotateHorizontal);
 	EnhancedInputComponent->BindAction(RotateVerticalAction, ETriggerEvent::Triggered, this, &AIdlePlayerController::RotateVertical);
+}
+
+void AIdlePlayerController::InitializeActorManager()
+{
+	AIdleActorManager::GetInstance(GetWorld());
+}
+
+void AIdlePlayerController::SetupPlayerState()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+	AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(PS);
+}
+
+void AIdlePlayerController::SetupAbilitySystemComponent()
+{
+	if (!CurrentWoodcuttingAbilityInstance)
+	{
+		CurrentWoodcuttingAbilityInstance = NewObject<UWoodcuttingAbility>(this, UWoodcuttingAbility::StaticClass());
+	}
+}
+
+void AIdlePlayerController::InitializeWoodcuttingAbility()
+{
+	FGameplayAbilityInfo WoodcuttingAbilityInfo;
+	WoodcuttingAbilityInfo.Ability = UWoodcuttingAbility::StaticClass();
+	WoodcuttingAbilityInfo.Level = 1;
+	WoodcuttingAbilityInfo.InputID = 0;
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+	PS->GiveAbility(WoodcuttingAbilityInfo);
+}
+
+void AIdlePlayerController::InitializeConversionAbility()
+{
+	FGameplayAbilityInfo ConversionAbilityInfo;
+	ConversionAbilityInfo.Ability = UConversionAbility::StaticClass();
+	ConversionAbilityInfo.Level = 1;
+	ConversionAbilityInfo.InputID = 0;
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+	PS->GiveAbility(ConversionAbilityInfo);
+}
+
+void AIdlePlayerController::SetupInputSubsystem()
+{
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (Subsystem)
+	{
+		Subsystem->AddMappingContext(IdleContext, 0);
+	}
+}
+
+void AIdlePlayerController::ConfigureMouseCursor()
+{
+	bShowMouseCursor = true;
+	DefaultMouseCursor = EMouseCursor::Default;
+
+	FInputModeGameAndUI InputModeData;
+	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputModeData.SetHideCursorDuringCapture(false);
+	SetInputMode(InputModeData);
 }
 
 void AIdlePlayerController::Move(const FInputActionValue& InputActionValue)
@@ -236,35 +264,39 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 	GetHitResultUnderCursor(ECC_Visibility, false, ClickResult);
 	APawn* PlayerPawn = GetPawn<APawn>();
 
+	// Check if the player is currently moving to a tree and interrupt the tree cutting if they click elsewhere
+	//if (CurrentPlayerState == EPlayerState::MovingToTree)
+	//{
+		//InterruptTreeCutting();
+	//}
+
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
-		bHasPerformedCofferClick = false;
+		CurrentPlayerState = EPlayerState::MovingToTree;
 		TreeClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeClickEffectSystem, ClickResult.Location);
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("Coffer"))
 	{
-		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
-		if (bIsChoppingTree)
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
-			bIsChoppingTree = false;
-			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
 		}
-		
+		CurrentPlayerState = EPlayerState::MovingToCoffer;
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		OnCofferClicked(ClickResult, PlayerPawn);	
 	}
 	else
 	{
-		MouseClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MouseClickEffectSystem, ClickResult.Location);
-		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
-		if (bIsChoppingTree)
+		UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
-			bIsChoppingTree = false;
-			bHasPerformedCofferClick = false;
 			InterruptTreeCutting();
 		}
+		//CurrentPlayerState = EPlayerState::Idle;
+		MouseClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MouseClickEffectSystem, ClickResult.Location);
+		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
 }
 
@@ -290,6 +322,7 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
 	TargetDestination = CursorHit.ImpactPoint;
 
 	// Start moving towards the target using the NavMesh
@@ -304,8 +337,8 @@ void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputAc
 
 void AIdlePlayerController::InterruptTreeCutting()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Interrupt Tree Cutting"));
-	bIsChoppingTree = false;
+	UE_LOG(LogTemp, Warning, TEXT("Interrupt Tree Cutting"));
+	CurrentPlayerState = EPlayerState::Idle;
 
 
 	AIdleActorManager* TreeManager = nullptr;
@@ -353,13 +386,7 @@ void AIdlePlayerController::InterruptTreeCutting()
 void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("ClickTree"));
-	if (bIsChoppingTree)
-	{
-		return;
-	}
-
 	TargetTree = TreeHit.GetActor();
-	bIsMovingToTarget = true;
 
 	// Start moving towards the tree using the NavMesh
 	if (PlayerPawn)
@@ -373,7 +400,6 @@ void AIdlePlayerController::OnCofferClicked(FHitResult CofferHit, APawn* PlayerP
 	//UE_LOG(LogTemp, Warning, TEXT("CofferClicked"));
 	TargetCoffer = CofferHit.GetActor();
 	CofferHitForCasting = CofferHit;
-	bIsMovingToCoffer = true;
 	ClickedCoffer = Cast<ACoffer>(CofferHit.GetActor());
 	if (PlayerPawn)
 	{
@@ -438,7 +464,7 @@ void AIdlePlayerController::ResetWoodcuttingAbilityTimer()
 
 void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 {
-	bIsMovingToTarget = false;
+	CurrentPlayerState = EPlayerState::CuttingTree;
 	//UE_LOG(LogTemp, Warning, TEXT("Start woodcutting ability"));
 
 	// Step 1: Calculate direction to the tree from the character's current location
@@ -460,7 +486,6 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 
 	if (MyCharacter->EssenceCount <= 24)
 	{
-		bIsChoppingTree = true;
 
 		PS->ActivateAbility(UWoodcuttingAbility::StaticClass());
 		
@@ -489,10 +514,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 
 void AIdlePlayerController::StartConversionAbility(APawn* PlayerPawn)
 {
-	bIsMovingToTarget = false;
-	bIsChoppingTree = false;
-	bHasPerformedCofferClick = true;
-	bIsMovingToCoffer = false;
+	CurrentPlayerState = EPlayerState::Idle;
 
 	// Step 1: Calculate direction to the tree from the character's current location
 	FVector DirectionToCoffer = (TargetCoffer->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();

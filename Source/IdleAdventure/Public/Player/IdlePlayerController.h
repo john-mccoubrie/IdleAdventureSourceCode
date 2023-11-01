@@ -74,6 +74,15 @@ struct FPlayerControllerDefaults : public FTableRowBase
 	}
 };
 
+UENUM(BlueprintType)
+enum class EPlayerState : uint8
+{
+	Idle,
+	MovingToTree,
+	MovingToCoffer,
+	CuttingTree
+};
+
 UCLASS()
 class IDLEADVENTURE_API AIdlePlayerController : public APlayerController
 {
@@ -82,6 +91,10 @@ class IDLEADVENTURE_API AIdlePlayerController : public APlayerController
 public:
 	AIdlePlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
+	void MoveTowardsTarget(AActor* Target, float CastingDistance, TFunction<void(APawn*)> OnReachTarget);
+
+	UPROPERTY(BlueprintReadOnly, Category = "State")
+	EPlayerState CurrentPlayerState = EPlayerState::Idle;
 
 
 	UPROPERTY(EditAnywhere)
@@ -182,9 +195,6 @@ public:
 	UFUNCTION()
 	void WoodcuttingEXPEffect();
 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	bool bIsChoppingTree = false;
-
 	AIdleEffectActor* CurrentTree = nullptr;
 
 	void InterruptTreeCutting();
@@ -193,6 +203,14 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
+
+	void InitializeActorManager();
+    void SetupPlayerState();
+    void SetupAbilitySystemComponent();
+    void InitializeWoodcuttingAbility();
+    void InitializeConversionAbility();
+    void SetupInputSubsystem();
+    void ConfigureMouseCursor();
 
 
 private:
@@ -248,7 +266,6 @@ private:
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;
 	FHitResult CofferHitForCasting;
-	bool bHasPerformedCofferClick;
 
 
 
@@ -264,8 +281,6 @@ private:
 	FVector CachedDestination;
 
 	UPROPERTY(EditAnywhere, Category = "Input")
-	bool bIsMovingToTarget = false;
-	bool bIsMovingToCoffer = false;
 	FVector TargetDestination;
 	
 
