@@ -9,6 +9,7 @@
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayerEquipment/EquipmentManager.h>
 #include <PlayerEquipment/PlayerEquipment.h>
+#include <Quest/QuestManager.h>
 
 AIdleCharacter::AIdleCharacter()
 {
@@ -99,9 +100,10 @@ void AIdleCharacter::CompleteQuest(UQuest* Quest)
 	// Assuming Complete finalizes the quest status
 		// This should now only be called when turning in the quest
 		// Quest->Complete(); // This line should be removed or commented out
-
+// 
+	//create an awards function
 		// Update the character state, e.g., give rewards
-
+	
 		// Remove quest from active quests if it's completed
 	if (Quest->QuestState == EQuestState::Completed)
 	{
@@ -129,5 +131,13 @@ UQuest* AIdleCharacter::GetCurrentActiveQuest()
 	}
 
 	return nullptr; // Return nullptr if there are no active quests.
+}
+
+void AIdleCharacter::UpdateAllActiveQuests(const FString& ObjectiveType, int32 Amount)
+{
+	for (UQuest* Quest : ActiveQuests)
+	{
+		Quest->UpdateProgress(ObjectiveType, Amount);
+	}
 }
 

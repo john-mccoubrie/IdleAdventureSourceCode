@@ -59,6 +59,8 @@ public:
 		
 		UQuest* GetCurrentActiveQuest();
 
+		void UpdateAllActiveQuests(const FString& ObjectiveType, int32 Amount);
+
 private:
 	void InitAbilityActorInfo();
 	

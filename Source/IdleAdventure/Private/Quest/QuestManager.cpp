@@ -9,6 +9,9 @@
 #include "EngineUtils.h"
 #include <Actor/NPCActor.h>
 #include <Kismet/GameplayStatics.h>
+#include <Player/IdlePlayerController.h>
+#include <Player/IdlePlayerState.h>
+#include <AbilitySystem/IdleAttributeSet.h>
 
 AQuestManager* AQuestManager::QuestManagerSingletonInstance = nullptr;
 
@@ -63,10 +66,14 @@ void AQuestManager::ResetInstance()
 void AQuestManager::GetQuestData()
 {
     PlayFab::ClientModels::FGetTitleDataRequest Request;
-    Request.Keys.Add("WisdomQuest");
-    Request.Keys.Add("TemperanceQuest");
-    RequestedKeys.Add("WisdomQuest");
-    RequestedKeys.Add("TemperanceQuest");
+    Request.Keys.Add("DailyEasyQuest");
+    Request.Keys.Add("DailyLegendaryQuest");
+    Request.Keys.Add("TheDailyGrind");
+    Request.Keys.Add("TheDailyStoic");
+    RequestedKeys.Add("DailyEasyQuest");
+    RequestedKeys.Add("DailyLegendaryQuest");
+    RequestedKeys.Add("TheDailyGrind");
+    RequestedKeys.Add("TheDailyStoic");
 
     clientAPI->GetTitleData(Request,
         PlayFab::UPlayFabClientAPI::FGetTitleDataDelegate::CreateUObject(this, &AQuestManager::OnGetQuestDataSuccess),
@@ -88,6 +95,8 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
 
             if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
             {
+                FString QuestID = JsonObject->GetStringField(TEXT("QuestID"));
+                FString Version = JsonObject->GetStringField(TEXT("Version"));
                 FString QuestName = JsonObject->GetStringField(TEXT("Name"));
                 FString QuestDescription = JsonObject->GetStringField(TEXT("Description"));
 
@@ -108,6 +117,8 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 Rewards.Objectives = Objectives;
 
                 UQuest* NewQuest = NewObject<UQuest>();
+                NewQuest->QuestID = QuestID;
+                NewQuest->Version = Version;
                 NewQuest->QuestName = QuestName;
                 NewQuest->QuestDescription = QuestDescription;
                 NewQuest->Rewards = Rewards;
@@ -152,6 +163,15 @@ void AQuestManager::AssignQuestsToNPCs()
             }
         }
     }
+}
+
+void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)
+{
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Quest->Rewards.Experience);
 }
 
 

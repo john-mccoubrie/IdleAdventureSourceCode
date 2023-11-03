@@ -67,7 +67,6 @@ void APlayLoginActor::Tick(float DeltaTime)
 //Called from playerstate "Checkforlevelup" need to change to a completely new save system
 void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 GlobalExp, int32 WeeklyExp, int32 PlayerLevel)
 {
-    UE_LOG(LogTemp, Warning, TEXT("GlobalExp in Save Data: %i"), GlobalExp);
     // Update Global PlayerExp
     PlayFab::ClientModels::FStatisticUpdate ExpStatisticsUpdate;
     ExpStatisticsUpdate.StatisticName = "EXP";

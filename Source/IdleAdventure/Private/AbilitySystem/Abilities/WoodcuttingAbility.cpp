@@ -208,44 +208,49 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
         if (Character)
         {
-            UQuest* CurrentQuest = Character->GetCurrentActiveQuest();
+            //UQuest* CurrentQuest = Character->GetCurrentActiveQuest();
 
 
-            if (CurrentQuest && !CurrentQuest->bIsCompleted)
-            {
+            //if (CurrentQuest && !CurrentQuest->bIsCompleted)
+            //{
                 // Update the progress based on the type of essence
                 if (NewLog->EssenceRarity == "Wisdom")
                 {
-                    CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
+                    //CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Wisdom", EssenceToAdd);
                     UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Temperance")
                 {
-                    CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
+                    //CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Temperance", EssenceToAdd);
                     UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Justice")
                 {
-                    CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
+                    //CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Justice", EssenceToAdd);
                     UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Courage")
                 {
-                    CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
+                    //CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Courage", EssenceToAdd);
                     UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
                 }
                 
-
+                /*
                 // Check if the quest is completed after updating
                 if (CurrentQuest->IsQuestComplete())
                 {
                     // Handle quest completion, e.g., give rewards, notify the player, etc.
                     Character->CompleteQuest(CurrentQuest);
                 }
-            }
-            else {
-                UE_LOG(LogTemp, Warning, TEXT("CurrentQuest not valid"));
-            }
+                */
+            //}
+            //else {
+            //    UE_LOG(LogTemp, Warning, TEXT("CurrentQuest not valid"));
+            //}
         }
 
 

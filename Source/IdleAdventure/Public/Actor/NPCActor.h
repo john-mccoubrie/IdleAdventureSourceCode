@@ -33,6 +33,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quests")
 	void AddAvailableQuests(UQuest* QuestToAdd);
 
+	UFUNCTION()
+	bool CanAcceptQuest(UQuest* Quest);
+
+
 	UPROPERTY(BlueprintReadWrite, Category = "Quests")
 	TArray<UQuest*> AvailableQuests;
 
@@ -45,6 +49,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInteractedWithNPC OnInteractedWithNPC;
+
+	UFUNCTION()
+	void HandleQuestVersionRetrieved(FString QuestID, FString QuestVersion);
 
 protected:
 	// Called when the game starts or when spawned

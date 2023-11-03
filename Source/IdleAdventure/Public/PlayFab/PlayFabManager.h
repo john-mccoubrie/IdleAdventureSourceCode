@@ -14,6 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPurchaseCompleted, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceTransferredPlayFab, const TArray<FEssenceCoffer>&, EssenceCofferArray);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryLoaded, const TArray<FName>&, InventoryRowNames);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestVersionRetrieved, FString, QuestID, FString, QuestVersion);
 /**
  * 
  */
@@ -52,6 +53,19 @@ public:
 	//PlayFab helper classes
 	FString ConvertToPlayFabFormat(const TArray<FEquipmentData>& EquipmentDataArray);
 	TArray<FName> ConvertFromPlayFabFormat(const FString& PlayFabData);
+
+	//Quest Logic
+	void SaveQuestStatsToPlayFab(TMap<FString, FString> CompletedQuests);
+	void OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
+	void OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+	bool CanAcceptQuest(UQuest* Quest);
+	void CompleteQuest(UQuest* Quest, AIdleCharacter* Player);
+	FString GetCompletedQuestVersion(FString QuestID);
+	void OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
+	void OnGetQuestVersionFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+	void MarkQuestAsCompleted(FString QuestID, FString Version);
+	UPROPERTY(BlueprintAssignable)
+	FOnQuestVersionRetrieved OnQuestVersionRetrieved;
 
 	//Delegate broadcasts to UI
 	UPROPERTY(BlueprintAssignable, Category = "Events")

@@ -12,6 +12,7 @@
 
 class UQuest;
 
+/*
 USTRUCT(BlueprintType)
 struct FQuestProgress
 {
@@ -68,6 +69,8 @@ struct FQuestProgress
     }
 };
 
+*/
+
 
 /*
 UENUM(BlueprintType)
@@ -99,8 +102,9 @@ public:
 	void OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitleDataResult& Result);
 	void OnGetQuestDataFailure(const PlayFab::FPlayFabCppError& ErrorResult);
     void AssignQuestsToNPCs();
+    void GivePlayerQuestRewards(UQuest* Quest);
 
-    FQuestProgress QuestProgress;
+    //FQuestProgress QuestProgress;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnAddAvailableQuestsToUI OnAddAvailableQuestsToUI;

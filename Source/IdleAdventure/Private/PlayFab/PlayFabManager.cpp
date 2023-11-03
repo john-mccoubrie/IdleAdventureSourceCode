@@ -471,3 +471,91 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
     //UE_LOG(LogTemp, Warning, TEXT("ConvertFromPlayFabFormat: Number of items in OutputArray: %d"), OutputArray.Num());
     return OutputArray;
 }
+
+void APlayFabManager::SaveQuestStatsToPlayFab(TMap<FString, FString> CompletedQuests)
+{
+    // Prepare the quest completion data
+    PlayFab::ClientModels::FUpdateUserDataRequest UpdateUserDataRequest;
+    for (const auto& Quest : CompletedQuests)
+    {
+        FString QuestData = FString::Printf(TEXT("{\"Version\":\"%s\"}"), *Quest.Value);
+        UpdateUserDataRequest.Data.Add(Quest.Key, QuestData);
+    }
+
+    // Update the player data in PlayFab
+    clientAPI->UpdateUserData(UpdateUserDataRequest,
+        PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &APlayFabManager::OnUpdateQuestStatsSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnUpdateQuestStatsFailure)
+    );
+}
+
+void APlayFabManager::OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Successfully updated user data."));
+}
+
+void APlayFabManager::OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to update user data: %s"), *ErrorResult.ErrorMessage);
+}
+
+bool APlayFabManager::CanAcceptQuest(UQuest* Quest)
+{
+    FString completedVersion = GetCompletedQuestVersion(Quest->QuestID);
+    return completedVersion != Quest->Version;
+}
+
+void APlayFabManager::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
+{
+    if (CanAcceptQuest(Quest))
+    {
+        // Additional completion logic here (e.g., rewards, notifications, etc.)
+
+        MarkQuestAsCompleted(Quest->QuestID, Quest->Version);
+    }
+}
+
+FString APlayFabManager::GetCompletedQuestVersion(FString QuestID)
+{
+    PlayFab::ClientModels::FGetUserDataRequest Request;
+    Request.Keys = { QuestID }; // Requesting the data associated with the specific quest
+
+    
+    clientAPI->GetUserData(Request,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnGetQuestVersionSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnGetQuestVersionFailure)
+    );
+
+    return "";
+    
+}
+
+void APlayFabManager::OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Successfully retrieved user data."));
+
+    for (const auto& Entry : Result.Data)
+    {
+        FString QuestID = Entry.Key;
+        FString QuestVersion = Entry.Value.Value;
+        UE_LOG(LogTemp, Warning, TEXT("Quest Version: %s"), *QuestVersion);
+
+        OnQuestVersionRetrieved.Broadcast(QuestID, QuestVersion);
+    }
+}
+
+void APlayFabManager::OnGetQuestVersionFailure(const PlayFab::FPlayFabCppError& ErrorResult)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to retrieve user data: %s"), *ErrorResult.ErrorMessage);
+    // Handle failure, e.g., retry or inform the user
+}
+
+void APlayFabManager::MarkQuestAsCompleted(FString QuestID, FString Version)
+{
+    // Create a map containing the quest completion data
+    TMap<FString, FString> CompletedQuests;
+    CompletedQuests.Add(QuestID, Version);
+
+    // Save this data to PlayFab
+    SaveQuestStatsToPlayFab(CompletedQuests);
+}

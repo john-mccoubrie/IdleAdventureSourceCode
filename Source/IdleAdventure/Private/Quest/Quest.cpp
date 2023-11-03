@@ -3,9 +3,21 @@
 
 #include "Quest/Quest.h"
 #include "Quest/QuestManager.h"
+#include <Player/IdlePlayerController.h>
+#include <Player/IdlePlayerState.h>
+#include <AbilitySystem/IdleAttributeSet.h>
 
 void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
 {
+
+    QuestProgress.UpdateProgress(ObjectiveType, Amount);
+
+    if (QuestProgress.IsComplete(Rewards.Objectives))
+    {
+        MarkQuestReadyToTurnIn();
+    }
+
+    /*
     UE_LOG(LogTemp, Warning, TEXT("Made it to update progress in Quest"));
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
     QuestManager->QuestProgress.UpdateProgress(ObjectiveType, Amount);
@@ -15,12 +27,14 @@ void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
         UE_LOG(LogTemp, Warning, TEXT("Made it inside questiscomplete loop"));
         MarkQuestReadyToTurnIn(); // Instead of completing, mark it as ready to turn in
     }
+    */
 }
 
 bool UQuest::IsQuestComplete() const
 {
-    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
-    return QuestManager->QuestProgress.IsComplete(Rewards.Objectives);
+    //AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+    //return QuestManager->QuestProgress.IsComplete(Rewards.Objectives);
+    return QuestProgress.IsComplete(Rewards.Objectives);
 }
 
 void UQuest::MarkQuestReadyToTurnIn()
@@ -37,12 +51,14 @@ void UQuest::TurnInQuest()
     UE_LOG(LogTemp, Warning, TEXT("TurnInQuestCalled"));
     if (QuestState == EQuestState::ReadyToTurnIn)
     {
-        Complete(); // Call the Complete method if the quest is ready to be turned in
+        Complete();
         QuestState = EQuestState::Completed;
         UE_LOG(LogTemp, Error, TEXT("Quest turned in and completed!!!"));
         // Reset the progress values
-        AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
-        QuestManager->QuestProgress.ResetProgress();
+        //AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+        //QuestManager->QuestProgress.ResetProgress();
+        //QuestProgress.ResetProgress();
+        QuestProgress.ResetProgress(Rewards.Objectives);
     }
 }
 
@@ -56,6 +72,10 @@ void UQuest::Start()
 void UQuest::Complete()
 {
     UE_LOG(LogTemp, Error, TEXT("Quest Complete!!!"));
+    
+    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+    QuestManager->GivePlayerQuestRewards(this);
+
     OnQuestComplete.Broadcast();
 }
 

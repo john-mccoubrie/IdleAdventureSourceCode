@@ -39,7 +39,7 @@ void AIdlePlayerState::BeginPlay()
 	APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
 	MyPlayLoginActor->LoadWoodcuttingExpFromPlayFab();
 	LoadExp();
-	GetWorld()->GetTimerManager().SetTimer(SaveGameTimerHandle, this, &AIdlePlayerState::AutoSaveGame, 10.f, true);
+	GetWorld()->GetTimerManager().SetTimer(SaveGameTimerHandle, this, &AIdlePlayerState::AutoSaveGame, 20.f, true);
 
 	
 	//Set initial values
