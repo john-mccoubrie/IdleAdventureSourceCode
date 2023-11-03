@@ -12,7 +12,7 @@ void AIdleActorManager::BeginPlay()
 {
     Super::BeginPlay();
 
-    GetLegendaryTree();
+    //GetLegendaryTree();
 }
 
 void AIdleActorManager::BeginDestroy()

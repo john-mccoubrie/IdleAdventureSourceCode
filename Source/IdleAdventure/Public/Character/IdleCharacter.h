@@ -1,14 +1,13 @@
 
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include <GameFramework/SpringArmComponent.h>
+#include "Quest/Quest.h"
 #include <Camera/CameraComponent.h>
 #include "Inventory/Inventory.h"
 #include "IdleCharacterBase.h"
 #include "IdleCharacter.generated.h"
-
 
 
 class UAnimMontage;
@@ -45,7 +44,20 @@ public:
 
 		USpringArmComponent* SpringArm;
 		UCameraComponent* Camera;
+
+		UPROPERTY(BlueprintReadWrite, Category = "Quests")
+		TArray<UQuest*> ActiveQuests;
+
+		UFUNCTION(BlueprintCallable, Category = "Quests")
+		void AddQuest(UQuest* Quest);
+
+		UFUNCTION(BlueprintCallable, Category = "Quests")
+		void CompleteQuest(UQuest* Quest);
+
+		UFUNCTION(BlueprintCallable, Category = "Quests")
+		void UpdateQuestLogUI();
 		
+		UQuest* GetCurrentActiveQuest();
 
 private:
 	void InitAbilityActorInfo();

@@ -53,6 +53,10 @@ void AIdleGameModeBase::BeginPlay()
      
      //Spawn the TestManager instance
      TestManagerInstance = GetWorld()->SpawnActor<ATestManager>(ATestManager::StaticClass());
+
+     //Spawn the QuestManager instance
+     QuestManagerInstance = GetWorld()->SpawnActor<AQuestManager>(AQuestManager::StaticClass());
+
      //Spawn the stoic store instance
      StoicStoreManagerInstance = GetWorld()->SpawnActor<AStoicStoreManager>(AStoicStoreManager::StaticClass());
      //Spawn the Bonus manager instnace

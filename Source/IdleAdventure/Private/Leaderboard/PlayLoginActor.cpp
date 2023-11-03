@@ -37,7 +37,7 @@ void APlayLoginActor::BeginPlay()
         if (GameMode)
         {
             //GameMode->ConnectToChat(PendingUserID);
-            //UE_LOG(LogTemp, Warning, TEXT("Connected to chat called after level load"));
+            UE_LOG(LogTemp, Warning, TEXT("Connected to chat called after level load"));
         }
         else
         {
@@ -54,7 +54,7 @@ void APlayLoginActor::OnSuccess(const PlayFab::ClientModels::FLoginResult& Resul
 
 void APlayLoginActor::OnError(const PlayFab::FPlayFabCppError& ErrorResult) const
 {
-    UE_LOG(LogTemp, Error, TEXT("Something went wrong with your first API call.\nHere's some debug information:\n%s"), *ErrorResult.GenerateErrorReport());
+    //UE_LOG(LogTemp, Error, TEXT("Something went wrong with your first API call.\nHere's some debug information:\n%s"), *ErrorResult.GenerateErrorReport());
 }
 
 // Called every frame
@@ -73,7 +73,7 @@ void APlayLoginActor::SavePlayerStatsToPlayFab(const FString& PlayerName, int32 
     ExpStatisticsUpdate.StatisticName = "EXP";
     ExpStatisticsUpdate.Value = GlobalExp;
 
-    UE_LOG(LogTemp, Warning, TEXT("WeeklyExp in Save Data: %i"), WeeklyExp);
+    //UE_LOG(LogTemp, Warning, TEXT("WeeklyExp in Save Data: %i"), WeeklyExp);
     // Increment Weekly PlayerExp
     PlayFab::ClientModels::FStatisticUpdate WeeklyExpStatisticsUpdate;
     WeeklyExpStatisticsUpdate.StatisticName = "WeeklyEXP";

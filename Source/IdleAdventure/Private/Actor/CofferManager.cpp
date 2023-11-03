@@ -4,6 +4,8 @@
 #include <Kismet/GameplayStatics.h>
 #include <Test/TestManager.h>
 #include <Chat/GameChatManager.h>
+#include <Actor/IdleActorManager.h>
+#include <Character/IdleCharacter.h>
 
 ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
@@ -95,21 +97,44 @@ int32 ACofferManager::CheckNumOfActiveCoffers()
 
 void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
 {
-    if (ActiveCoffers.Num() < 3)
+    // Get the player character
+    ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0); // 0 is the player index, for single-player games it's typically 0
+
+    // Cast the character to your specific character class
+    AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
+    if (Character->EssenceCount >= 24)
     {
         ActiveCoffers.Add(NewCoffer);
+
+        // Check if essence has been added to this coffer before
+        if (!CoffersWithEssence.Contains(NewCoffer))
+        {
+            CoffersWithEssence.Add(NewCoffer);
+            LegendaryCount++;
+
+            // Broadcast to the UI to update the star count
+            OnLegendaryCountChanged.Broadcast(LegendaryCount);
+
+            // Check if StarCount is 4, if yes, respawn the legendary tree
+            if (LegendaryCount > 3)
+            {
+                AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+                IdleActorManager->GetLegendaryTree();
+            }
+        }
+
         OnActiveCofferCountChanged.Broadcast(NewCoffer);
     }
+    UE_LOG(LogTemp, Error, TEXT("Not full inventory"));
 }
 
-void ACofferManager::RemoveActiveCoffer(ACoffer* CofferToRemove)
+void ACofferManager::RemoveActiveCoffers()
 {
-    ActiveCoffers.Remove(CofferToRemove);
-    if (CofferProgressBarMapping.Contains(CofferToRemove))
-    {
-        CofferProgressBarMapping.Remove(CofferToRemove);
-    }
-    //OnActiveCofferCountChanged.Broadcast(ActiveCoffers.Num());
+    //Called in woodcutting ability
+    LegendaryCount = 0;
+    CoffersWithEssence.Empty();
+    OnLegendaryCountChanged.Broadcast(LegendaryCount);
+    ActiveCoffers.Empty();
 }
 
 void ACofferManager::UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRatio)
@@ -118,7 +143,7 @@ void ACofferManager::UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRat
     //{
         //int32 ProgressBarID = CofferProgressBarMapping[UpdatedCoffer];
     //OnCofferClicked.Clear();
-    UE_LOG(LogTemp, Error, TEXT("ProgressRatio: %f"), ProgressRatio);
+    //UE_LOG(LogTemp, Error, TEXT("ProgressRatio: %f"), ProgressRatio);
     //OnCofferClicked.Broadcast(UpdatedCoffer, ProgressRatio);
     //}
 }
@@ -130,16 +155,16 @@ void ACofferManager::StartExperienceTimer(float Duration)
     {
         RemainingExperienceTime += Duration;
         TotalExperienceTime = RemainingExperienceTime;
-        UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
-        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
+        //UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
+        //UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
     }
     else // If no timer is active, set the values fresh
     {
-        UE_LOG(LogTemp, Error, TEXT("Duration: %f"), Duration);
+        //UE_LOG(LogTemp, Error, TEXT("Duration: %f"), Duration);
         TotalExperienceTime = Duration;
         RemainingExperienceTime = Duration;
-        UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
-        UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);  // Note: This should log RemainingExperienceTime, not TotalExperienceTime
+        //UE_LOG(LogTemp, Error, TEXT("TotalExperienceTime: %f"), TotalExperienceTime);
+        //UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);  // Note: This should log RemainingExperienceTime, not TotalExperienceTime
 
         // Start a new timer
         GetWorld()->GetTimerManager().SetTimer(ExperienceTimerHandle, this, &ACofferManager::DecrementExperienceTime, 1.0f, true);
@@ -150,8 +175,8 @@ void ACofferManager::DecrementExperienceTime()
 {
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     RemainingExperienceTime -= TestManager->CurrentSettings.CofferMeterReductionRate;
-    UE_LOG(LogTemp, Error, TEXT("CurrentSettings.CofferMeterReductionRate: %f"), TestManager->CurrentSettings.CofferMeterReductionRate);
-    UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
+    //UE_LOG(LogTemp, Error, TEXT("CurrentSettings.CofferMeterReductionRate: %f"), TestManager->CurrentSettings.CofferMeterReductionRate);
+    //UE_LOG(LogTemp, Error, TEXT("RemainingExperienceTime: %f"), RemainingExperienceTime);
     //RemainingExperienceTime -= 1.0f;
     float progress = FMath::Clamp(RemainingExperienceTime / TotalExperienceTime, 0.0f, 1.0f);
     //UE_LOG(LogTemp, Error, TEXT("Progress: %f"), progress);

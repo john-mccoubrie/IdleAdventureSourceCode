@@ -27,12 +27,11 @@ UConversionAbility::~UConversionAbility()
 
 void UConversionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Activated Conversion Ability"));
+	//UE_LOG(LogTemp, Warning, TEXT("Activated Conversion Ability"));
 
 	AIdleCharacter* Character = Cast<AIdleCharacter>(ActorInfo->AvatarActor.Get());
 	UAnimMontage* AnimMontage = Character->CofferMontage;
 	//Character->PlayAnimMontage(AnimMontage);
-
 	CovertEssenceToEXP();
 
 
@@ -93,12 +92,12 @@ void UConversionAbility::OnDurationEffectRemoved(const FGameplayEffectRemovalInf
 	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 	ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
 
-	CofferManager->RemoveActiveCoffer(ClickedCoffer);
+	//CofferManager->RemoveActiveCoffer(ClickedCoffer);
 
 	// Get all ACoffer instances
-	TArray<AActor*> TempCoffers;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACoffer::StaticClass(), TempCoffers);
+	//TArray<AActor*> TempCoffers;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACoffer::StaticClass(), TempCoffers);
 	//CofferManager->ActiveCoffers.Remove(ClickedCoffer);
-	UE_LOG(LogTemp, Warning, TEXT("Removed Coffer: %s"), *ClickedCoffer->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Removed Coffer: %s"), *ClickedCoffer->GetName());
 	//UE_LOG(LogTemp, Warning, TEXT("Active Coffers: %d"), PS->ActiveCoffers.Num());
 }

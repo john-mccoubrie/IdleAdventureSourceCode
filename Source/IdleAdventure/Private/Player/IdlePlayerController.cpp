@@ -24,10 +24,13 @@
 #include "AIController.h"
 #include <Kismet/KismetMathLibrary.h>
 #include <Chat/GameChatManager.h>
+#include <Actor/CofferManager.h>
 
 AIdlePlayerController::AIdlePlayerController()
 {
 	bReplicates = true;
+
+	IdleInteractionComponent = CreateDefaultSubobject<UIdleInteractionComponent>(TEXT("TreeInteractionComponent"));
 
 	static ConstructorHelpers::FObjectFinder<UDataTable> DataTableObj(TEXT("/Game/Blueprints/DataTables/DT_PlayerDefaults.DT_PlayerDefaults"));
 	if (DataTableObj.Succeeded())
@@ -49,6 +52,7 @@ AIdlePlayerController::AIdlePlayerController()
 			ZMultiplierTreeLoc = Defaults->ZMultiplierTreeLoc;
 			MinZoomDistance = Defaults->MinZoomDistance;
 			MaxZoomDistance = Defaults->MaxZoomDistance;
+			NPCTalkingDistance = Defaults->NPCTalkingDistance;
 		}
 	}
 
@@ -76,6 +80,16 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 		{
 			MoveTowardsTarget(TargetCoffer, CofferCastingDistance, [this](APawn* PlayerPawn) {
 				StartConversionAbility(PlayerPawn);
+				return;
+				});
+		}
+		break;
+
+	case EPlayerState::MovingToNPC:
+		if (TargetNPC)
+		{
+			MoveTowardsTarget(TargetNPC, NPCTalkingDistance, [this](APawn* PlayerPawn) {
+				TargetNPC->Interact();
 				return;
 				});
 		}
@@ -256,24 +270,19 @@ void AIdlePlayerController::RotateVertical(const FInputActionValue& InputActionV
 	}
 }
 
-
-
 void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActionValue)
 {
 	FHitResult ClickResult;
 	GetHitResultUnderCursor(ECC_Visibility, false, ClickResult);
 	APawn* PlayerPawn = GetPawn<APawn>();
 
-	// Check if the player is currently moving to a tree and interrupt the tree cutting if they click elsewhere
-	//if (CurrentPlayerState == EPlayerState::MovingToTree)
-	//{
-		//InterruptTreeCutting();
-	//}
 
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
 		CurrentPlayerState = EPlayerState::MovingToTree;
 		TreeClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeClickEffectSystem, ClickResult.Location);
+
+		TargetTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
 	}
@@ -287,9 +296,19 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		OnCofferClicked(ClickResult, PlayerPawn);	
 	}
+	else if (ClickResult.GetComponent()->ComponentTags.Contains("NPC"))
+	{
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
+		{
+			InterruptTreeCutting();
+		}
+		CurrentPlayerState = EPlayerState::MovingToNPC;
+		TargetNPC = Cast<ANPCActor>(ClickResult.GetActor());
+		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
+	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
+		//UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
 			InterruptTreeCutting();
@@ -322,7 +341,7 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
+	//UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
 	TargetDestination = CursorHit.ImpactPoint;
 
 	// Start moving towards the target using the NavMesh
@@ -376,7 +395,7 @@ void AIdlePlayerController::InterruptTreeCutting()
 		//UE_LOG(LogTemp, Warning, TEXT("WoodcuttingEffectHandle Invalidated"));
 		UAnimMontage* AnimMontage = MyCharacter->WoodcutMontage;
 		MyCharacter->StopAnimMontage(AnimMontage);
-		EndTreeCutEffect();
+		IdleInteractionComponent->EndTreeCutEffect();
 	}
 	else {
 		UE_LOG(LogTemp, Warning, TEXT("Character or WoodcuttingEffectHandle is null player controller"));
@@ -385,8 +404,13 @@ void AIdlePlayerController::InterruptTreeCutting()
 
 void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("ClickTree"));
-	TargetTree = TreeHit.GetActor();
+	if (IdleInteractionComponent)
+	{
+		IdleInteractionComponent->ClickTree(TreeHit, PlayerPawn);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("IdleInteractionComponent is null"));
+	}
 
 	// Start moving towards the tree using the NavMesh
 	if (PlayerPawn)
@@ -408,47 +432,6 @@ void AIdlePlayerController::OnCofferClicked(FHitResult CofferHit, APawn* PlayerP
 }
 
 
-void AIdlePlayerController::ResetTreeTimer(AIdleEffectActor* Tree)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("ResetTreeTimer"));
-	AIdleActorManager* ActorManager = AIdleActorManager::GetInstance(GetWorld());
-	if (ActorManager)
-	{
-		FName TreeName = Tree->GetFName(); // Convert the tree pointer to its name.
-		//UE_LOG(LogTemp, Warning, TEXT("Trying to reset timer for tree: %s"), *TreeName.ToString());
-
-		if (ActorManager->TreeTimers.Contains(TreeName))
-		{
-			ActorManager->TreeChoppingStates[TreeName] = false;
-			FTimerHandle TreeTimerHandle = ActorManager->TreeTimers[TreeName];
-
-			// Print the remaining time for the timer before resetting
-			float TimeRemainingBeforeReset = GetWorld()->GetTimerManager().GetTimerRemaining(TreeTimerHandle);
-			//UE_LOG(LogTemp, Warning, TEXT("Time remaining before reset: %f"), TimeRemainingBeforeReset);
-
-			GetWorld()->GetTimerManager().ClearTimer(TreeTimerHandle);
-			ActorManager->TreeTimers.Remove(TreeName);
-			APlayerController* PC = GetWorld()->GetFirstPlayerController();
-			AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-			//PS->DeactivateAbility(CurrentWoodcuttingAbilityInstance->StaticClass());
-
-			// Print the remaining time for the timer after resetting
-			float TimeRemainingAfterReset = GetWorld()->GetTimerManager().GetTimerRemaining(TreeTimerHandle);
-			//UE_LOG(LogTemp, Warning, TEXT("Time remaining after reset: %f"), TimeRemainingAfterReset);
-
-			//UE_LOG(LogTemp, Warning, TEXT("ResetTreeTimer After"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Tree Timer null/doesn't contain tree name"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ActorManager is a null ptr"));
-	}
-}
-
 void AIdlePlayerController::ResetWoodcuttingAbilityTimer()
 {
 	if (CurrentWoodcuttingAbilityInstance)
@@ -465,44 +448,15 @@ void AIdlePlayerController::ResetWoodcuttingAbilityTimer()
 void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 {
 	CurrentPlayerState = EPlayerState::CuttingTree;
-	//UE_LOG(LogTemp, Warning, TEXT("Start woodcutting ability"));
-
-	// Step 1: Calculate direction to the tree from the character's current location
-	FVector DirectionToTree = (TargetTree->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
-	FRotator RotationTowardsTree = DirectionToTree.Rotation();
-
-	// Preserve the current Pitch and Roll of the character
-	RotationTowardsTree.Pitch = PlayerPawn->GetActorRotation().Pitch;
-	RotationTowardsTree.Roll = PlayerPawn->GetActorRotation().Roll;
-
-	// Step 2: Set the character's rotation to face that direction
-	PlayerPawn->SetActorRotation(RotationTowardsTree);
 
 	AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(PlayerPawn);
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 
-	
-
 	if (MyCharacter->EssenceCount <= 24)
 	{
-
-		PS->ActivateAbility(UWoodcuttingAbility::StaticClass());
-		
+		IdleInteractionComponent->StartWoodcuttingAbility(PlayerPawn);
 		WoodcuttingEXPEffect();
-
-		AIdleEffectActor* MyIdleEffectActor = Cast<AIdleEffectActor>(TargetTree);
-		if (MyIdleEffectActor)
-		{
-			// Unbind first to ensure no multiple bindings
-			OnTreeClicked.RemoveDynamic(MyIdleEffectActor, &AIdleEffectActor::SetTreeLifespan);
-			OnTreeClicked.AddDynamic(MyIdleEffectActor, &AIdleEffectActor::SetTreeLifespan);
-			OnTreeClicked.Broadcast(MyIdleEffectActor);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Cast to AIdleEffectActor failed! player controller"));
-		}
 	}
 	else
 	{
@@ -541,40 +495,3 @@ void AIdlePlayerController::WoodcuttingEXPEffect()
 	WoodcuttingEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 }
 
-void AIdlePlayerController::SpawnTreeCutEffect()
-{
-	AIdleCharacter* ParticleCharacter = Cast<AIdleCharacter>(GetCharacter());
-	if (!ParticleCharacter) return;
-
-	USkeletalMeshComponent* CharacterWeapon = ParticleCharacter->GetMesh();
-	StaffEndLocation = CharacterWeapon->GetSocketLocation(FName("StaffEndSocket"));
-	FVector TreeLocation = CurrentTree->GetActorLocation();
-	//StaffEndLocation.Z -= ZMultiplierStaffEndLoc;
-	//StaffEndLocation.X += XMultiplierStaffEndLoc;
-	//StaffEndLocation.Y += YMultiplierStaffEndLoc;
-	TreeLocation.Z += ZMultiplierTreeLoc;
-	
-	
-
-	FRotator RotationTowardsTree = UKismetMathLibrary::FindLookAtRotation(StaffEndLocation, TreeLocation);
-	RotationTowardsTree.Yaw += YawRotationStaffMultiplier; //Move's the pitch downward slightly
-	RotationTowardsTree.Pitch += PitchRotationStaffMultiplier;
-	RotationTowardsTree.Roll += RollRotationStaffMultiplier;
-
-	// Spawn the Niagara effects
-	SpawnedTreeEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeCutEffect, CurrentTree->GetActorLocation());
-	SpawnedStaffEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), StaffEffect, StaffEndLocation, RotationTowardsTree);
-	//SpawnedStaffEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), StaffEffect, StaffEndLocation, RotationTowardsTree);
-
-	// Draw a debug directional arrow
-	//DrawDebugDirectionalArrow(GetWorld(), StaffEndLocation, StaffEndLocation + RotationTowardsTree.Vector() * 200, 20, FColor::Red, true, 5.0f, 0, 3.0f);
-}
-
-void AIdlePlayerController::EndTreeCutEffect()
-{
-	if (SpawnedTreeEffect && SpawnedStaffEffect)
-	{
-		SpawnedTreeEffect->Deactivate();
-		SpawnedStaffEffect->Deactivate();
-	}
-}

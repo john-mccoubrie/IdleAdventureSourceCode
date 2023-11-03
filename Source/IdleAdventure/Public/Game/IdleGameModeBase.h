@@ -7,6 +7,7 @@
 #include <Leaderboard/LeaderboardManager.h>
 #include <Actor/CofferManager.h>
 #include <Chat/GameChatManager.h>
+#include <Quest/QuestManager.h>
 #include <StoicStore/StoicStoreManager.h>
 #include <Test/TestManager.h>
 #include <Sound/SoundManager.h>
@@ -61,6 +62,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Test Manager")
 	ATestManager* TestManagerInstance;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Quest Manager")
+	AQuestManager* QuestManagerInstance;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Sound")
 	ASoundManager* SoundManagerInstance;

@@ -9,6 +9,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActiveCofferCountChanged, ACoffer*, ClickedCoffer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLegendaryCountChanged, int32, LegendaryCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCofferClicked, float, ProgressRatio, float, TotalTime, float, RemainingTime);
 
 UCLASS()
@@ -27,7 +28,7 @@ public:
 	bool CheckIfCofferIsActive(ACoffer* CofferToCheck);
 	int32 CheckNumOfActiveCoffers();
 	void AddActiveCoffer(ACoffer* NewCoffer);
-	void RemoveActiveCoffer(ACoffer* CofferToRemove);
+	void RemoveActiveCoffers();
 	void UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRatio);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CofferManager")
@@ -37,6 +38,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Coffer")
 	FOnActiveCofferCountChanged OnActiveCofferCountChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Coffer")
+	FOnLegendaryCountChanged OnLegendaryCountChanged;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnCofferClicked OnCofferClicked;
@@ -50,6 +54,10 @@ public:
 	FTimerHandle ExperienceTimerHandle;
 	float TotalExperienceTime;
 	float RemainingExperienceTime;
+
+	//legendary system
+	int32 LegendaryCount = 0;
+	TSet<ACoffer*> CoffersWithEssence;
 
 private:
 	static ACofferManager* CofferManagerSingletonInstance;

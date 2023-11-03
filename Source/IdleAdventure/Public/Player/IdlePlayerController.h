@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include <Actor/NPCActor.h>
+#include "Actor/IdleInteractionComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
 #include "NiagaraComponent.h"
@@ -27,7 +29,6 @@ class ACoffer;
 class AIdleActorManager;
 class UNiagaraSystem;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTreeClickedDelegate, AIdleEffectActor*, TreeClickedParam);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPeriodFiredDelegate);
 
 
@@ -42,6 +43,9 @@ struct FPlayerControllerDefaults : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
 	float CofferCastingDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float NPCTalkingDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
 	float ZMultiplierStaffEndLoc;
@@ -64,6 +68,7 @@ struct FPlayerControllerDefaults : public FTableRowBase
 	FPlayerControllerDefaults()
 		: WoodcuttingCastingDistance(0.0f)
 		, CofferCastingDistance(0.0f)
+		, NPCTalkingDistance(0.0f)
 		, ZMultiplierStaffEndLoc(0.0f)
 		, XMultiplierStaffEndLoc(0.0f)
 		, YMultiplierStaffEndLoc(0.0f)
@@ -80,6 +85,7 @@ enum class EPlayerState : uint8
 	Idle,
 	MovingToTree,
 	MovingToCoffer,
+	MovingToNPC,
 	CuttingTree
 };
 
@@ -97,14 +103,16 @@ public:
 	EPlayerState CurrentPlayerState = EPlayerState::Idle;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tree Interaction", meta = (AllowPrivateAccess = "true"))
+	UIdleInteractionComponent* IdleInteractionComponent;
+
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY(BlueprintAssignable)
-	FOnTreeClickedDelegate OnTreeClicked;
+	
 
 	UPROPERTY(BlueprintAssignable)
 	FOnPeriodFiredDelegate OnPeriodFired;
@@ -148,6 +156,9 @@ public:
 	float CofferCastingDistance;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
+	float NPCTalkingDistance;
+
+	UPROPERTY(EditAnywhere, Category = "Initial values")
 	FVector StaffEndLocation;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
@@ -175,11 +186,6 @@ public:
 	UDataTable* PlayerDefaultsTable;
 
 	//Niagara system
-	void SpawnTreeCutEffect();
-	void EndTreeCutEffect();
-	UNiagaraComponent* SpawnedTreeEffect;
-	UNiagaraComponent* SpawnedStaffEffect;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* MouseClickEffectSystem;
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
@@ -258,13 +264,14 @@ private:
 	void MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn);
 	void ClickTree(FHitResult TreeHit, APawn* PlayerPawn);
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);
-	void ResetTreeTimer(AIdleEffectActor* Tree);
 	void ResetWoodcuttingAbilityTimer();
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
 	void StartConversionAbility(APawn* PlayerPawn);
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;
+	ANPCActor* TargetNPC = nullptr;
+
 	FHitResult CofferHitForCasting;
 
 
@@ -282,6 +289,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input")
 	FVector TargetDestination;
+
+	
 	
 
 };

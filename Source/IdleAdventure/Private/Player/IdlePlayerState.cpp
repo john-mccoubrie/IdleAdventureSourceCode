@@ -34,7 +34,10 @@ AIdlePlayerState::AIdlePlayerState()
 
 void AIdlePlayerState::BeginPlay()
 {
-	// Handle auto save
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LoginActorTag"), FoundActors);
+	APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
+	MyPlayLoginActor->LoadWoodcuttingExpFromPlayFab();
 	LoadExp();
 	GetWorld()->GetTimerManager().SetTimer(SaveGameTimerHandle, this, &AIdlePlayerState::AutoSaveGame, 10.f, true);
 
@@ -115,11 +118,9 @@ bool AIdlePlayerState::IsAbilityActive(TSubclassOf<UGameplayAbility> AbilityClas
 
 void AIdlePlayerState::InitializePlayerValues()
 {
-	//LoadExp();
-
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
 	OnExpGained.Broadcast(IdleAttributeSet->GetWoodcutExp());
-	OnExpGained.Broadcast(IdleAttributeSet->GetWeeklyWoodcutExp());
+;	OnExpGained.Broadcast(IdleAttributeSet->GetWeeklyWoodcutExp());
 	WhenLevelUp.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
 }
 
@@ -150,9 +151,19 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 	//LeaderboardManager->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
 	OnExpGained.Broadcast(IdleAttributeSet->GetWoodcutExp());
-
+	float testWCLvl = IdleAttributeSet->GetWoodcuttingLevel();
 	// Current level's required experience
-	float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
+	//float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
+	float expForCurrentLevel = 0.0f;
+
+	if (IdleAttributeSet->GetWoodcuttingLevel() == 1)
+	{
+		expForCurrentLevel = 0;
+	}
+	else
+	{
+		expForCurrentLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
+	}
 
 	// Next level's required experience
 	float expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 1);
@@ -229,8 +240,8 @@ void AIdlePlayerState::AutoSaveGame()
 		if (MyPlayLoginActor)
 		{
 			// Update both global and weekly experience values on PlayFab
-			UE_LOG(LogTemp, Warning, TEXT("GlobalExp in PC: %f"), IdleAttributeSet->GetWoodcutExp());
-			UE_LOG(LogTemp, Warning, TEXT("WeeklyExp in PC: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
+			//UE_LOG(LogTemp, Warning, TEXT("GlobalExp in PC: %f"), IdleAttributeSet->GetWoodcutExp());
+			//UE_LOG(LogTemp, Warning, TEXT("WeeklyExp in PC: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
 			MyPlayLoginActor->SavePlayerStatsToPlayFab(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWeeklyWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
 		}
 	}
@@ -238,7 +249,7 @@ void AIdlePlayerState::AutoSaveGame()
 
 void AIdlePlayerState::LoadExp()
 {
-	UE_LOG(LogTemp, Warning, TEXT("LOAD EXP CALLED"));
+	//UE_LOG(LogTemp, Warning, TEXT("LOAD EXP CALLED"));
 	//Load values from playfab
 		TArray<AActor*> FoundActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LoginActorTag"), FoundActors);
@@ -269,7 +280,7 @@ void AIdlePlayerState::OnPlayFabExpLoaded(int32 LoadedExp)
 
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
 	IdleAttributeSet->SetWoodcutExp(LoadedExp);
-	UE_LOG(LogTemp, Warning, TEXT("Global Exp set in PC: %f"), IdleAttributeSet->GetWoodcutExp());
+	//UE_LOG(LogTemp, Warning, TEXT("Global Exp set in PC: %f"), IdleAttributeSet->GetWoodcutExp());
 }
 
 void AIdlePlayerState::OnPlayFabWeeklyExpLoaded(int32 LoadedWeeklyExp)
@@ -278,7 +289,7 @@ void AIdlePlayerState::OnPlayFabWeeklyExpLoaded(int32 LoadedWeeklyExp)
 
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
 	IdleAttributeSet->SetWeeklyWoodcutExp(LoadedWeeklyExp);
-	UE_LOG(LogTemp, Warning, TEXT("Weekly Exp set in PC: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
+	//UE_LOG(LogTemp, Warning, TEXT("Weekly Exp set in PC: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
 }
 
 void AIdlePlayerState::OnPlayFabPlayerLevelLoaded(int32 LoadedPlayerLevel)

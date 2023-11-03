@@ -12,6 +12,7 @@
 #include <PlayerEquipment/BonusManager.h>
 #include <Chat/GameChatManager.h>
 #include <Test/TestManager.h>
+#include <Actor/CofferManager.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -49,7 +50,7 @@ void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
     Character->PlayAnimMontage(AnimMontage);
 
     //Spawn particle effect from the character
-    PC->SpawnTreeCutEffect();
+    //PC->SpawnTreeCutEffect();
 
 
 
@@ -87,7 +88,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     bAbilityIsActive = false;
 
     //Deactivate particle effect from the character
-    PC->EndTreeCutEffect();
+    PC->IdleInteractionComponent->EndTreeCutEffect();
     
     PS->AbilitySystemComponent->RemoveActiveGameplayEffect(PC->WoodcuttingEffectHandle);
     UAnimMontage* AnimMontage = Character->WoodcutMontage;
@@ -202,6 +203,53 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
         AddExperience(ExperienceGain);
 
+
+        // Update quest progress here
+        AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+        if (Character)
+        {
+            UQuest* CurrentQuest = Character->GetCurrentActiveQuest();
+
+
+            if (CurrentQuest && !CurrentQuest->bIsCompleted)
+            {
+                // Update the progress based on the type of essence
+                if (NewLog->EssenceRarity == "Wisdom")
+                {
+                    CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
+                    UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
+                }
+                else if (NewLog->EssenceRarity == "Temperance")
+                {
+                    CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
+                    UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
+                }
+                else if (NewLog->EssenceRarity == "Justice")
+                {
+                    CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
+                    UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
+                }
+                else if (NewLog->EssenceRarity == "Courage")
+                {
+                    CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
+                    UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
+                }
+                
+
+                // Check if the quest is completed after updating
+                if (CurrentQuest->IsQuestComplete())
+                {
+                    // Handle quest completion, e.g., give rewards, notify the player, etc.
+                    Character->CompleteQuest(CurrentQuest);
+                }
+            }
+            else {
+                UE_LOG(LogTemp, Warning, TEXT("CurrentQuest not valid"));
+            }
+        }
+
+
+
         // Load the data table
         UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/UI/Inventory/DT_EssenceTypes.DT_EssenceTypes"));
         if (EssenceDataTable)
@@ -216,7 +264,7 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 NewLog->ItemDescription = EssenceData->Description;
             }
         }
-        AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+        //AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
         for (int i = 0; i < EssenceToAdd; ++i)
         {
             Character->CharacterInventory->AddItem(NewLog);
@@ -234,13 +282,13 @@ void UWoodcuttingAbility::AddExperience(float Amount)
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
 
-    UE_LOG(LogTemp, Warning, TEXT("Global Before add: %f"), IdleAttributeSet->GetWoodcutExp());
-    UE_LOG(LogTemp, Warning, TEXT("Weekly Before add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
-    UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
+    //UE_LOG(LogTemp, Warning, TEXT("Global Before add: %f"), IdleAttributeSet->GetWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("Weekly Before add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("Amount: %f"), Amount);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Amount);
     IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Amount);
-    UE_LOG(LogTemp, Warning, TEXT("Global After add: %f"), IdleAttributeSet->GetWoodcutExp());
-    UE_LOG(LogTemp, Warning, TEXT("Weekly AFter add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("Global After add: %f"), IdleAttributeSet->GetWoodcutExp());
+    //UE_LOG(LogTemp, Warning, TEXT("Weekly AFter add: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
 }
 
 void UWoodcuttingAbility::GetLegendaryEssence()
@@ -256,12 +304,12 @@ void UWoodcuttingAbility::GetLegendaryEssence()
 
     //Test values (originally 1000)
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
-    float LegendaryExpGain = TestManager->CurrentSettings.LegendaryExpAmount;
+    float LegendaryExpGain = 5000;
     
     ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->LegendaryEssenceMultiplier));
     EssenceToAdd *= BonusManager->LegendaryYieldMultiplier;
 
-    //AddExperience(ExperienceGain);
+    AddExperience(ExperienceGain);
 
     // Load the data table
     UDataTable* EssenceDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/Blueprints/DataTables/DT_EssenceTypes.DT_EssenceTypes"));
@@ -288,7 +336,10 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
     GameChatManager->PostNotificationToUI("You receive a legendary essence!");
     PC->CurrentTree->Tags.Remove("Legendary");
-    IdleActorManager->SelectNewLegendaryTree();
+
+    ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());
+    CofferManager->RemoveActiveCoffers();
+    IdleActorManager->DeactivateCurrentLegendaryTree();
 }
 
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const

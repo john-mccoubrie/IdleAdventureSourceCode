@@ -1,5 +1,6 @@
 #include "Character/IdleCharacter.h"
 #include "AbilitySystemComponent.h"
+#include "Quest/QuestEnums.h"
 #include "Player/IdlePlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/IdlePlayerState.h"
@@ -78,5 +79,55 @@ void AIdleCharacter::InitAbilityActorInfo()
 		}
 	}
 	InitializePrimaryAttributes();
+}
+
+void AIdleCharacter::AddQuest(UQuest* Quest)
+{
+	if (Quest && !ActiveQuests.Contains(Quest))
+	{
+		ActiveQuests.Add(Quest);
+		Quest->Start(); // Assuming Start initializes quest status
+		
+
+		// Notify the UI to update the quest log display
+		UpdateQuestLogUI();
+	}
+}
+
+void AIdleCharacter::CompleteQuest(UQuest* Quest)
+{
+	// Assuming Complete finalizes the quest status
+		// This should now only be called when turning in the quest
+		// Quest->Complete(); // This line should be removed or commented out
+
+		// Update the character state, e.g., give rewards
+
+		// Remove quest from active quests if it's completed
+	if (Quest->QuestState == EQuestState::Completed)
+	{
+		ActiveQuests.Remove(Quest);
+	}
+
+	// Notify the UI to update the quest log display
+	UpdateQuestLogUI();
+
+}
+
+void AIdleCharacter::UpdateQuestLogUI()
+{
+	
+	//OnActiveQuestsUpdated.Broadcast();
+}
+
+UQuest* AIdleCharacter::GetCurrentActiveQuest()
+{
+	// This is a simple example where we return the last quest added to the ActiveQuests array.
+	// You might have more complex logic to determine the current active quest.
+	if (ActiveQuests.Num() > 0)
+	{
+		return ActiveQuests.Last();
+	}
+
+	return nullptr; // Return nullptr if there are no active quests.
 }
 
