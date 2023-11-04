@@ -85,6 +85,7 @@ enum class EQuestState : uint8
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAddAvailableQuestsToUI, UQuest*, QuestObject, FString, QuestName, FString, QuestDescription, FQuestRewards, Rewards);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddAvailableQuestsToUI, const TArray<UQuest*>&, Quests);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddCompletedQuestsToUI, const TArray<UQuest*>&, Quests);
 
 UCLASS()
 class IDLEADVENTURE_API AQuestManager : public AActor
@@ -101,16 +102,31 @@ public:
 	void GetQuestData();
 	void OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitleDataResult& Result);
 	void OnGetQuestDataFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+    bool PlayerHasCompletedQuest(UQuest* Quest);
     void AssignQuestsToNPCs();
     void GivePlayerQuestRewards(UQuest* Quest);
+
+    void BindToQuestDataReadyEvent();
+    UFUNCTION()
+    void HandleQuestDataReady();
+    void CheckAllQuests();
 
     //FQuestProgress QuestProgress;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnAddAvailableQuestsToUI OnAddAvailableQuestsToUI;
 
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnAddCompletedQuestsToUI OnAddCompletedQuestsToUI;
+
     UPROPERTY(BlueprintReadOnly, Category = "Quests")
     TArray<UQuest*> AvailableQuests;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Quests")
+    TArray<UQuest*> CompletedQuests;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Quests")
+    TArray<UQuest*> AllLoadedQuests;
 
     UPROPERTY(BlueprintReadOnly, Category = "Quests")
     TArray<FString> RequestedKeys;

@@ -39,15 +39,14 @@ void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 {
 	if (Player && Quest)
 	{
-		if (CanAcceptQuest(Quest))
+		// Ask the QuestManager to check if the quest can be accepted.
+		AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+		if (QuestManager)
 		{
-			Player->AddQuest(Quest);
-			AvailableQuests.Remove(Quest);
-			//OnQuestAssigned.Broadcast(Quest);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Player has already completed their daily quest."));
+			bool bCanAcceptQuest = !QuestManager->PlayerHasCompletedQuest(Quest);
+
+			// Now, notify the player about the quest acceptance status.
+			Player->NotifyQuestCompletionStatus(Quest->QuestID, bCanAcceptQuest);
 		}
 	}
 	else
@@ -61,7 +60,7 @@ void ANPCActor::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
 	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
 	if (PlayFabManager && Player && Quest && Player->ActiveQuests.Contains(Quest))
 	{
-		PlayFabManager->CompleteQuest(Quest, Player);
+		PlayFabManager->CompleteQuest(Quest);
 		Player->CompleteQuest(Quest);
 	}
 	/*
@@ -80,12 +79,12 @@ void ANPCActor::AddAvailableQuests(UQuest* QuestToAdd)
 	AvailableQuests.Add(QuestToAdd);
 }
 
-bool ANPCActor::CanAcceptQuest(UQuest* Quest)
+bool ANPCActor::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
 {
 	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
 	if (PlayFabManager)
 	{
-		PlayFabManager->GetCompletedQuestVersion(Quest->QuestID);
+		PlayFabManager->GetCompletedQuestVersion(Quest->QuestID, Player);
 		// Note: Now you will handle the quest version in HandleQuestVersionRetrieved
 	}
 
@@ -94,27 +93,21 @@ bool ANPCActor::CanAcceptQuest(UQuest* Quest)
 
 void ANPCActor::HandleQuestVersionRetrieved(FString QuestID, FString QuestVersion)
 {
-	// Assuming AvailableQuests is a TArray or TMap containing your quests
 	for (UQuest* AvailableQuest : AvailableQuests)
 	{
-		if (AvailableQuest->QuestID == QuestID) // Assuming QuestID is a member of your UQuest class
+		if (AvailableQuest->QuestID == QuestID)
 		{
 			if (QuestVersion != AvailableQuest->Version)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Quest %s is available for the player."), *QuestID);
-
-				// Additional logic here such as adding the quest to the player’s available quests UI
-				// You might also enable interaction points or NPCs associated with this quest
+				// Logic to make the quest available to the player
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Quest %s has already been completed by the player today."), *QuestID);
-
-				// Additional logic such as disabling the quest in the player’s available quests UI
-				// You might also disable interaction points or NPCs associated with this quest
+				// Logic to indicate the quest is not available
 			}
-
-			break; // Exit the loop once the quest is found
+			break;
 		}
 	}
 }

@@ -12,6 +12,7 @@
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystem/IdleAttributeSet.h>
+#include <PlayFab/PlayFabManager.h>
 
 AQuestManager* AQuestManager::QuestManagerSingletonInstance = nullptr;
 
@@ -32,7 +33,11 @@ void AQuestManager::BeginPlay()
 		QuestManagerSingletonInstance = this;
 	}
 	clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::GetQuestData);
+    PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);;
     GetQuestData();
+    BindToQuestDataReadyEvent();
 }
 
 void AQuestManager::BeginDestroy()
@@ -84,6 +89,7 @@ void AQuestManager::GetQuestData()
 void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitleDataResult& Result)
 {
     AvailableQuests.Empty();
+    CompletedQuests.Empty();
 
     for (const FString& Key : RequestedKeys)
     {
@@ -122,8 +128,28 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 NewQuest->QuestName = QuestName;
                 NewQuest->QuestDescription = QuestDescription;
                 NewQuest->Rewards = Rewards;
+                AllLoadedQuests.Add(NewQuest);
 
-                AvailableQuests.Add(NewQuest);
+                for (UQuest* Quest : AllLoadedQuests)
+                {
+                    
+                     // Check if the quest has been completed using the data from PlayFab
+                    if (PlayerHasCompletedQuest(Quest))
+                    {
+                        CompletedQuests.Add(Quest);
+                        //OnAddCompletedQuestsToUI.Broadcast(CompletedQuests);
+                        UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
+                    }
+                    else
+                    {
+                        AvailableQuests.Add(Quest);
+                        //OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
+                        UE_LOG(LogTemp, Warning, TEXT("Added to Available Quests: %s"), *Quest->QuestName);
+                    }
+                    
+                }
+
+                //AvailableQuests.Add(NewQuest);
                 //UE_LOG(LogTemp, Error, TEXT("AddedQuest"));
             }
             else
@@ -137,11 +163,28 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
         }
     }
 
-    OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
     AssignQuestsToNPCs();
 }
 
+bool AQuestManager::PlayerHasCompletedQuest(UQuest* Quest)
+{
+    FString* LastCompletedDatePtr = nullptr;
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    if (PlayFabManager)
+    {
+        // Find returns a pointer to the value if the key exists, otherwise nullptr.
+        LastCompletedDatePtr = PlayFabManager->PlayerCompletedQuestsData.Find(Quest->QuestID);
 
+        // If the pointer is not null, that means the key exists in the map
+        if (LastCompletedDatePtr)
+        {
+            // Dereference the pointer to get the actual FString value
+            FString LastCompletedDate = *LastCompletedDatePtr;
+            return !PlayFabManager->NeedsReset(LastCompletedDate);
+        }
+    }
+    return false; // Quest not found in completed quests data, or PlayFabManager instance not found
+}
 
 void AQuestManager::OnGetQuestDataFailure(const PlayFab::FPlayFabCppError& ErrorResult)
 {
@@ -161,6 +204,45 @@ void AQuestManager::AssignQuestsToNPCs()
             {
                 NPCActor->AddAvailableQuests(Quest);
             }
+        }
+    }
+}
+
+void AQuestManager::BindToQuestDataReadyEvent()
+{
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    if (PlayFabManager)
+    {
+        // Bind a function to handle the event
+        PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);
+    }
+}
+
+void AQuestManager::HandleQuestDataReady()
+{
+    // Data is ready, now it's safe to check quests
+    CheckAllQuests();
+
+
+    AssignQuestsToNPCs();
+
+    OnAddCompletedQuestsToUI.Broadcast(CompletedQuests); // If you need to broadcast the whole list at once
+    OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
+}
+
+void AQuestManager::CheckAllQuests()
+{
+    // Assume this function iterates over quests and checks their completion
+    // based on the now available completed quests data
+    for (UQuest* Quest : AllLoadedQuests)
+    {
+        if (PlayerHasCompletedQuest(Quest))
+        {
+            CompletedQuests.Add(Quest);
+        }
+        else
+        {
+            AvailableQuests.Add(Quest);
         }
     }
 }

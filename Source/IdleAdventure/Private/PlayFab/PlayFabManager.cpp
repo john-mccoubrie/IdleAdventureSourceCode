@@ -30,6 +30,7 @@ void APlayFabManager::BeginPlay()
     }
     Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     LoadPlayerEquipmentInventory();
+   
 }
 
 void APlayFabManager::BeginDestroy()
@@ -472,15 +473,15 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
     return OutputArray;
 }
 
-void APlayFabManager::SaveQuestStatsToPlayFab(TMap<FString, FString> CompletedQuests)
+void APlayFabManager::SaveQuestStatsToPlayFab(const FString& QuestID)
 {
-    // Prepare the quest completion data
     PlayFab::ClientModels::FUpdateUserDataRequest UpdateUserDataRequest;
-    for (const auto& Quest : CompletedQuests)
-    {
-        FString QuestData = FString::Printf(TEXT("{\"Version\":\"%s\"}"), *Quest.Value);
-        UpdateUserDataRequest.Data.Add(Quest.Key, QuestData);
-    }
+
+    // Create a JSON string with the current timestamp
+    FString QuestData = FString::Printf(TEXT("{\"LastCompleted\":\"%s\"}"), *FDateTime::UtcNow().ToString());
+
+    // Save the quest completion data with a timestamp
+    UpdateUserDataRequest.Data.Add(QuestID, QuestData);
 
     // Update the player data in PlayFab
     clientAPI->UpdateUserData(UpdateUserDataRequest,
@@ -491,61 +492,91 @@ void APlayFabManager::SaveQuestStatsToPlayFab(TMap<FString, FString> CompletedQu
 
 void APlayFabManager::OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Successfully updated user data."));
+    UE_LOG(LogTemp, Warning, TEXT("Successfully saved quest stats to playfab"));
 }
 
 void APlayFabManager::OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult)
 {
-    UE_LOG(LogTemp, Error, TEXT("Failed to update user data: %s"), *ErrorResult.ErrorMessage);
+    UE_LOG(LogTemp, Error, TEXT("Failed to save quest stats to playfab: %s"), *ErrorResult.ErrorMessage);
 }
 
-bool APlayFabManager::CanAcceptQuest(UQuest* Quest)
+void APlayFabManager::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
 {
-    FString completedVersion = GetCompletedQuestVersion(Quest->QuestID);
-    return completedVersion != Quest->Version;
-}
-
-void APlayFabManager::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
-{
-    if (CanAcceptQuest(Quest))
+    if (!Quest || !Player)
     {
-        // Additional completion logic here (e.g., rewards, notifications, etc.)
-
-        MarkQuestAsCompleted(Quest->QuestID, Quest->Version);
+        UE_LOG(LogTemp, Warning, TEXT("CanAcceptQuest called with invalid parameters."));
+        return;
     }
+
+    // Check if the quest exists in the completed quests data and if it needs to be reset
+    FString* LastCompletedDatePtr = PlayerCompletedQuestsData.Find(Quest->QuestID);
+    if (LastCompletedDatePtr)
+    {
+        // The quest has been completed before, check if it needs reset (e.g., if it's a daily quest)
+        if (!NeedsReset(*LastCompletedDatePtr))
+        {
+            // The player has already completed this quest, and it doesn't need a reset
+            Player->NotifyQuestCompletionStatus(Quest->QuestID, false);
+            return;
+        }
+    }
+
+    // If the quest hasn't been completed, or it has been completed but needs a reset, it can be accepted
+    Player->NotifyQuestCompletionStatus(Quest->QuestID, true);
 }
 
-FString APlayFabManager::GetCompletedQuestVersion(FString QuestID)
+void APlayFabManager::CompleteQuest(UQuest* Quest)
+{
+    // Mark the quest as completed in your game logic
+    //Player->MarkQuestAsComplete(Quest->QuestID, Quest->Version);
+
+    // Now update PlayFab with the new quest status
+    MarkQuestAsCompleted(Quest->QuestID, Quest->Version); 
+}
+
+void APlayFabManager::GetCompletedQuestVersion(FString QuestID, AIdleCharacter* Player)
 {
     PlayFab::ClientModels::FGetUserDataRequest Request;
     Request.Keys = { QuestID }; // Requesting the data associated with the specific quest
 
-    
+    // Pass the Player as part of the context to the callback
     clientAPI->GetUserData(Request,
-        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnGetQuestVersionSuccess),
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnGetQuestVersionSuccess, Player),
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnGetQuestVersionFailure)
     );
-
-    return "";
-    
 }
 
-void APlayFabManager::OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result)
+void APlayFabManager::OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result, AIdleCharacter* Player)
 {
     UE_LOG(LogTemp, Warning, TEXT("Successfully retrieved user data."));
 
+    // Process the result and determine if the quest can be accepted
     for (const auto& Entry : Result.Data)
     {
         FString QuestID = Entry.Key;
         FString QuestVersion = Entry.Value.Value;
-        UE_LOG(LogTemp, Warning, TEXT("Quest Version: %s"), *QuestVersion);
+        FDateTime LastUpdatedTime = Entry.Value.LastUpdated; // This is your FDateTime
+        FString LastCompletedDate = LastUpdatedTime.ToString();
 
-        OnQuestVersionRetrieved.Broadcast(QuestID, QuestVersion);
+        // Check if the quest is completed and if it needs to be reset (if it's a daily quest)
+        if (Player->HasQuestWithVersion(QuestID, QuestVersion) && !NeedsReset(LastCompletedDate))
+        {
+            // The player has already completed this version of the quest and it doesn't need a reset
+            Player->NotifyQuestCompletionStatus(QuestID, false);
+            UE_LOG(LogTemp, Warning, TEXT("notify quest completion status passing false."));
+        }
+        else
+        {
+            // The player can accept this quest or the quest has been reset
+            Player->NotifyQuestCompletionStatus(QuestID, true);
+            UE_LOG(LogTemp, Warning, TEXT("notify quest completion status passing true."));
+        }
     }
 }
 
 void APlayFabManager::OnGetQuestVersionFailure(const PlayFab::FPlayFabCppError& ErrorResult)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Mark quest as completed."));
     UE_LOG(LogTemp, Error, TEXT("Failed to retrieve user data: %s"), *ErrorResult.ErrorMessage);
     // Handle failure, e.g., retry or inform the user
 }
@@ -557,5 +588,62 @@ void APlayFabManager::MarkQuestAsCompleted(FString QuestID, FString Version)
     CompletedQuests.Add(QuestID, Version);
 
     // Save this data to PlayFab
-    SaveQuestStatsToPlayFab(CompletedQuests);
+    SaveQuestStatsToPlayFab(QuestID);
+}
+
+void APlayFabManager::CheckIfQuestCompleted(UQuest* Quest, AIdleCharacter* Player)
+{
+    // Fetch the completed quest version for the given quest
+    GetCompletedQuestVersion(Quest->QuestID, Player);
+}
+
+bool APlayFabManager::NeedsReset(const FString& LastCompletedDate)
+{
+    FDateTime LastDate;
+    FDateTime::Parse(LastCompletedDate, LastDate);
+    FDateTime CurrentDate = FDateTime::UtcNow(); // Assuming you're using UTC time everywhere
+
+    // This will reset the quest every new day (UTC time)
+    return LastDate.GetDate() != CurrentDate.GetDate();
+}
+
+void APlayFabManager::FetchCompletedQuestsData()
+{
+    // Request for completed quests data
+    PlayFab::ClientModels::FGetUserDataRequest Request;
+    Request.Keys.Add(TEXT("CompletedQuests"));
+
+    clientAPI->GetUserData(Request,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnFetchCompletedQuestsDataSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnFetchCompletedQuestsDataFailure)
+    );
+}
+
+void APlayFabManager::OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Error, TEXT("Got new quest data"));
+    // Clear the old data
+    PlayerCompletedQuestsData.Empty();
+
+    // Iterate over the data to populate your PlayerCompletedQuestsData
+    for (const auto& DataItem : Result.Data)
+    {
+        FString QuestID = DataItem.Key;
+        TSharedPtr<FJsonObject> JsonObject;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DataItem.Value.Value);
+
+        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+        {
+            FString LastCompletedDate = JsonObject->GetStringField(TEXT("LastCompleted"));
+            PlayerCompletedQuestsData.Add(QuestID, LastCompletedDate);
+        }
+    }
+
+    // Optionally, notify the game that quest data is ready to be used
+    OnQuestDataReady.Broadcast();
+}
+
+void APlayFabManager::OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to retrieve user data: %s"), *ErrorResult.ErrorMessage);
 }

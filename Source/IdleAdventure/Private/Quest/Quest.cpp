@@ -6,6 +6,7 @@
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystem/IdleAttributeSet.h>
+#include <PlayFab/PlayFabManager.h>
 
 void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
 {
@@ -75,6 +76,9 @@ void UQuest::Complete()
     
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
     QuestManager->GivePlayerQuestRewards(this);
+
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    PlayFabManager->CompleteQuest(this);
 
     OnQuestComplete.Broadcast();
 }

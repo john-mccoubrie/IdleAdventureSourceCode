@@ -73,6 +73,10 @@ void AIdleGameModeBase::BeginPlay()
      //Spawn the CofferManager singleton instance
      CofferManagerInstance = GetWorld()->SpawnActor<ACofferManager>(ACofferManager::StaticClass());
      CofferManagerInstance->SetUpAllCoffers();
+
+
+     //Load quest data
+     PlayFabManagerInstance->FetchCompletedQuestsData();
 }
 
 void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID, ExitGames::Common::JString& photonToken)

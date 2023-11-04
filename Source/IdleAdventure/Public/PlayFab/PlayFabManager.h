@@ -15,6 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPurchaseCompleted, bool, bSuccess
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceTransferredPlayFab, const TArray<FEssenceCoffer>&, EssenceCofferArray);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryLoaded, const TArray<FName>&, InventoryRowNames);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestVersionRetrieved, FString, QuestID, FString, QuestVersion);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestDataReady);
 /**
  * 
  */
@@ -55,15 +56,22 @@ public:
 	TArray<FName> ConvertFromPlayFabFormat(const FString& PlayFabData);
 
 	//Quest Logic
-	void SaveQuestStatsToPlayFab(TMap<FString, FString> CompletedQuests);
+	void SaveQuestStatsToPlayFab(const FString& QuestID);
 	void OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
 	void OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult);
-	bool CanAcceptQuest(UQuest* Quest);
-	void CompleteQuest(UQuest* Quest, AIdleCharacter* Player);
-	FString GetCompletedQuestVersion(FString QuestID);
-	void OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
+	void CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player);
+	void CompleteQuest(UQuest* Quest);
+	void GetCompletedQuestVersion(FString QuestID, AIdleCharacter* Player);
+	void OnGetQuestVersionSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result, AIdleCharacter* Player);
 	void OnGetQuestVersionFailure(const PlayFab::FPlayFabCppError& ErrorResult);
 	void MarkQuestAsCompleted(FString QuestID, FString Version);
+	void CheckIfQuestCompleted(UQuest* Quest, AIdleCharacter* Player);
+	bool NeedsReset(const FString& LastCompletedDate);
+
+	void FetchCompletedQuestsData();
+	void OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
+	void OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+
 	UPROPERTY(BlueprintAssignable)
 	FOnQuestVersionRetrieved OnQuestVersionRetrieved;
 
@@ -81,6 +89,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
 	TArray<FName> DataTableRowNames;
+	
+	TMap<FString, FString> PlayerCompletedQuestsData;
+	FOnQuestDataReady OnQuestDataReady;
 
 private:
 

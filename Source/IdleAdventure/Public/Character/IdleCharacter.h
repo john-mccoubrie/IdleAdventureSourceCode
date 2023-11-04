@@ -48,6 +48,8 @@ public:
 		UPROPERTY(BlueprintReadWrite, Category = "Quests")
 		TArray<UQuest*> ActiveQuests;
 
+		void CheckQuestCompletionFromPlayFab(UQuest* Quest);
+
 		UFUNCTION(BlueprintCallable, Category = "Quests")
 		void AddQuest(UQuest* Quest);
 
@@ -60,6 +62,10 @@ public:
 		UQuest* GetCurrentActiveQuest();
 
 		void UpdateAllActiveQuests(const FString& ObjectiveType, int32 Amount);
+
+		void NotifyQuestCompletionStatus(FString QuestID, bool bCanAccept);
+
+		bool HasQuestWithVersion(const FString& QuestID, const FString& Version) const;
 
 private:
 	void InitAbilityActorInfo();

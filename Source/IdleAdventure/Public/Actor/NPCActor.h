@@ -34,7 +34,7 @@ public:
 	void AddAvailableQuests(UQuest* QuestToAdd);
 
 	UFUNCTION()
-	bool CanAcceptQuest(UQuest* Quest);
+	bool CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player);
 
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quests")

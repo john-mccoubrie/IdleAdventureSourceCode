@@ -10,6 +10,7 @@
 #include <PlayerEquipment/EquipmentManager.h>
 #include <PlayerEquipment/PlayerEquipment.h>
 #include <Quest/QuestManager.h>
+#include <PlayFab/PlayFabManager.h>
 
 AIdleCharacter::AIdleCharacter()
 {
@@ -61,6 +62,17 @@ void AIdleCharacter::BeginPlay()
 
 	SpringArm = FindComponentByClass<USpringArmComponent>();
 	Camera = FindComponentByClass<UCameraComponent>();
+
+	// Initialize PlayFabManager reference
+	
+	AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+
+
+	// Check the completion status of all quests on game start
+	for (UQuest* Quest : QuestManager->AvailableQuests) // Assuming AvailableQuests is an array of all quests
+	{
+		CheckQuestCompletionFromPlayFab(Quest);
+	}
 }
 
 
@@ -86,10 +98,9 @@ void AIdleCharacter::AddQuest(UQuest* Quest)
 {
 	if (Quest && !ActiveQuests.Contains(Quest))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("added an active quest"));
 		ActiveQuests.Add(Quest);
 		Quest->Start(); // Assuming Start initializes quest status
-		
-
 		// Notify the UI to update the quest log display
 		UpdateQuestLogUI();
 	}
@@ -97,21 +108,21 @@ void AIdleCharacter::AddQuest(UQuest* Quest)
 
 void AIdleCharacter::CompleteQuest(UQuest* Quest)
 {
-	// Assuming Complete finalizes the quest status
-		// This should now only be called when turning in the quest
-		// Quest->Complete(); // This line should be removed or commented out
-// 
-	//create an awards function
-		// Update the character state, e.g., give rewards
-	
-		// Remove quest from active quests if it's completed
-	if (Quest->QuestState == EQuestState::Completed)
+	if (Quest && Quest->QuestState == EQuestState::Completed)
 	{
-		ActiveQuests.Remove(Quest);
-	}
+		APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+		// Notify PlayFabManager to update the quest status
+		if (PlayFabManager)
+		{
+			PlayFabManager->MarkQuestAsCompleted(Quest->QuestID, Quest->Version);
+		}
 
-	// Notify the UI to update the quest log display
-	UpdateQuestLogUI();
+		// Remove quest from active quests
+		ActiveQuests.Remove(Quest);
+
+		// Notify the UI to update the quest log display
+		UpdateQuestLogUI();
+	}
 
 }
 
@@ -141,3 +152,62 @@ void AIdleCharacter::UpdateAllActiveQuests(const FString& ObjectiveType, int32 A
 	}
 }
 
+void AIdleCharacter::NotifyQuestCompletionStatus(FString QuestID, bool bCanAccept)
+{
+	if (bCanAccept)
+	{
+		// Logic to accept the quest
+		// Find the quest by ID and add it to the active quests if it's not already there
+		AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+		UQuest** QuestPointer = QuestManager->AvailableQuests.FindByPredicate([&](UQuest* Quest) {
+			return Quest && Quest->QuestID.Equals(QuestID);
+			});
+
+		UQuest* QuestToAccept = nullptr;
+		if (QuestPointer != nullptr)
+		{
+			QuestToAccept = *QuestPointer;
+		}
+
+		if (QuestToAccept)
+		{
+			AddQuest(QuestToAccept);
+			UE_LOG(LogTemp, Warning, TEXT("accept quest"));
+		}
+	}
+	else
+	{
+		// Logic to reject the quest because it's already completed
+		UE_LOG(LogTemp, Warning, TEXT("Player has already completed their daily quest."));
+	}
+}
+
+bool AIdleCharacter::HasQuestWithVersion(const FString& QuestID, const FString& Version) const
+{
+	// Iterate through the ActiveQuests array
+	for (UQuest* Quest : ActiveQuests)
+	{
+		// Check if the current quest matches the QuestID
+		if (Quest && Quest->QuestID.Equals(QuestID))
+		{
+			// Check if the version of the current quest matches the provided Version
+			if (Quest->Version.Equals(Version))
+			{
+				// The quest with this version is active
+				return true;
+			}
+		}
+	}
+
+	// If no matching quest is found, return false
+	return false;
+}
+
+void AIdleCharacter::CheckQuestCompletionFromPlayFab(UQuest* Quest)
+{
+	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+	if (PlayFabManager && Quest)
+	{
+		PlayFabManager->CheckIfQuestCompleted(Quest, this);
+	}
+}
