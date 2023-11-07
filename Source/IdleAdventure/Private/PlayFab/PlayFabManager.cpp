@@ -8,6 +8,7 @@
 #include "Core/PlayFabClientAPI.h"
 #include <PlayerEquipment/PlayerEquipment.h>
 #include <Chat/GameChatManager.h>
+#include <Quest/QuestManager.h>
 
 //Define the static member variable
 APlayFabManager* APlayFabManager::SingletonInstance = nullptr;
@@ -29,6 +30,7 @@ void APlayFabManager::BeginPlay()
         SingletonInstance = this;
     }
     Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    UE_LOG(LogTemp, Warning, TEXT("PLa"))
     FetchCompletedQuestsData();
     LoadPlayerEquipmentInventory();
    
@@ -719,6 +721,8 @@ void APlayFabManager::OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientMod
 
     // Optionally, notify the game that quest data is ready to be used
     OnQuestDataReady.Broadcast();
+    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+    QuestManager->GetQuestData();
 }
 
 void APlayFabManager::OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult)

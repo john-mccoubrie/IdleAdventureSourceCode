@@ -69,14 +69,14 @@ void AIdleGameModeBase::BeginPlay()
      }
 
      // Spawn the PlayFabManager singleton instance
-     APlayFabManager* PlayFabManagerInstance = GetWorld()->SpawnActor<APlayFabManager>(APlayFabManager::StaticClass());
+     PlayFabManagerInstance = GetWorld()->SpawnActor<APlayFabManager>(APlayFabManager::StaticClass());
      //Spawn the CofferManager singleton instance
      CofferManagerInstance = GetWorld()->SpawnActor<ACofferManager>(ACofferManager::StaticClass());
      CofferManagerInstance->SetUpAllCoffers();
 
 
      //Load quest data
-     PlayFabManagerInstance->FetchCompletedQuestsData();
+     //PlayFabManagerInstance->FetchCompletedQuestsData();
 }
 
 void AIdleGameModeBase::ConnectToChat(ExitGames::Common::JString& userID, ExitGames::Common::JString& photonToken)

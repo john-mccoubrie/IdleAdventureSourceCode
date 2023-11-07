@@ -71,7 +71,7 @@ void AIdleCharacter::BeginPlay()
 	// Check the completion status of all quests on game start
 	for (UQuest* Quest : QuestManager->AvailableQuests) // Assuming AvailableQuests is an array of all quests
 	{
-		CheckQuestCompletionFromPlayFab(Quest);
+		//CheckQuestCompletionFromPlayFab(Quest);
 	}
 }
 

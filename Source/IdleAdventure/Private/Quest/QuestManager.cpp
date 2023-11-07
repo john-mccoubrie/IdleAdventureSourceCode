@@ -21,7 +21,6 @@ AQuestManager::AQuestManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
@@ -33,10 +32,10 @@ void AQuestManager::BeginPlay()
 		QuestManagerSingletonInstance = this;
 	}
 	clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    //APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
     //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::GetQuestData);
     //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);;
-    GetQuestData();
+    //GetQuestData();
     //BindToQuestDataReadyEvent();
 }
 
@@ -77,6 +76,7 @@ void AQuestManager::ResetInstance()
 
 void AQuestManager::GetQuestData()
 {
+    UE_LOG(LogTemp, Warning, TEXT("GetQuestData called"));
     PlayFab::ClientModels::FGetTitleDataRequest Request;
     Request.Keys.Add("DailyEasyQuest");
     Request.Keys.Add("DailyLegendaryQuest");
@@ -97,6 +97,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
 {
     AvailableQuests.Empty();
     CompletedQuests.Empty();
+    AllLoadedQuests.Empty();
 
     for (const FString& Key : RequestedKeys)
     {
@@ -137,40 +138,30 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 NewQuest->QuestDescription = QuestDescription;
                 NewQuest->Rewards = Rewards;
                 AllLoadedQuests.Add(NewQuest);
-
-                for (UQuest* Quest : AllLoadedQuests)
+            }
+        }
+                
+    }
+            // After all quests have been loaded, determine if they are completed or available
+            for (UQuest* Quest : AllLoadedQuests)
+            {
+                if (PlayerHasCompletedQuest(Quest) && !CompletedQuests.Contains(Quest))
                 {
-                    
-                    if (PlayerHasCompletedQuest(Quest))
-                    {
-                        CompletedQuests.Add(Quest);
-                        OnAddCompletedQuestsToUI.Broadcast(CompletedQuests);
-                        UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
-                    }
-                    else
+                    CompletedQuests.Add(Quest);
+                    UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
+                }
+                else
+                {
+                    if (!AvailableQuests.Contains(Quest))
                     {
                         AvailableQuests.Add(Quest);
-                        OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
                         UE_LOG(LogTemp, Warning, TEXT("Added to Available Quests: %s"), *Quest->QuestName);
-                    }
-                    
+                    } 
                 }
-
-                //AvailableQuests.Add(NewQuest);
-                //UE_LOG(LogTemp, Error, TEXT("AddedQuest"));
             }
-            else
-            {
-                UE_LOG(LogTemp, Error, TEXT("Failed to parse quest data for key '%s' as JSON"), *Key);
-            }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Key '%s' not found in Result.Data"), *Key);
-        }
-    }
-
-    AssignQuestsToNPCs();
+            OnAddCompletedQuestsToUI.Broadcast(CompletedQuests);
+            OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
+            AssignQuestsToNPCs();
 }
 
 bool AQuestManager::PlayerHasCompletedQuest(UQuest* Quest)

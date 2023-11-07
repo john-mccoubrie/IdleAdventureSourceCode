@@ -118,12 +118,13 @@ void ANPCActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	/*
 	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
 	if (PlayFabManager)
 	{
 		PlayFabManager->OnQuestVersionRetrieved.AddDynamic(this, &ANPCActor::HandleQuestVersionRetrieved);
 	}
-	
+	*/
 }
 
 // Called every frame

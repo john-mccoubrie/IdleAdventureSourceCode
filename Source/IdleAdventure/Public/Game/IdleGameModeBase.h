@@ -69,6 +69,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Sound")
 	ASoundManager* SoundManagerInstance;
 
+	UPROPERTY(BlueprintReadOnly, Category = "PlayFab Manager")
+	APlayFabManager* PlayFabManagerInstance;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
 	TSubclassOf<class ASoundManager> SoundManagerBlueprint;
 
