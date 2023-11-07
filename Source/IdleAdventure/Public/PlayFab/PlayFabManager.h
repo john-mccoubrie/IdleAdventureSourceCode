@@ -56,7 +56,7 @@ public:
 	TArray<FName> ConvertFromPlayFabFormat(const FString& PlayFabData);
 
 	//Quest Logic
-	void SaveQuestStatsToPlayFab(const FString& QuestID);
+	void SaveQuestStatsToPlayFab();
 	void OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
 	void OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult);
 	void CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player);
@@ -92,6 +92,8 @@ public:
 	
 	TMap<FString, FString> PlayerCompletedQuestsData;
 	FOnQuestDataReady OnQuestDataReady;
+
+	TMap<FString, FString> CompletedQuests;
 
 private:
 

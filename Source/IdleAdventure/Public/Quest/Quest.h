@@ -123,6 +123,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void TurnInQuest();
 
+	void SetWorldContext(UWorld* InWorld);
+	UWorld* GetWorldContext() const;
+	UWorld* WorldContext;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest")
 	EQuestState QuestState;
 

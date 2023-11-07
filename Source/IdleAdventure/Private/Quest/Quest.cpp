@@ -63,6 +63,16 @@ void UQuest::TurnInQuest()
     }
 }
 
+void UQuest::SetWorldContext(UWorld* InWorld)
+{
+    WorldContext = InWorld;
+}
+
+UWorld* UQuest::GetWorldContext() const
+{
+    return WorldContext;
+}
+
 void UQuest::Start()
 {
     // Logic to start the quest, for example setting initial objectives or flags
@@ -74,11 +84,22 @@ void UQuest::Complete()
 {
     UE_LOG(LogTemp, Error, TEXT("Quest Complete!!!"));
     
-    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
-    QuestManager->GivePlayerQuestRewards(this);
+    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorldContext());
+    
+    
 
-    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
-    PlayFabManager->CompleteQuest(this);
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorldContext());
+   
+
+    if (QuestManager && PlayFabManager)
+    {
+        PlayFabManager->CompleteQuest(this);
+        QuestManager->GivePlayerQuestRewards(this);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("playfab manager or quest manager not valid in quest"));
+    }
 
     OnQuestComplete.Broadcast();
 }

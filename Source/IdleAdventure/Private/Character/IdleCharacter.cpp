@@ -111,11 +111,8 @@ void AIdleCharacter::CompleteQuest(UQuest* Quest)
 	if (Quest && Quest->QuestState == EQuestState::Completed)
 	{
 		APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
-		// Notify PlayFabManager to update the quest status
-		if (PlayFabManager)
-		{
-			PlayFabManager->MarkQuestAsCompleted(Quest->QuestID, Quest->Version);
-		}
+		PlayFabManager->CompleteQuest(Quest);
+		UE_LOG(LogTemp, Warning, TEXT("Complete quest called in character"));
 
 		// Remove quest from active quests
 		ActiveQuests.Remove(Quest);

@@ -29,6 +29,7 @@ void APlayFabManager::BeginPlay()
         SingletonInstance = this;
     }
     Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    FetchCompletedQuestsData();
     LoadPlayerEquipmentInventory();
    
 }
@@ -42,6 +43,12 @@ void APlayFabManager::BeginDestroy()
 
 APlayFabManager* APlayFabManager::GetInstance(UWorld* World)
 {
+    if (!World || !World->IsValidLowLevelFast() || World->bIsTearingDown)
+    {
+        // The world is not valid or is being destroyed, return nullptr.
+        return nullptr;
+    }
+
     if (!SingletonInstance)
     {
         for (TActorIterator<APlayFabManager> It(World); It; ++It)
@@ -473,15 +480,27 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
     return OutputArray;
 }
 
-void APlayFabManager::SaveQuestStatsToPlayFab(const FString& QuestID)
+void APlayFabManager::SaveQuestStatsToPlayFab()
 {
     PlayFab::ClientModels::FUpdateUserDataRequest UpdateUserDataRequest;
 
-    // Create a JSON string with the current timestamp
-    FString QuestData = FString::Printf(TEXT("{\"LastCompleted\":\"%s\"}"), *FDateTime::UtcNow().ToString());
+    // Convert your TMap of completed quests to a JSON object
+    TSharedPtr<FJsonObject> CompletedQuestsJson = MakeShareable(new FJsonObject());
+    for (const auto& QuestEntry : CompletedQuests)
+    {
+        TSharedPtr<FJsonObject> QuestCompletionJson = MakeShareable(new FJsonObject());
+        QuestCompletionJson->SetStringField(TEXT("LastCompleted"), QuestEntry.Value);
 
-    // Save the quest completion data with a timestamp
-    UpdateUserDataRequest.Data.Add(QuestID, QuestData);
+        CompletedQuestsJson->SetObjectField(QuestEntry.Key, QuestCompletionJson);
+    }
+
+    // Convert the JSON object to string
+    FString CompletedQuestsJsonString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&CompletedQuestsJsonString);
+    FJsonSerializer::Serialize(CompletedQuestsJson.ToSharedRef(), Writer);
+
+    // Use a specific key for this structured data, e.g., "CompletedQuests"
+    UpdateUserDataRequest.Data.Add(TEXT("CompletedQuests"), CompletedQuestsJsonString);
 
     // Update the player data in PlayFab
     clientAPI->UpdateUserData(UpdateUserDataRequest,
@@ -528,10 +547,13 @@ void APlayFabManager::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
 void APlayFabManager::CompleteQuest(UQuest* Quest)
 {
     // Mark the quest as completed in your game logic
-    //Player->MarkQuestAsComplete(Quest->QuestID, Quest->Version);
+    UE_LOG(LogTemp, Warning, TEXT("Complete quest called in playfabmanager."));
 
-    // Now update PlayFab with the new quest status
-    MarkQuestAsCompleted(Quest->QuestID, Quest->Version); 
+    // Add the quest and the completion timestamp to the CompletedQuests map
+    CompletedQuests.Add(Quest->QuestID, FDateTime::UtcNow().ToString());
+
+    // Save all completed quests to PlayFab
+    SaveQuestStatsToPlayFab(); // Updated to call without parameters
 }
 
 void APlayFabManager::GetCompletedQuestVersion(FString QuestID, AIdleCharacter* Player)
@@ -583,12 +605,15 @@ void APlayFabManager::OnGetQuestVersionFailure(const PlayFab::FPlayFabCppError& 
 
 void APlayFabManager::MarkQuestAsCompleted(FString QuestID, FString Version)
 {
+    /*
+    UE_LOG(LogTemp, Warning, TEXT("Mark Quest as completed called in playfabmanager."));
     // Create a map containing the quest completion data
     TMap<FString, FString> CompletedQuests;
     CompletedQuests.Add(QuestID, Version);
 
     // Save this data to PlayFab
     SaveQuestStatsToPlayFab(QuestID);
+    */
 }
 
 void APlayFabManager::CheckIfQuestCompleted(UQuest* Quest, AIdleCharacter* Player)
@@ -622,21 +647,45 @@ void APlayFabManager::FetchCompletedQuestsData()
 void APlayFabManager::OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result)
 {
     UE_LOG(LogTemp, Error, TEXT("Got new quest data"));
-    // Clear the old data
-    PlayerCompletedQuestsData.Empty();
 
-    // Iterate over the data to populate your PlayerCompletedQuestsData
-    for (const auto& DataItem : Result.Data)
+    const FString CompletedQuestsKey = TEXT("CompletedQuests");
+    const FString LastCompletedField = TEXT("LastCompleted");
+
+    // Check if the CompletedQuests key is in the result data
+    if (Result.Data.Contains(CompletedQuestsKey))
     {
-        FString QuestID = DataItem.Key;
-        TSharedPtr<FJsonObject> JsonObject;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DataItem.Value.Value);
+        const auto& CompletedQuestsJsonValue = Result.Data[CompletedQuestsKey];
 
-        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+        // Parse the JSON string for the CompletedQuests object
+        TSharedPtr<FJsonObject> CompletedQuestsJsonObject;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(CompletedQuestsJsonValue.Value);
+        if (FJsonSerializer::Deserialize(Reader, CompletedQuestsJsonObject) && CompletedQuestsJsonObject.IsValid())
         {
-            FString LastCompletedDate = JsonObject->GetStringField(TEXT("LastCompleted"));
-            PlayerCompletedQuestsData.Add(QuestID, LastCompletedDate);
+            // Now iterate over the CompletedQuests object to get each quest's completion time
+            for (const auto& QuestEntry : CompletedQuestsJsonObject->Values)
+            {
+                const FString QuestID = QuestEntry.Key;
+                const TSharedPtr<FJsonValue> QuestValue = QuestEntry.Value;
+
+                // Make sure this value is an object
+                if (QuestValue.IsValid() && QuestValue->Type == EJson::Object)
+                {
+                    TSharedPtr<FJsonObject> QuestObject = QuestValue->AsObject();
+                    FString LastCompletedDate = QuestObject->GetStringField(LastCompletedField);
+
+                    PlayerCompletedQuestsData.Add(QuestID, LastCompletedDate);
+                    UE_LOG(LogTemp, Log, TEXT("Quest %s completed on: %s"), *QuestID, *LastCompletedDate);
+                }
+            }
         }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to deserialize CompletedQuests data."));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("CompletedQuests key not found in Result.Data"));
     }
 
     // Optionally, notify the game that quest data is ready to be used

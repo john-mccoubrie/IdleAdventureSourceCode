@@ -35,14 +35,21 @@ void AQuestManager::BeginPlay()
 	clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
     APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
     //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::GetQuestData);
-    PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);;
+    //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);;
     GetQuestData();
-    BindToQuestDataReadyEvent();
+    //BindToQuestDataReadyEvent();
 }
 
 void AQuestManager::BeginDestroy()
 {
 	Super::BeginDestroy();
+
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    if (PlayFabManager)
+    {
+        PlayFabManager->OnQuestDataReady.RemoveDynamic(this, &AQuestManager::HandleQuestDataReady);
+    }
+
 	ResetInstance();
 }
 
@@ -123,6 +130,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 Rewards.Objectives = Objectives;
 
                 UQuest* NewQuest = NewObject<UQuest>();
+                NewQuest->SetWorldContext(GetWorld());
                 NewQuest->QuestID = QuestID;
                 NewQuest->Version = Version;
                 NewQuest->QuestName = QuestName;
@@ -133,17 +141,16 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 for (UQuest* Quest : AllLoadedQuests)
                 {
                     
-                     // Check if the quest has been completed using the data from PlayFab
                     if (PlayerHasCompletedQuest(Quest))
                     {
                         CompletedQuests.Add(Quest);
-                        //OnAddCompletedQuestsToUI.Broadcast(CompletedQuests);
+                        OnAddCompletedQuestsToUI.Broadcast(CompletedQuests);
                         UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
                     }
                     else
                     {
                         AvailableQuests.Add(Quest);
-                        //OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
+                        OnAddAvailableQuestsToUI.Broadcast(AvailableQuests);
                         UE_LOG(LogTemp, Warning, TEXT("Added to Available Quests: %s"), *Quest->QuestName);
                     }
                     
@@ -213,8 +220,7 @@ void AQuestManager::BindToQuestDataReadyEvent()
     APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
     if (PlayFabManager)
     {
-        // Bind a function to handle the event
-        PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);
+        //PlayFabManager->OnQuestDataReady.AddDynamic(this, &AQuestManager::HandleQuestDataReady);  
     }
 }
 
@@ -255,75 +261,3 @@ void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Quest->Rewards.Experience);
 }
-
-
-/*
-
-
-void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitleDataResult& Result)
-{
-    if (Result.Data.Contains(TEXT("QuestTest")))
-    {
-        FString QuestDataJson = Result.Data[TEXT("QuestTest")];
-        // Parse the JSON string to a JSON object
-        TSharedPtr<FJsonObject> JsonObject;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(QuestDataJson);
-
-        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-        {
-            // Now extract the data from the JSON object
-            FString QuestName = JsonObject->GetStringField(TEXT("Name"));
-            FString QuestDescription = JsonObject->GetStringField(TEXT("Description"));
-
-            TSharedPtr<FJsonObject> RewardsObject = JsonObject->GetObjectField(TEXT("Rewards"));
-
-            FQuestRewards Rewards;
-            Rewards.Experience = RewardsObject->GetIntegerField(TEXT("Experience"));
-            Rewards.TemperanceEssence = RewardsObject->GetIntegerField(TEXT("TemperanceEssence"));
-
-
-            TSharedPtr<FJsonObject> ObjectivesObject = JsonObject->GetObjectField(TEXT("QuestObjectives"));
-            FQuestObjectives Objectives;
-            Objectives.Wisdom = ObjectivesObject->GetIntegerField(TEXT("Wisdom"));
-            Objectives.Temperance = ObjectivesObject->GetIntegerField(TEXT("Temperance"));
-            Objectives.Justice = ObjectivesObject->GetIntegerField(TEXT("Justice"));
-            Objectives.Courage = ObjectivesObject->GetIntegerField(TEXT("Courage"));
-            Objectives.Other = ObjectivesObject->GetIntegerField(TEXT("Other"));
-
-            Rewards.Objectives = Objectives;
-
-
-            // Create the quest object
-            UQuest* NewQuest = NewObject<UQuest>();
-            NewQuest->QuestName = QuestName;
-            NewQuest->QuestDescription = QuestDescription;
-            NewQuest->Rewards = Rewards; // Assign the struct here
-
-            TArray<AActor*> FoundActors;
-            UGameplayStatics::GetAllActorsWithTag(GetWorld(), "NPC", FoundActors);
-            ANPCActor* NPCActor = FoundActors.Num() > 0 ? Cast<ANPCActor>(FoundActors[0]) : nullptr;
-
-            OnAddAvailableQuestsToUI.Broadcast(NewQuest, NewQuest->QuestName, NewQuest->QuestDescription, NewQuest->Rewards);
-
-            if (NPCActor != nullptr)
-            {
-                NPCActor->AddAvailableQuests(NewQuest);
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("No NPC Actor found with the specified tag."));
-            }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to parse QuestTest data as JSON"));
-        }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("QuestTest key not found in Result.Data"));
-    }
-}
-
-
-*/

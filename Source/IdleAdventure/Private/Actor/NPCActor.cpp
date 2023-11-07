@@ -47,6 +47,7 @@ void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 
 			// Now, notify the player about the quest acceptance status.
 			Player->NotifyQuestCompletionStatus(Quest->QuestID, bCanAcceptQuest);
+			//Quest->OnQuestComplete.AddDynamic(this, &ANPCActor::CompleteQuest);
 		}
 	}
 	else
@@ -63,7 +64,7 @@ void ANPCActor::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
 		PlayFabManager->CompleteQuest(Quest);
 		Player->CompleteQuest(Quest);
 	}
-	/*
+	
 	if (Player && Quest && Player->ActiveQuests.Contains(Quest))
 	{
 		//Quest->Complete(); // Mark the quest as completed
@@ -71,7 +72,7 @@ void ANPCActor::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
 		Player->CompleteQuest(Quest);
 		//OnQuestCompleted.Broadcast(Quest); // Optional: Broadcast an event when a quest is completed.
 	}
-	*/
+	
 }
 
 void ANPCActor::AddAvailableQuests(UQuest* QuestToAdd)
