@@ -480,30 +480,59 @@ TArray<FName> APlayFabManager::ConvertFromPlayFabFormat(const FString& PlayFabDa
     return OutputArray;
 }
 
-void APlayFabManager::SaveQuestStatsToPlayFab()
+void APlayFabManager::SaveQuestStatsToPlayFab(const FString& QuestID, const FString& CompletionDate)
 {
-    PlayFab::ClientModels::FUpdateUserDataRequest UpdateUserDataRequest;
+    // Store the quest ID and completion date in member variables
+    PendingQuestID = QuestID;
+    PendingCompletionDate = FDateTime::UtcNow().ToString();;
 
-    // Convert your TMap of completed quests to a JSON object
-    TSharedPtr<FJsonObject> CompletedQuestsJson = MakeShareable(new FJsonObject());
-    for (const auto& QuestEntry : CompletedQuests)
+    // Fetch the existing completed quests data first
+    PlayFab::ClientModels::FGetUserDataRequest GetRequest;
+    GetRequest.Keys.Add(TEXT("CompletedQuests"));
+    clientAPI->GetUserData(GetRequest,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnFetchedCompletedQuestsBeforeSaving),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnFetchCompletedQuestsDataFailure)
+    );
+}
+
+void APlayFabManager::OnFetchedCompletedQuestsBeforeSaving(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    FString QuestID = PendingQuestID;
+    FString CompletionDate = PendingCompletionDate;
+
+    // Create a JSON object that represents a single quest completion
+    TSharedPtr<FJsonObject> QuestCompletionJsonObject = MakeShared<FJsonObject>();
+    QuestCompletionJsonObject->SetStringField(TEXT("LastCompleted"), CompletionDate);
+
+    TSharedPtr<FJsonObject> CompletedQuestsJsonObject;
+    if (Result.Data.Contains(TEXT("CompletedQuests")))
     {
-        TSharedPtr<FJsonObject> QuestCompletionJson = MakeShareable(new FJsonObject());
-        QuestCompletionJson->SetStringField(TEXT("LastCompleted"), QuestEntry.Value);
-
-        CompletedQuestsJson->SetObjectField(QuestEntry.Key, QuestCompletionJson);
+        // Existing data found, parse it
+        const FString& CompletedQuestsData = Result.Data[TEXT("CompletedQuests")].Value;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(CompletedQuestsData);
+        if (FJsonSerializer::Deserialize(Reader, CompletedQuestsJsonObject) && CompletedQuestsJsonObject.IsValid())
+        {
+            // Now, update the specific quest's last completion date
+            CompletedQuestsJsonObject->SetObjectField(QuestID, QuestCompletionJsonObject);
+        }
+    }
+    else
+    {
+        // No existing data, create a new JSON object
+        CompletedQuestsJsonObject = MakeShared<FJsonObject>();
+        CompletedQuestsJsonObject->SetObjectField(QuestID, QuestCompletionJsonObject);
     }
 
-    // Convert the JSON object to string
-    FString CompletedQuestsJsonString;
-    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&CompletedQuestsJsonString);
-    FJsonSerializer::Serialize(CompletedQuestsJson.ToSharedRef(), Writer);
+    // Serialize the updated object back into a string
+    FString UpdatedCompletedQuestsData;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedCompletedQuestsData);
+    FJsonSerializer::Serialize(CompletedQuestsJsonObject.ToSharedRef(), Writer);
 
-    // Use a specific key for this structured data, e.g., "CompletedQuests"
-    UpdateUserDataRequest.Data.Add(TEXT("CompletedQuests"), CompletedQuestsJsonString);
+    // Now, update PlayFab with the new data
+    PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
+    UpdateRequest.Data.Add(TEXT("CompletedQuests"), UpdatedCompletedQuestsData);
 
-    // Update the player data in PlayFab
-    clientAPI->UpdateUserData(UpdateUserDataRequest,
+    clientAPI->UpdateUserData(UpdateRequest,
         PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &APlayFabManager::OnUpdateQuestStatsSuccess),
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnUpdateQuestStatsFailure)
     );
@@ -511,7 +540,7 @@ void APlayFabManager::SaveQuestStatsToPlayFab()
 
 void APlayFabManager::OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Successfully saved quest stats to playfab"));
+    UE_LOG(LogTemp, Log, TEXT("User data updated successfully in update quest stats."));
 }
 
 void APlayFabManager::OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult)
@@ -553,7 +582,7 @@ void APlayFabManager::CompleteQuest(UQuest* Quest)
     CompletedQuests.Add(Quest->QuestID, FDateTime::UtcNow().ToString());
 
     // Save all completed quests to PlayFab
-    SaveQuestStatsToPlayFab(); // Updated to call without parameters
+    SaveQuestStatsToPlayFab(Quest->QuestID, Quest->Version); // Updated to call without parameters
 }
 
 void APlayFabManager::GetCompletedQuestVersion(FString QuestID, AIdleCharacter* Player)

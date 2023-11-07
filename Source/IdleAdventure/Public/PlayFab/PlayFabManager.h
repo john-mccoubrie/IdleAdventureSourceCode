@@ -56,7 +56,8 @@ public:
 	TArray<FName> ConvertFromPlayFabFormat(const FString& PlayFabData);
 
 	//Quest Logic
-	void SaveQuestStatsToPlayFab();
+	void SaveQuestStatsToPlayFab(const FString& QuestID, const FString& CompletionDate);
+	void OnFetchedCompletedQuestsBeforeSaving(const PlayFab::ClientModels::FGetUserDataResult& Result);
 	void OnUpdateQuestStatsSuccess(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
 	void OnUpdateQuestStatsFailure(const PlayFab::FPlayFabCppError& ErrorResult);
 	void CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player);
@@ -71,6 +72,10 @@ public:
 	void FetchCompletedQuestsData();
 	void OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
 	void OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+
+
+	FString PendingQuestID;
+	FString PendingCompletionDate;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnQuestVersionRetrieved OnQuestVersionRetrieved;

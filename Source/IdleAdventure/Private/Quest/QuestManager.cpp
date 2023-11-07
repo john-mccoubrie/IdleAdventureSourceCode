@@ -200,6 +200,7 @@ void AQuestManager::OnGetQuestDataFailure(const PlayFab::FPlayFabCppError& Error
 
 void AQuestManager::AssignQuestsToNPCs()
 {
+    UE_LOG(LogTemp, Warning, TEXT("AssignQuestsToNPC called"));
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsWithTag(GetWorld(), "NPC", FoundActors);
     for (UQuest* Quest : AvailableQuests)
