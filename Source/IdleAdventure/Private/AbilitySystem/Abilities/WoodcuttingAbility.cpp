@@ -3,6 +3,7 @@
 #include "Character/IdleCharacter.h"
 #include "Player/IdlePlayerController.h"
 #include "Actor/IdleActorManager.h"
+#include "Styling/SlateColor.h"
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include "Actor/IdleEffectActor.h"
 #include <Player/IdlePlayerState.h>
@@ -121,7 +122,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
     else
     {
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Woodcutting ability"));
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Woodcutting ability"), FLinearColor::Red);
     }
     
 }
@@ -339,7 +340,7 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     UWorld* World = GetWorld();
     AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(World);
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-    GameChatManager->PostNotificationToUI("You receive a legendary essence!");
+    GameChatManager->PostNotificationToUI("You receive a legendary essence!", FLinearColor::Yellow);
     PC->CurrentTree->Tags.Remove("Legendary");
 
     ACofferManager* CofferManager = ACofferManager::GetInstance(GetWorld());

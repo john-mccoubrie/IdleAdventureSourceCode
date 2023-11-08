@@ -21,7 +21,7 @@ void AGameChatManager::BeginPlay()
     }
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
     GetMessageOfTheDay();
-    PostNotificationToUI(TEXT("Welcome to StoicScape!"));
+    PostNotificationToUI(TEXT("Welcome to StoicScape!"), FLinearColor::White);
 }
 
 void AGameChatManager::BeginDestroy()
@@ -92,13 +92,13 @@ void AGameChatManager::PostMessageToUI(FString Message)
     //UE_LOG(LogTemp, Warning, TEXT("MOTD broadcasted to UI"));
 }
 
-void AGameChatManager::PostNotificationToUI(FString Message)
+void AGameChatManager::PostNotificationToUI(FString Message, FSlateColor Color)
 {
     // Check if the delegate is bound to any function
     if (FOnPostGameNotification.IsBound())
     {
-        FOnPostGameNotification.Broadcast(Message);
-        UE_LOG(LogTemp, Warning, TEXT("Notification posted to UI: %s"), *Message);
+        FOnPostGameNotification.Broadcast(Message, Color);
+        UE_LOG(LogTemp, Warning, TEXT("Notification posted to UI: %s"), *Message, Color);
     }
     else
     {
@@ -107,9 +107,9 @@ void AGameChatManager::PostNotificationToUI(FString Message)
 
         // Use a lambda to capture the 'Message' and call this function again
         FTimerDelegate TimerDel;
-        TimerDel.BindLambda([this, Message]()
+        TimerDel.BindLambda([this, Message, Color]()
             {
-                PostNotificationToUI(Message);
+                PostNotificationToUI(Message, Color);
             });
 
         // Set the timer for a delay (e.g., 1 second)

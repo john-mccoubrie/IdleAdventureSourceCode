@@ -6,6 +6,7 @@
 #include <Player/IdlePlayerController.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayFab/PlayFabManager.h>
+#include "Styling/SlateColor.h"
 #include <Character/IdleCharacter.h>
 #include <Kismet/GameplayStatics.h>
 #include "PlayerEquipment/BonusManager.h"
@@ -93,7 +94,7 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("Item not found in data table, cannot equip"));
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        GameChatManager->PostNotificationToUI(TEXT("Item not found in data table, cannot equip"));
+        GameChatManager->PostNotificationToUI(TEXT("Item not found in data table, cannot equip"), FLinearColor::Red);
         return;
     }
 
@@ -101,7 +102,7 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("Player level too low, cannot equip"));
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"));
+        GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"), FLinearColor::Red);
         return;
     }
 
@@ -141,7 +142,7 @@ bool UPlayerEquipment::CanEquipItem(const FEquipmentData& ItemData)
     if (!GameChatManager) {
         UE_LOG(LogTemp, Error, TEXT("GameChatManager is null!"));
     }
-    GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"));
+    GameChatManager->PostNotificationToUI(TEXT("Player level too low, cannot equip"), FLinearColor::Red);
     return false;
 }
 
@@ -222,7 +223,7 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
         UE_LOG(LogTemp, Warning, TEXT("Insufficient essence to purchase the item"));
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
         FString formattedMessage = FString::Printf(TEXT("Insufficient essence to purchase %s"), *ItemData.Name);
-        GameChatManager->PostNotificationToUI(formattedMessage);
+        GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Red);
         return false;
     }
 

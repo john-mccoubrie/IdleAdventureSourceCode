@@ -4,6 +4,7 @@
 #include "Inventory/Inventory.h"
 #include "Character/IdleCharacter.h"
 #include "Core/PlayFabClientDataModels.h"
+#include "Styling/SlateColor.h"
 #include "Core/PlayFabClientAPI.h"
 #include <Kismet/GameplayStatics.h>
 #include <Chat/GameChatManager.h>
@@ -94,7 +95,7 @@ void AInventory::CheckInventorySize()
     {
         AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
         //PC->InterruptTreeCutting();
-        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Inventory"));
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Inventory"), FLinearColor::Red);
 
         //TODO:
         //Stop wooductting animation, tree timers, etc.
@@ -150,7 +151,7 @@ void AInventory::TransferAndClearEssenceCounts()
 
     // Send the formatted message to the game chat manager
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-    GameChatManager->PostNotificationToUI(formattedMessage);
+    GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::White);
 
 
     EssenceCount.Empty();

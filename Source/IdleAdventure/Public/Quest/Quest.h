@@ -7,6 +7,12 @@
 #include "UObject/NoExportTypes.h"
 #include "Quest.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestComplete);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FUpdateQuestProgressDelegate, float, WisdomProgress, float, TemperanceProgress, float, JusticeProgress, float, CourageProgress, float, OtherProgress);
+
+
+
 USTRUCT(BlueprintType)
 struct FQuestObjectives
 {
@@ -26,6 +32,15 @@ struct FQuestObjectives
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 Other;
+
+	FQuestObjectives()
+		: Wisdom(0)
+		, Temperance(0)
+		, Justice(0)
+		, Courage(0)
+		, Other(0)
+	{
+	}
 };
 
 
@@ -42,6 +57,13 @@ struct FQuestRewards
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FQuestObjectives Objectives;
+
+	FQuestRewards()
+		: Experience(0)
+		, TemperanceEssence(0)
+		, Objectives()
+	{
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -100,7 +122,8 @@ struct FQuestProgress
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestComplete);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUpdateQuestTextValuesDelegate, FQuestProgress, Progress, FQuestObjectives, Objectives);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FQuestDetailsDelegate, FString, QuestName, int32, ExperienceReward);
 
 UCLASS(BlueprintType)
 class IDLEADVENTURE_API UQuest : public UObject
@@ -126,6 +149,8 @@ public:
 	void SetWorldContext(UWorld* InWorld);
 	UWorld* GetWorldContext() const;
 	UWorld* WorldContext;
+
+	void SetInitialQuestValues();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest")
 	EQuestState QuestState;
@@ -160,8 +185,18 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FQuestRewards Rewards;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FQuestProgress QuestProgress;
+
 	UPROPERTY(BlueprintAssignable, Category = "Quest")
 	FOnQuestComplete OnQuestComplete;
 
-	FQuestProgress QuestProgress;
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FUpdateQuestProgressDelegate UpdateQuestProgressDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FUpdateQuestTextValuesDelegate UpdateQuestTextValuesDelegate;
+
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FQuestDetailsDelegate QuestDetailsDelegate;
 };

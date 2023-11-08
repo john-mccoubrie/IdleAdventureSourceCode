@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/IdlePlayerState.h"
 #include "UI/HUD/IdleHUD.h"
+#include "Chat/GameChatManager.h"
 #include "Animation/AnimMontage.h"
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayerEquipment/EquipmentManager.h>

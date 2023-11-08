@@ -8,6 +8,7 @@
 #include "AIController.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Styling/SlateColor.h"
 #include "NavigationSystem.h"
 #include "EngineUtils.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
@@ -462,7 +463,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
 		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer."));
+		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer."), FLinearColor::Red);
 	}
 }
 

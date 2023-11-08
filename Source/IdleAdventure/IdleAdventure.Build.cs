@@ -9,7 +9,7 @@ public class IdleAdventure : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", 
-            "PlayFab", "PlayFabCpp", "PlayFabCommon", "PhotonCloudAPI", "AIModule", "Niagara", "NavigationSystem", "Json" });
+            "PlayFab", "PlayFabCpp", "PlayFabCommon", "PhotonCloudAPI", "AIModule", "Niagara", "NavigationSystem", "Json", "Slate", "SlateCore" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayTags", "GameplayTasks", "PhotonCloudAPI" });
 

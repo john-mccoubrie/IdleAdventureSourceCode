@@ -80,7 +80,7 @@ bool APlayFabManager::PurchaseEquipment(const FString& EquipmentName, const FEqu
         // Item already exists, do not proceed with purchase
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
         FString formattedMessage = FString::Printf(TEXT("You already purchased the %s"), *EquipmentName);
-        GameChatManager->PostNotificationToUI(formattedMessage);
+        GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Red);
         UE_LOG(LogTemp, Warning, TEXT("in playfab manager, Item already exists in inventory: %s"), *EquipmentName);
         return false;
     }

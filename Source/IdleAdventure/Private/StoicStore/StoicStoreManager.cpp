@@ -6,6 +6,7 @@
 #include "PlayerEquipment/PlayerEquipment.h"
 #include <Kismet/GameplayStatics.h>
 #include <Player/IdlePlayerController.h>
+#include "Styling/SlateColor.h"
 #include <Player/IdlePlayerState.h>
 #include <PlayFab/PlayFabManager.h>
 #include <Chat/GameChatManager.h>
@@ -37,7 +38,7 @@ bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
                 return true;
                 UE_LOG(LogTemp, Warning, TEXT("Purchase successfull in stoic store manager"));
                 AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-                GameChatManager->PostNotificationToUI(TEXT("You purchased this item."));
+                GameChatManager->PostNotificationToUI(TEXT("You purchased this item."), FLinearColor::White);
             }
             else
             {

@@ -1,6 +1,7 @@
 #include "Actor/IdleActorManager.h"
 #include "EngineUtils.h"
 #include "NiagaraComponent.h"
+#include "Styling/SlateColor.h"
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
 #include <Chat/GameChatManager.h>
@@ -193,7 +194,7 @@ void AIdleActorManager::GetLegendaryTree()
         if (!GameChatManager) {
             UE_LOG(LogTemp, Error, TEXT("GameChatManager is null!"));
         }
-        GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."));
+        GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."), FLinearColor::Yellow);
 
         // Log the name of the LegendaryIdleEffectActor to the output log
         //UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
@@ -235,7 +236,7 @@ void AIdleActorManager::SelectNewLegendaryTree()
             // Activate the legendary effect particle system
             LegendaryIdleEffectActor->ActivateLegendaryEffect();
             AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-            GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."));
+            GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."), FLinearColor::Yellow);
         }
         else
         {
