@@ -45,6 +45,11 @@ public:
 	void GainExperience(const FGameplayAbilityActorInfo* ActorInfo);
 	void OnGameplayEffectRemoved(const FActiveGameplayEffect& Effect);
 
+	float WisdomThreshold;
+	float TemperanceThreshold;
+	float JusticeThreshold;
+	float CourageThreshold;
+
 	FActiveGameplayEffectHandle GetActiveEffectHandle() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")

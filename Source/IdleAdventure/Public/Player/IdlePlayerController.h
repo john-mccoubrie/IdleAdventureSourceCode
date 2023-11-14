@@ -267,6 +267,7 @@ private:
 	void ResetWoodcuttingAbilityTimer();
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
 	void StartConversionAbility(APawn* PlayerPawn);
+	void StartNPCInteraction(APawn* PlayerPawn);
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;

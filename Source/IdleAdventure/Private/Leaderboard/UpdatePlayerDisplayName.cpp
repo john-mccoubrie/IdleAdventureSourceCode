@@ -43,6 +43,8 @@ void UUpdatePlayerDisplayName::FetchPlayerProfile(const FString& PlayFabId)
 void UUpdatePlayerDisplayName::OnUpdateDisplayNameSuccess(const PlayFab::ClientModels::FUpdateUserTitleDisplayNameResult& Result)
 {
     UE_LOG(LogTemp, Warning, TEXT("Display name updated successfully!"));
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Player name updated successfully!"), FLinearColor::Green);
     //Display name is successfully updated, delegate points to APlayLoginActor to call "Idle Forest" Level
     //Cannot call GetWorld() here because it is a UObject and has no world context
     OnUpdateDisplayNameSuccessDelegate.Broadcast();
@@ -51,6 +53,8 @@ void UUpdatePlayerDisplayName::OnUpdateDisplayNameSuccess(const PlayFab::ClientM
 void UUpdatePlayerDisplayName::OnUpdateDisplayNameError(const PlayFab::FPlayFabCppError& Error)
 {
     UE_LOG(LogTemp, Error, TEXT("Error updating display name: %s"), *Error.ErrorMessage);
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Player name updated successfully!"), FLinearColor::Red);
 }
 
 void UUpdatePlayerDisplayName::OnGetPlayerProfileSuccess(const PlayFab::ClientModels::FGetPlayerProfileResult& Result)

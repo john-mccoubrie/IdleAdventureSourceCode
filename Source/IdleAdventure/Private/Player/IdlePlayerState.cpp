@@ -126,6 +126,7 @@ void AIdlePlayerState::InitializePlayerValues()
 
 void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 {
+	UE_LOG(LogTemp, Warning, TEXT("CheckForLevelUp"));
 	ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
 	float NextLevelExpGrowthRate = TestManager->CurrentSettings.LevelUpMultiplier;
 
@@ -194,8 +195,9 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
 	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
 	// If the player has leveled up
-	if (IdleAttributeSet->GetWoodcutExp() >= expForNextLevel)
+	while (IdleAttributeSet->GetWoodcutExp() >= expForNextLevel)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Level up"));
 		// Increase the level
 		IdleAttributeSet->SetWoodcuttingLevel(IdleAttributeSet->GetWoodcuttingLevel() + 1.f);
 
@@ -213,6 +215,8 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 		// Broadcast level up delegate
 		WhenLevelUp.Broadcast(progress);
+		ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
+		ShowPlayerLevelOnText.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
 
 	}
 }

@@ -20,8 +20,8 @@ void AGameChatManager::BeginPlay()
         GameChatManagerSingletonInstance = this;
     }
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
-    GetMessageOfTheDay();
-    PostNotificationToUI(TEXT("Welcome to StoicScape!"), FLinearColor::White);
+    //GetMessageOfTheDay();
+    //PostNotificationToUI(TEXT("Welcome to StoicScape!"), FLinearColor::White);
 }
 
 void AGameChatManager::BeginDestroy()
@@ -116,6 +116,12 @@ void AGameChatManager::PostNotificationToUI(FString Message, FSlateColor Color)
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, 1.0f, false);
     }
+}
+
+void AGameChatManager::PostNotificationToLoginScreen(FString Message, FSlateColor Color)
+{
+    UE_LOG(LogTemp, Warning, TEXT("OnPostGameNotificationToLoginScreen"));
+    OnPostGameNotificationToLoginScreen.Broadcast(Message, Color);
 }
 
 

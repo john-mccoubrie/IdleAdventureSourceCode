@@ -35,6 +35,9 @@ void AIdleGameModeBase::BeginPlay()
     //Spawn the Game Chat Manager (Message of the day)
     GameChatManagerInstance = GetWorld()->SpawnActor<AGameChatManager>(AGameChatManager::StaticClass());
 
+    GameChatManagerInstance->GetMessageOfTheDay();
+    GameChatManagerInstance->PostNotificationToUI(TEXT("Welcome to StoicScape!"), FLinearColor::White);
+
     LeaderboardManagerInstance = NewObject<ULeaderboardManager>();
     BeginUpdateLeaderboard();
     // Retrieve the game instance

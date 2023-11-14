@@ -12,6 +12,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPostGameChat, FString, Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostGameNotification, FString, Message, FSlateColor, Color);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostGameNotificationToLoginScreen, FString, Message, FSlateColor, Color);
 
 UCLASS()
 class IDLEADVENTURE_API AGameChatManager : public AActor
@@ -29,6 +30,7 @@ public:
 	void OnGetMessageOfTheDayFailure(const PlayFab::FPlayFabCppError& ErrorResult);
 	void PostMessageToUI(FString Message);
 	void PostNotificationToUI(FString Message, FSlateColor Color);
+	void PostNotificationToLoginScreen(FString Message, FSlateColor Color);
 
 	//Message from playfab
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
@@ -37,6 +39,10 @@ public:
 	//In game warnings
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
 	FOnPostGameNotification FOnPostGameNotification;
+	
+	//Login screen warnings
+	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
+	FOnPostGameNotificationToLoginScreen OnPostGameNotificationToLoginScreen;
 
 private:
 	static AGameChatManager* GameChatManagerSingletonInstance;

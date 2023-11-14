@@ -22,6 +22,10 @@ UWoodcuttingAbility::UWoodcuttingAbility()
 {
     
     InstanceCounter++;
+    WisdomThreshold = 50.0f;
+    TemperanceThreshold = 75.0f;
+    JusticeThreshold = 95.0f;
+    CourageThreshold = 100.0f;
     //UE_LOG(LogTemp, Warning, TEXT("UWoodcuttingAbility instances: %d"), InstanceCounter);
 }
 UWoodcuttingAbility::~UWoodcuttingAbility()
@@ -173,29 +177,47 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
         // Determine the type of log based on the rarity roll
         UItem* NewLog = NewObject<UItem>();
+
+        WisdomThreshold = 50.0f;
+        TemperanceThreshold = 75.0f;
+        JusticeThreshold = 95.0f;
+        CourageThreshold = 100.0f;
+
+        WisdomThreshold -= BonusManager->WisdomEssenceChanceMultiplier;
+        TemperanceThreshold -= BonusManager->TemperanceEssenceChanceMultiplier;
+        JusticeThreshold -= BonusManager->JusticeEssenceChanceMultiplier;
+        CourageThreshold -= BonusManager->CourageEssenceChanceMultiplier;
+
         float RarityRoll = FMath::RandRange(0.f, 100.f);
+
+        UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
+
 
         //Default Essence to add multiper
         int EssenceToAdd = 1;
-        if (RarityRoll <= 50.f)  // 50% chance for Wisdom
+        if (RarityRoll <= WisdomThreshold)  // 50% chance for Wisdom
         {
             NewLog->EssenceRarity = "Wisdom";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->WisdomEssenceMultiplier));
             EssenceToAdd *= BonusManager->WisdomYieldMultiplier;
         }
-        else if (RarityRoll <= 75.f)  // 25% chance for Temperance
+        else if (RarityRoll <= TemperanceThreshold)  // 25% chance for Temperance
         {
             NewLog->EssenceRarity = "Temperance";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->TemperanceEssenceMultiplier));
             EssenceToAdd *= BonusManager->TemperanceYieldMultiplier;
         }
-        else if (RarityRoll <= 95.f)  // 20% chance for Justice
+        else if (RarityRoll <= JusticeThreshold)  // 20% chance for Justice
         {
             NewLog->EssenceRarity = "Justice";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->JusticeEssenceMultiplier));
             EssenceToAdd *= BonusManager->JusticeYieldMultiplier;
         }
-        else  // 5% chance for Courage
+        else // if (RarityRoll <= CourageThreshold)  // 5% chance for Courage
         {
             NewLog->EssenceRarity = "Courage";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->CourageEssenceMultiplier));

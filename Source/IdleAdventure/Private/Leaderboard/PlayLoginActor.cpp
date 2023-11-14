@@ -228,11 +228,18 @@ void APlayLoginActor::LoginUser(FString username, FString password, FString emai
 void APlayLoginActor::OnRegisterSuccess(const PlayFab::ClientModels::FRegisterPlayFabUserResult& result) const
 {
     UE_LOG(LogTemp, Warning, TEXT("Player registered successfully!"));
+
+    FString PlayFabUserID = result.PlayFabId;
+
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Player registered successfully! Please Login"), FLinearColor::Green);
 }
 
 void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& result)
 {
     UE_LOG(LogTemp, Warning, TEXT("Player login successful: %s"), *result.PlayFabId);
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Login successfuly...Loading map..."), FLinearColor::Green);
     //UGameplayStatics::OpenLevel(this, TEXT("Sandbox"));
     FString PlayFabUserID = result.PlayFabId; // store the playfab user ID
     std::wstring wstrUserID(*PlayFabUserID);
@@ -277,10 +284,12 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
                 if (UpdatePlayerDisplayNameInstance->HasDisplayName())
                 {
                     //TestPhotonUserIDToPlayFabDisplayNameMap.Add(IdleGameInstance->StoredPlayFabUserID, UpdatePlayerDisplayNameInstance->TestDisplayName);
+                    UE_LOG(LogTemp, Error, TEXT("Player has display name...loading map 1"));
                     UGameplayStatics::OpenLevel(this, TEXT("Map1"));
                 }
                 else
                 {
+                    UE_LOG(LogTemp, Error, TEXT("Player does NOT have display name...loading ProfileSetup"));
                     UGameplayStatics::OpenLevel(this, TEXT("ProfileSetup"));
                 }
             },
@@ -298,13 +307,17 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
 
 void APlayLoginActor::OnLoginError(const PlayFab::FPlayFabCppError& errorResult) const
 {
-   //FString errorMessage = FString::Printf(TEXT("PlayFab Error: %s"), *errorResult.GenerateErrorReport());
+    // Format the error message
+    FString errorMessage = FString::Printf(TEXT("PlayFab Error: %s"), *errorResult.GenerateErrorReport());
+
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen((TEXT("%s"), *errorMessage), FLinearColor::Red);
 
     if (GEngine)
     {
         //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, errorMessage);
     }
-    //UE_LOG(LogTemp, Error, TEXT("%s"), *errorMessage);
+    UE_LOG(LogTemp, Error, TEXT("%s"), *errorMessage);
 }
 
 void APlayLoginActor::HandleChatConnected()

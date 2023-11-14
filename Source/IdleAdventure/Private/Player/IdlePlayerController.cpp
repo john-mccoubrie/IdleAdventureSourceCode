@@ -90,7 +90,7 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 		if (TargetNPC)
 		{
 			MoveTowardsTarget(TargetNPC, NPCTalkingDistance, [this](APawn* PlayerPawn) {
-				TargetNPC->Interact();
+				StartNPCInteraction(PlayerPawn);
 				return;
 				});
 		}
@@ -280,25 +280,36 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 
 	if (ClickResult.GetComponent()->ComponentTags.Contains("Tree"))
 	{
-		CurrentPlayerState = EPlayerState::MovingToTree;
 		TreeClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeClickEffectSystem, ClickResult.Location);
-
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
+		{
+			return;
+		}
+		CurrentPlayerState = EPlayerState::MovingToTree;
 		TargetTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("Coffer"))
 	{
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
+		AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(GetCharacter());
+		if (MyCharacter->EssenceCount == 0)
+		{
+			AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+			GameChatManager->PostNotificationToUI(TEXT("You have no essence to add to the coffer."), FLinearColor::Red);
+			return;
+		}
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
 			InterruptTreeCutting();
 		}
 		CurrentPlayerState = EPlayerState::MovingToCoffer;
-		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		OnCofferClicked(ClickResult, PlayerPawn);	
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("NPC"))
 	{
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
 			InterruptTreeCutting();
@@ -461,7 +472,7 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
 		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
 		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer."), FLinearColor::Red);
 	}
@@ -485,6 +496,14 @@ void AIdlePlayerController::StartConversionAbility(APawn* PlayerPawn)
 
 	ClickedCoffer->CofferClicked(CofferHitForCasting);
 	
+}
+
+void AIdlePlayerController::StartNPCInteraction(APawn* PlayerPawn)
+{
+	UE_LOG(LogTemp, Warning, TEXT("StartNPCInteraction in PlayerController called."));
+	CurrentPlayerState = EPlayerState::Idle;
+
+	TargetNPC->Interact();
 }
 
 

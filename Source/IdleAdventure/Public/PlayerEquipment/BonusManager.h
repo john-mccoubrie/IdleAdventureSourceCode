@@ -28,7 +28,7 @@ struct FItemBonus
     float JusticeEssenceMultiplier = 1.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float CourageWisdomEssenceMultiplier = 1.0f;
+    float CourageEssenceMultiplier = 1.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float LegendaryEssenceMultiplier = 1.0f;
@@ -48,16 +48,32 @@ struct FItemBonus
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int LegendaryYieldMultiplier = 1;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WisdomEssenceChanceBonus = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float TemperanceEssenceChanceBonus = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float JusticeEssenceChanceBonus = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float CourageEssenceChanceBonus = 0.0f;
+
     bool operator==(const FItemBonus& Other) const
     {
         return WisdomEssenceMultiplier == Other.WisdomEssenceMultiplier &&
             TemperanceEssenceMultiplier == Other.TemperanceEssenceMultiplier &&
             JusticeEssenceMultiplier == Other.JusticeEssenceMultiplier &&
-            CourageWisdomEssenceMultiplier == Other.CourageWisdomEssenceMultiplier &&
+            CourageEssenceMultiplier == Other.CourageEssenceMultiplier &&
             WisdomYieldMultiplier == Other.WisdomYieldMultiplier &&
             TemperanceYieldMultiplier == Other.TemperanceYieldMultiplier &&
             JusticeYieldMultiplier == Other.JusticeYieldMultiplier &&
-            CourageYieldMultiplier == Other.CourageYieldMultiplier;
+            CourageYieldMultiplier == Other.CourageYieldMultiplier &&
+            WisdomEssenceChanceBonus == Other.WisdomEssenceChanceBonus &&
+            TemperanceEssenceChanceBonus == Other.TemperanceEssenceChanceBonus &&
+            JusticeEssenceChanceBonus == Other.JusticeEssenceChanceBonus &&
+            CourageEssenceChanceBonus == Other.CourageEssenceChanceBonus;
     }
 
 };
@@ -93,6 +109,11 @@ public:
     int JusticeYieldMultiplier;
     int CourageYieldMultiplier;
     int LegendaryYieldMultiplier;
+
+    float WisdomEssenceChanceMultiplier;
+    float TemperanceEssenceChanceMultiplier;
+    float JusticeEssenceChanceMultiplier;
+    float CourageEssenceChanceMultiplier;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bonuses")

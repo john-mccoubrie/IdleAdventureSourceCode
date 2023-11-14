@@ -119,12 +119,9 @@ void UQuest::Complete()
     //UE_LOG(LogTemp, Error, TEXT("Quest Complete!!!"));
     
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorldContext());
-    
-    
-
     APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorldContext());
-
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
+
     // Format the message using FString::Printf
     FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience!"), *this->QuestName, this->Rewards.Experience);
     // Convert FLinearColor to FSlateColor

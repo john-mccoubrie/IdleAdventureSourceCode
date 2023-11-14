@@ -17,10 +17,13 @@ class IDLEADVENTURE_API AIdleGameModeLogin : public AIdleGameModeBase
 public:
 
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
 	
 
 	UFUNCTION()
 	void LoadIdleForestLevel();
 
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Manager")
+	AGameChatManager* LoginGameChatManagerInstance;
 };

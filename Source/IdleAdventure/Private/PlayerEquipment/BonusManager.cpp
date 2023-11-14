@@ -18,6 +18,11 @@ ABonusManager::ABonusManager()
     JusticeYieldMultiplier = 0;
     CourageYieldMultiplier = 0;
     LegendaryYieldMultiplier = 0;
+
+    WisdomEssenceChanceMultiplier = 0.0f;
+    TemperanceEssenceChanceMultiplier = 0.0f;
+    JusticeEssenceChanceMultiplier = 0.0f;
+    CourageEssenceChanceMultiplier = 0.0f;
 }
 
 void ABonusManager::BeginPlay()
@@ -72,7 +77,7 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     WisdomEssenceMultiplier *= ItemBonus.WisdomEssenceMultiplier;
     TemperanceEssenceMultiplier *= ItemBonus.TemperanceEssenceMultiplier;
     JusticeEssenceMultiplier *= ItemBonus.JusticeEssenceMultiplier;
-    CourageEssenceMultiplier *= ItemBonus.CourageWisdomEssenceMultiplier;
+    CourageEssenceMultiplier *= ItemBonus.CourageEssenceMultiplier;
     LegendaryEssenceMultiplier *= ItemBonus.LegendaryEssenceMultiplier;
 
     WisdomYieldMultiplier += (ItemBonus.WisdomYieldMultiplier);
@@ -80,6 +85,11 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     JusticeYieldMultiplier += (ItemBonus.JusticeYieldMultiplier);
     CourageYieldMultiplier += (ItemBonus.CourageYieldMultiplier);
     LegendaryYieldMultiplier += (ItemBonus.LegendaryYieldMultiplier);
+
+    WisdomEssenceChanceMultiplier += (ItemBonus.WisdomEssenceChanceBonus);
+    TemperanceEssenceChanceMultiplier += (ItemBonus.TemperanceEssenceChanceBonus);
+    JusticeEssenceChanceMultiplier += (ItemBonus.JusticeEssenceChanceBonus);
+    CourageEssenceChanceMultiplier += (ItemBonus.CourageEssenceChanceBonus);
 
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);
@@ -112,6 +122,11 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     UE_LOG(LogTemp, Warning, TEXT("Justice Yield Multiplier: %i"), JusticeYieldMultiplier);
     UE_LOG(LogTemp, Warning, TEXT("Courage Yield Multiplier: %i"), CourageYieldMultiplier);
     UE_LOG(LogTemp, Warning, TEXT("Legendary Yield Multiplier: %i"), LegendaryYieldMultiplier);
+
+    UE_LOG(LogTemp, Warning, TEXT("Wisdom Chance Multiplier: %f"), WisdomEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Temperance Chance Multiplier: %f"), TemperanceEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Justice Chance Multiplier: %f"), JusticeEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Courage Chance Multiplier: %f"), CourageEssenceChanceMultiplier);
 }
 
 void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
@@ -122,7 +137,7 @@ void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
     WisdomEssenceMultiplier /= ItemBonus.WisdomEssenceMultiplier;
     TemperanceEssenceMultiplier /= ItemBonus.TemperanceEssenceMultiplier;
     JusticeEssenceMultiplier /= ItemBonus.JusticeEssenceMultiplier;
-    CourageEssenceMultiplier /= ItemBonus.CourageWisdomEssenceMultiplier;
+    CourageEssenceMultiplier /= ItemBonus.CourageEssenceMultiplier;
     LegendaryEssenceMultiplier /= ItemBonus.LegendaryEssenceMultiplier;
 
     WisdomYieldMultiplier -= (ItemBonus.WisdomYieldMultiplier);
@@ -130,6 +145,11 @@ void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
     JusticeYieldMultiplier -= (ItemBonus.JusticeYieldMultiplier);
     CourageYieldMultiplier -= (ItemBonus.CourageYieldMultiplier);
     LegendaryYieldMultiplier -= (ItemBonus.LegendaryYieldMultiplier);
+
+    WisdomEssenceChanceMultiplier -= (ItemBonus.WisdomEssenceChanceBonus);
+    TemperanceEssenceChanceMultiplier -= (ItemBonus.TemperanceEssenceChanceBonus);
+    JusticeEssenceChanceMultiplier -= (ItemBonus.JusticeEssenceChanceBonus);
+    CourageEssenceChanceMultiplier -= (ItemBonus.CourageEssenceChanceBonus);
 
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);
@@ -160,5 +180,10 @@ void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
     UE_LOG(LogTemp, Warning, TEXT("Justice Yield Multiplier: %i"), JusticeYieldMultiplier);
     UE_LOG(LogTemp, Warning, TEXT("Courage Yield Multiplier: %i"), CourageYieldMultiplier);
     UE_LOG(LogTemp, Warning, TEXT("Legendary Yield Multiplier: %i"), LegendaryYieldMultiplier);
+
+    UE_LOG(LogTemp, Warning, TEXT("Wisdom Chance Multiplier: %f"), WisdomEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Temperance Chance Multiplier: %f"), TemperanceEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Justice Chance Multiplier: %f"), JusticeEssenceChanceMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("Courage Chance Multiplier: %f"), CourageEssenceChanceMultiplier);
 }
 
