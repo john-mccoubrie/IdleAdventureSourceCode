@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "SoundManager.generated.h"
 
@@ -25,6 +26,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	TArray<USoundCue*> SoundCues;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* AudioComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	float VolumeMultiplier;
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void UpdateVolume(float NewVolume);
 
 private:
 	static ASoundManager* SoundManagerSingletonInstance;

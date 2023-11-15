@@ -371,6 +371,7 @@ void AIdlePlayerController::InterruptTreeCutting()
 	UE_LOG(LogTemp, Warning, TEXT("Interrupt Tree Cutting"));
 	CurrentPlayerState = EPlayerState::Idle;
 
+	//CurrentWoodcuttingAbilityInstance->CallEndAbility();
 
 	AIdleActorManager* TreeManager = nullptr;
 	for (TActorIterator<AIdleActorManager> It(GetWorld()); It; ++It)
@@ -408,6 +409,7 @@ void AIdlePlayerController::InterruptTreeCutting()
 		UAnimMontage* AnimMontage = MyCharacter->WoodcutMontage;
 		MyCharacter->StopAnimMontage(AnimMontage);
 		IdleInteractionComponent->EndTreeCutEffect();
+		IdleInteractionComponent->StopStaffCastingSound();
 	}
 	else {
 		UE_LOG(LogTemp, Warning, TEXT("Character or WoodcuttingEffectHandle is null player controller"));
@@ -459,6 +461,11 @@ void AIdlePlayerController::ResetWoodcuttingAbilityTimer()
 
 void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 {
+	if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
+	{
+		return;
+	}
+
 	CurrentPlayerState = EPlayerState::CuttingTree;
 
 	AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(PlayerPawn);

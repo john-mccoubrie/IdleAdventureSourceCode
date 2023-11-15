@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "IdleEffectActor.h"
 #include "GameplayEffectTypes.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 #include "NiagaraComponent.h"
 #include "Components/ActorComponent.h"
 #include "IdleInteractionComponent.generated.h"
@@ -41,6 +43,13 @@ public:
 	//Begin animations
 	void SpawnTreeCutEffect(APawn* PlayerPawn);
 	void EndTreeCutEffect();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayStaffCastingSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void StopStaffCastingSound();
+
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
@@ -66,6 +75,14 @@ public:
 	//Delegates
 	UPROPERTY(BlueprintAssignable)
 	FOnTreeClickedDelegate OnTreeClicked;
+
+
+	//Sound effects
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* StaffCastingSound;
+
+	UPROPERTY(VisibleAnywhere, Category = "Sound Properties")
+	UAudioComponent* StaffAudioComponent;
 
 protected:
 	// Called when the game starts

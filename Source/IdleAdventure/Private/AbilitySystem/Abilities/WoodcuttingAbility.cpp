@@ -26,18 +26,18 @@ UWoodcuttingAbility::UWoodcuttingAbility()
     TemperanceThreshold = 75.0f;
     JusticeThreshold = 95.0f;
     CourageThreshold = 100.0f;
-    //UE_LOG(LogTemp, Warning, TEXT("UWoodcuttingAbility instances: %d"), InstanceCounter);
+    UE_LOG(LogTemp, Warning, TEXT("UWoodcuttingAbility instances: %d"), InstanceCounter);
 }
 UWoodcuttingAbility::~UWoodcuttingAbility()
 {
     // Destructor logic
     InstanceCounter--;
-    //UE_LOG(LogTemp, Warning, TEXT("UWoodcuttingAbility instances: %d"), InstanceCounter);
+    UE_LOG(LogTemp, Warning, TEXT("UWoodcuttingAbility instances: %d"), InstanceCounter);
 }
 
 void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Activate ability wca"));
+    UE_LOG(LogTemp, Warning, TEXT("Activate ability wca"));
     OnTreeLifespanChanged.AddDynamic(this, &UWoodcuttingAbility::SetDuration);
     if (bAbilityIsActive)
     {
@@ -94,12 +94,14 @@ void UWoodcuttingAbility::OnTreeCutDown()
 
     //Deactivate particle effect from the character
     PC->IdleInteractionComponent->EndTreeCutEffect();
+    PC->IdleInteractionComponent->StopStaffCastingSound();
     
     PS->AbilitySystemComponent->RemoveActiveGameplayEffect(PC->WoodcuttingEffectHandle);
     UAnimMontage* AnimMontage = Character->WoodcutMontage;
     Character->StopAnimMontage(AnimMontage);
     
-    //EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+    UE_LOG(LogTemp, Warning, TEXT("End ability"));
 }
 
 void UWoodcuttingAbility::SetDuration(float TotalDuration)
@@ -190,11 +192,11 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
         float RarityRoll = FMath::RandRange(0.f, 100.f);
 
-        UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
+        //UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
 
 
         //Default Essence to add multiper
@@ -241,25 +243,25 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 {
                     //CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Wisdom", EssenceToAdd);
-                    UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
+                    //UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Temperance")
                 {
                     //CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Temperance", EssenceToAdd);
-                    UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
+                    //UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Justice")
                 {
                     //CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Justice", EssenceToAdd);
-                    UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
+                    //UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Courage")
                 {
                     //CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Courage", EssenceToAdd);
-                    UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
+                    //UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
                 }
                 
                 /*
@@ -370,6 +372,12 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     IdleActorManager->DeactivateCurrentLegendaryTree();
 }
 
+void UWoodcuttingAbility::CallEndAbility()
+{
+    //EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+    //UE_LOG(LogTemp, Warning, TEXT("Call End ability from PlayerController"));
+}
+
 FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const
 {
     return ActiveEffectHandle;
@@ -378,6 +386,8 @@ FActiveGameplayEffectHandle UWoodcuttingAbility::GetActiveEffectHandle() const
 void UWoodcuttingAbility::StopCutDownTimer()
 {
     FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+    UE_LOG(LogTemp, Warning, TEXT("End ability in stop cutdowntimer"));
 
     if (GetWorld()->GetTimerManager().IsTimerActive(StopWoodcuttingTimerHandle))
     {

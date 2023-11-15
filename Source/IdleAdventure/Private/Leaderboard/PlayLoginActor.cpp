@@ -239,7 +239,7 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
 {
     UE_LOG(LogTemp, Warning, TEXT("Player login successful: %s"), *result.PlayFabId);
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-    GameChatManager->PostNotificationToLoginScreen(TEXT("Login successfuly...Loading map..."), FLinearColor::Green);
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Login successful...Loading map..."), FLinearColor::Green);
     //UGameplayStatics::OpenLevel(this, TEXT("Sandbox"));
     FString PlayFabUserID = result.PlayFabId; // store the playfab user ID
     std::wstring wstrUserID(*PlayFabUserID);

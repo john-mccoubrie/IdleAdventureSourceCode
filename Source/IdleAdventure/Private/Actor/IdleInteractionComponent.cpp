@@ -3,6 +3,7 @@
 #include "Player/IdlePlayerController.h"
 #include <Character/IdleCharacter.h>
 #include <Kismet/KismetMathLibrary.h>
+#include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include <Player/IdlePlayerState.h>
@@ -12,6 +13,10 @@
 UIdleInteractionComponent::UIdleInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
+    // Initialize the Audio Component
+    StaffAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffAudioComponent"));
+    StaffAudioComponent->bAutoActivate = false;
 
 }
 
@@ -44,6 +49,7 @@ void UIdleInteractionComponent::StartWoodcuttingAbility(APawn* PlayerPawn)
     PS->ActivateAbility(UWoodcuttingAbility::StaticClass());
     //PC->WoodcuttingEXPEffect();
     SpawnTreeCutEffect(PlayerPawn);
+    PlayStaffCastingSound();
         
 
     AIdleEffectActor* MyIdleEffectActor = Cast<AIdleEffectActor>(TargetTree);
@@ -102,6 +108,23 @@ void UIdleInteractionComponent::EndTreeCutEffect()
     {
         SpawnedTreeEffect->Deactivate();
         SpawnedStaffEffect->Deactivate();
+    }
+}
+
+void UIdleInteractionComponent::PlayStaffCastingSound()
+{
+    if (StaffCastingSound && StaffAudioComponent && !StaffAudioComponent->IsPlaying())
+    {
+        StaffAudioComponent->SetSound(StaffCastingSound);
+        StaffAudioComponent->Play();
+    }
+}
+
+void UIdleInteractionComponent::StopStaffCastingSound()
+{
+    if (StaffAudioComponent && StaffAudioComponent->IsPlaying())
+    {
+        StaffAudioComponent->Stop();
     }
 }
 

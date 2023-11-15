@@ -13,6 +13,7 @@
 #include <Player/IdlePlayerState.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayFab/PlayFabManager.h>
+#include <Chat/GameChatManager.h>
 
 AQuestManager* AQuestManager::QuestManagerSingletonInstance = nullptr;
 
@@ -21,6 +22,8 @@ AQuestManager::AQuestManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+    questCount = 0;
 }
 
 // Called when the game starts or when spawned
@@ -179,6 +182,7 @@ bool AQuestManager::PlayerHasCompletedQuest(UQuest* Quest)
             // Dereference the pointer to get the actual FString value
             FString LastCompletedDate = *LastCompletedDatePtr;
             return !PlayFabManager->NeedsReset(LastCompletedDate);
+            questCount++;
         }
     }
     return false; // Quest not found in completed quests data, or PlayFabManager instance not found
@@ -243,6 +247,12 @@ void AQuestManager::CheckAllQuests()
             AvailableQuests.Add(Quest);
         }
     }
+}
+
+void AQuestManager::PlayerHasTooManyQuestsMessage()
+{
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToUI(TEXT("You may only have 2 active quests at one time!"), FLinearColor::Red);
 }
 
 void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)

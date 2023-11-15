@@ -41,6 +41,7 @@ public:
 	void AddExperience(float Amount);
 	void GetLegendaryEssence();
 	bool bIsChoppingLegendaryTree;
+	void CallEndAbility();
 
 	void GainExperience(const FGameplayAbilityActorInfo* ActorInfo);
 	void OnGameplayEffectRemoved(const FActiveGameplayEffect& Effect);

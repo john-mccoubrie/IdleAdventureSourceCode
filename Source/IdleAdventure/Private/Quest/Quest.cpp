@@ -84,6 +84,12 @@ void UQuest::TurnInQuest()
         //QuestProgress.ResetProgress();
         QuestProgress.ResetProgress(Rewards.Objectives);
     }
+    else
+    {
+        //FString QuestToTurnIn = this->QuestName;
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI(TEXT("this quest is not ready to be turned in yet!"),FLinearColor::Red);
+    }
 }
 
 void UQuest::SetWorldContext(UWorld* InWorld)
@@ -101,7 +107,8 @@ void UQuest::Start()
     // Logic to start the quest, for example setting initial objectives or flags
     QuestState = EQuestState::InProgress;
     UE_LOG(LogTemp, Warning, TEXT("QuestStarted"));
-    
+    AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorldContext());
+    QuestManager->questCount++;
     FTimerHandle TimerHandle;
     WorldContext->GetTimerManager().SetTimer(TimerHandle, this, &UQuest::SetInitialQuestValues, 1.0f, false);
 }
@@ -121,7 +128,7 @@ void UQuest::Complete()
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorldContext());
     APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorldContext());
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
-
+    QuestManager->questCount--;
     // Format the message using FString::Printf
     FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience!"), *this->QuestName, this->Rewards.Experience);
     // Convert FLinearColor to FSlateColor

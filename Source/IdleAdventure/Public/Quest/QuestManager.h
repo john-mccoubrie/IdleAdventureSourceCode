@@ -87,7 +87,7 @@ enum class EQuestState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddAvailableQuestsToUI, const TArray<UQuest*>&, Quests);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddCompletedQuestsToUI, const TArray<UQuest*>&, Quests);
 
-UCLASS()
+UCLASS(Blueprintable)
 class IDLEADVENTURE_API AQuestManager : public AActor
 {
 	GENERATED_BODY()
@@ -111,6 +111,9 @@ public:
     void HandleQuestDataReady();
     void CheckAllQuests();
 
+    UFUNCTION(BlueprintCallable, Category = "Quests")
+    void PlayerHasTooManyQuestsMessage();
+
     //FQuestProgress QuestProgress;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
@@ -130,6 +133,9 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category = "Quests")
     TArray<FString> RequestedKeys;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
+    int32 questCount;
 
 private:
 	static AQuestManager* QuestManagerSingletonInstance;

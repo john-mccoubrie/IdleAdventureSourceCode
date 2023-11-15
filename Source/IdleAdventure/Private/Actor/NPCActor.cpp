@@ -4,6 +4,7 @@
 #include <Player/IdlePlayerController.h>
 #include <Quest/QuestManager.h>
 #include <PlayFab/PlayFabManager.h>
+#include <Chat/GameChatManager.h>
 
 // Sets default values
 ANPCActor::ANPCActor()
@@ -42,10 +43,12 @@ void ANPCActor::Interact()
 
 void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 {
+	AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
 	if (Player && Quest)
 	{
+		
 		// Ask the QuestManager to check if the quest can be accepted.
-		AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
+					//AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
 		if (QuestManager)
 		{
 			bool bCanAcceptQuest = !QuestManager->PlayerHasCompletedQuest(Quest);
@@ -54,10 +57,11 @@ void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 			Player->NotifyQuestCompletionStatus(Quest->QuestID, bCanAcceptQuest);
 			//Quest->OnQuestComplete.AddDynamic(this, &ANPCActor::CompleteQuest);
 		}
+		
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player or Quest is null"));
+		UE_LOG(LogTemp, Warning, TEXT("Player or Quest is null or questCount > 2"));
 	}
 }
 

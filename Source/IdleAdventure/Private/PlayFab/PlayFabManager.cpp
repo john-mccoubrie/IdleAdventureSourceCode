@@ -254,6 +254,10 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
             UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager."));
             return;
         }
+        //Add the default item for all players
+        FName DefaultItemName = "DefaultStaff";
+        DataTableRowNames.Insert(DefaultItemName, 0); //Ensure that the default item is first in the player inventory
+
         for (const FName& DataTableRowName : DataTableRowNames)
         {
             if (DataTableRowName.IsNone())
@@ -277,7 +281,6 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
             }
             
         }
-
         //UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
         OnInventoryLoaded.Broadcast(DataTableRowNames);
     }
