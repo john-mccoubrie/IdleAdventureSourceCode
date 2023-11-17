@@ -7,7 +7,7 @@
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include "EngineUtils.h"
-#include <Actor/NPCActor.h>
+#include <Actor/NPC_QuestGiver.h>
 #include <Kismet/GameplayStatics.h>
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
@@ -202,7 +202,7 @@ void AQuestManager::AssignQuestsToNPCs()
     {
         for (AActor* Actor : FoundActors)
         {
-            ANPCActor* NPCActor = Cast<ANPCActor>(Actor);
+            ANPC_QuestGiver* NPCActor = Cast<ANPC_QuestGiver>(Actor);
             if (NPCActor != nullptr)
             {
                 NPCActor->AddAvailableQuests(Quest);

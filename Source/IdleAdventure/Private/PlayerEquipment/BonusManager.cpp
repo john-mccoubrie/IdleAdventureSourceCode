@@ -23,6 +23,8 @@ ABonusManager::ABonusManager()
     TemperanceEssenceChanceMultiplier = 0.0f;
     JusticeEssenceChanceMultiplier = 0.0f;
     CourageEssenceChanceMultiplier = 0.0f;
+
+    InvestingBonusChance = 0;
 }
 
 void ABonusManager::BeginPlay()
@@ -91,6 +93,8 @@ void ABonusManager::ApplyEssenceBonus(const FItemBonus& ItemBonus)
     JusticeEssenceChanceMultiplier += (ItemBonus.JusticeEssenceChanceBonus);
     CourageEssenceChanceMultiplier += (ItemBonus.CourageEssenceChanceBonus);
 
+    InvestingBonusChance += (ItemBonus.InvestingBonusChance);
+
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);
 
@@ -150,6 +154,8 @@ void ABonusManager::RemoveEssenceBonus(const FItemBonus& ItemBonus)
     TemperanceEssenceChanceMultiplier -= (ItemBonus.TemperanceEssenceChanceBonus);
     JusticeEssenceChanceMultiplier -= (ItemBonus.JusticeEssenceChanceBonus);
     CourageEssenceChanceMultiplier -= (ItemBonus.CourageEssenceChanceBonus);
+
+    InvestingBonusChance -= (ItemBonus.InvestingBonusChance);
 
     OnBonusesUpdated.Broadcast(WisdomEssenceMultiplier, TemperanceEssenceMultiplier, 
         JusticeEssenceMultiplier, CourageEssenceMultiplier, WisdomYieldMultiplier, TemperanceYieldMultiplier, JusticeYieldMultiplier, CourageYieldMultiplier);

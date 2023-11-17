@@ -5,24 +5,25 @@
 #include "CoreMinimal.h"
 #include <Character/IdleCharacter.h>
 #include "Quest/Quest.h"
+#include "Base_NPCActor.h"
 #include "GameFramework/Actor.h"
-#include "NPCActor.generated.h"
+#include "NPC_QuestGiver.generated.h"
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteractedWithNPC);
 
-class UCapsuleComponent;
+//class UCapsuleComponent;
 
 UCLASS()
-class IDLEADVENTURE_API ANPCActor : public AActor
+class IDLEADVENTURE_API ANPC_QuestGiver : public ABase_NPCActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ANPCActor();
+	ANPC_QuestGiver();
 
-	void Interact();
+	virtual void Interact() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Quests")
 	void AssignQuest(UQuest* Quest, AIdleCharacter* Player);
@@ -41,24 +42,10 @@ public:
 	TArray<UQuest*> AvailableQuests;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UCapsuleComponent* CapsuleComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
-	UStaticMeshComponent* NPCMeshComponent;
-
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInteractedWithNPC OnInteractedWithNPC;
 
 	UFUNCTION()
 	void HandleQuestVersionRetrieved(FString QuestID, FString QuestVersion);
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 };

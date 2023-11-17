@@ -60,6 +60,9 @@ struct FItemBonus
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CourageEssenceChanceBonus = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 InvestingBonusChance = 0.0f;
+
     bool operator==(const FItemBonus& Other) const
     {
         return WisdomEssenceMultiplier == Other.WisdomEssenceMultiplier &&
@@ -73,7 +76,8 @@ struct FItemBonus
             WisdomEssenceChanceBonus == Other.WisdomEssenceChanceBonus &&
             TemperanceEssenceChanceBonus == Other.TemperanceEssenceChanceBonus &&
             JusticeEssenceChanceBonus == Other.JusticeEssenceChanceBonus &&
-            CourageEssenceChanceBonus == Other.CourageEssenceChanceBonus;
+            CourageEssenceChanceBonus == Other.CourageEssenceChanceBonus &&
+            InvestingBonusChance == Other.InvestingBonusChance;
     }
 
 };
@@ -114,6 +118,8 @@ public:
     float TemperanceEssenceChanceMultiplier;
     float JusticeEssenceChanceMultiplier;
     float CourageEssenceChanceMultiplier;
+
+    int32 InvestingBonusChance;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bonuses")

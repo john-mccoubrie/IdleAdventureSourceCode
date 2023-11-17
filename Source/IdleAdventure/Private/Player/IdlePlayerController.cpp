@@ -315,7 +315,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 			InterruptTreeCutting();
 		}
 		CurrentPlayerState = EPlayerState::MovingToNPC;
-		TargetNPC = Cast<ANPCActor>(ClickResult.GetActor());
+		TargetNPC = Cast<ABase_NPCActor>(ClickResult.GetActor());
 		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
 	else

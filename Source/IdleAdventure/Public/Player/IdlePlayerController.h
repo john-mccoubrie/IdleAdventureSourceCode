@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include <Actor/NPCActor.h>
+#include <Actor/NPC_QuestGiver.h>
 #include "Actor/IdleInteractionComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
@@ -271,7 +271,7 @@ private:
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;
-	ANPCActor* TargetNPC = nullptr;
+	ABase_NPCActor* TargetNPC = nullptr;
 
 	FHitResult CofferHitForCasting;
 

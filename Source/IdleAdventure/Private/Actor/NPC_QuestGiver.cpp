@@ -1,36 +1,20 @@
 
-#include "Actor/NPCActor.h"
-#include "Components/CapsuleComponent.h"
+#include "Actor/NPC_QuestGiver.h"
 #include <Player/IdlePlayerController.h>
 #include <Quest/QuestManager.h>
 #include <PlayFab/PlayFabManager.h>
 #include <Chat/GameChatManager.h>
 
 // Sets default values
-ANPCActor::ANPCActor()
+ANPC_QuestGiver::ANPC_QuestGiver()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// Create a root component
-	USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
-	SetRootComponent(SceneRoot);
-
-	// Create a capsule component and set it as the root component
-	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-	//CapsuleComponent->InitCapsuleSize(730.f, 400.f); // Replace with your desired size
-	CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
-	CapsuleComponent->ComponentTags.Add(FName("NPC"));
-	CapsuleComponent->SetupAttachment(SceneRoot); // Attach the capsule to the scene root
-
-	// Create and setup the mesh component to be attached to the capsule
-	NPCMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NPCMeshComponent"));
-	NPCMeshComponent->SetupAttachment(CapsuleComponent); // Attach the mesh to the capsule
 }
 
-void ANPCActor::Interact()
+void ANPC_QuestGiver::Interact()
 {
-	UE_LOG(LogTemp, Warning, TEXT("NPC Interact"));
+	UE_LOG(LogTemp, Warning, TEXT("NPC_QuestGiver Interact"));
 	//AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
 	//PC->CurrentPlayerState = EPlayerState::Idle;
 
@@ -41,7 +25,7 @@ void ANPCActor::Interact()
 	//QuestManager->GetQuestData();
 }
 
-void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
+void ANPC_QuestGiver::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 {
 	AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
 	if (Player && Quest)
@@ -65,7 +49,7 @@ void ANPCActor::AssignQuest(UQuest* Quest, AIdleCharacter* Player)
 	}
 }
 
-void ANPCActor::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
+void ANPC_QuestGiver::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
 {
 	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
 	if (PlayFabManager && Player && Quest && Player->ActiveQuests.Contains(Quest))
@@ -84,12 +68,12 @@ void ANPCActor::CompleteQuest(UQuest* Quest, AIdleCharacter* Player)
 	
 }
 
-void ANPCActor::AddAvailableQuests(UQuest* QuestToAdd)
+void ANPC_QuestGiver::AddAvailableQuests(UQuest* QuestToAdd)
 {
 	AvailableQuests.Add(QuestToAdd);
 }
 
-bool ANPCActor::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
+bool ANPC_QuestGiver::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
 {
 	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
 	if (PlayFabManager)
@@ -101,7 +85,7 @@ bool ANPCActor::CanAcceptQuest(UQuest* Quest, AIdleCharacter* Player)
 	return false;
 }
 
-void ANPCActor::HandleQuestVersionRetrieved(FString QuestID, FString QuestVersion)
+void ANPC_QuestGiver::HandleQuestVersionRetrieved(FString QuestID, FString QuestVersion)
 {
 	for (UQuest* AvailableQuest : AvailableQuests)
 	{
@@ -122,24 +106,4 @@ void ANPCActor::HandleQuestVersionRetrieved(FString QuestID, FString QuestVersio
 	}
 }
 
-// Called when the game starts or when spawned
-void ANPCActor::BeginPlay()
-{
-	Super::BeginPlay();
-
-	/*
-	APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
-	if (PlayFabManager)
-	{
-		PlayFabManager->OnQuestVersionRetrieved.AddDynamic(this, &ANPCActor::HandleQuestVersionRetrieved);
-	}
-	*/
-}
-
-// Called every frame
-void ANPCActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 

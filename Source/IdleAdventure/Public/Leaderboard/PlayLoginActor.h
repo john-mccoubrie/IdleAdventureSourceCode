@@ -55,8 +55,8 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PlayFab")
     FOnPlayerLevelLoaded OnPlayerLevelLoaded;
 
-    UPROPERTY(BlueprintAssignable, Category = "PlayFab")
-    FOnLeaderboardDataReceived OnLeaderboardDataReceived;
+    //UPROPERTY(BlueprintAssignable, Category = "PlayFab")
+    //FOnLeaderboardDataReceived OnLeaderboardDataReceived;
 
     UFUNCTION(BlueprintCallable, Category = "PlayFab||Login")
     void RegisterUser(FString username, FString password, FString email);
