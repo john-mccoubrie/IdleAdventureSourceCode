@@ -18,6 +18,9 @@ struct FEquipmentData : public FTableRowBase
 	FString Name;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
+	FString ItemDescription;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
 	float LevelRequired;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Equipment Data", meta = (AllowPrivateAccess = "true"))
@@ -50,6 +53,7 @@ struct FEquipmentData : public FTableRowBase
 	
     FEquipmentData()
         : Name(TEXT(""))
+		, ItemDescription(TEXT(""))
 		, LevelRequired(0.0f)
         , Mesh(nullptr)
 		, Icon(nullptr)

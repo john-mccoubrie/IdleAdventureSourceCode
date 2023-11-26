@@ -1,6 +1,7 @@
 
 #include "Actor/Base_NPCActor.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values
 ABase_NPCActor::ABase_NPCActor()
@@ -22,6 +23,13 @@ ABase_NPCActor::ABase_NPCActor()
 	// Create and setup the mesh component to be attached to the capsule
 	NPCMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NPCMeshComponent"));
 	NPCMeshComponent->SetupAttachment(CapsuleComponent); // Attach the mesh to the capsule
+
+	// Create the money sign mesh component
+	NPCIndicatorMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MoneySignMeshComponent"));
+	NPCIndicatorMeshComponent->SetupAttachment(CapsuleComponent); // or SceneRoot if you prefer
+
+	// Position it above the NPC
+	NPCIndicatorMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, DesiredHeightAboveNPC)); // Set DesiredHeightAboveNPC to your desired value
 }
 
 

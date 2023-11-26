@@ -14,9 +14,9 @@ ATestManager::ATestManager()
     CurrentSettings.EquipmentBonusAmout = 1.0f; 
     CurrentSettings.EssenceYieldAmount = 1.0f; 
     CurrentSettings.LegendaryExpAmount = 1.0f; 
-    CurrentSettings.TreeCutTimeMin = 10.0f;
-    CurrentSettings.TreeCutTimeMax = 15.0f;
-    CurrentSettings.TreeRespawnDelay = 5.0f;
+    CurrentSettings.TreeCutTimeMin = 5.0f;
+    CurrentSettings.TreeCutTimeMax = 10.0f;
+    CurrentSettings.TreeRespawnDelay = 500.0f;
     CurrentSettings.CofferDropOffTime = 10.0f;
     CurrentSettings.EssenceAddToCofferMultiply = 10.f;
 }

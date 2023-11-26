@@ -12,7 +12,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteractedWithInvestor);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEssenceUpdate, int32, Wisdom, int32, Temperance, int32, Justice, int32, Courage, int32, Legendary);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEssenceUpdate, int32, Wisdom, int32, Temperance, int32, Justice, int32, Courage, int32, Legendary);
 
 
 
@@ -68,8 +68,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInteractedWithInvestor OnInteractedWithInvestor;
 
-	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnEssenceUpdate OnEssenceUpdate;
+	//UPROPERTY(BlueprintAssignable, Category = "Events")
+	//FOnEssenceUpdate OnEssenceUpdate;
 
 	//PlayFab stored
 	int32 PlayFabWisdom;

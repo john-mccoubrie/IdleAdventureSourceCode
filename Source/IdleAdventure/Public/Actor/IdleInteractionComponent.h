@@ -50,6 +50,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void StopStaffCastingSound();
 
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayStaffDinkSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void StopStaffDinkSound();
+
+	void PlaySound(USoundBase* SoundToPlay);
+
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
@@ -83,6 +91,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Sound Properties")
 	UAudioComponent* StaffAudioComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* StaffDinkSound;
+
+	UPROPERTY(VisibleAnywhere, Category = "Sound Properties")
+	UAudioComponent* StaffDinkAudioComponent;
 
 protected:
 	// Called when the game starts

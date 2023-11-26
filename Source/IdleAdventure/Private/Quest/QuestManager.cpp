@@ -116,12 +116,17 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 FString Version = JsonObject->GetStringField(TEXT("Version"));
                 FString QuestName = JsonObject->GetStringField(TEXT("Name"));
                 FString QuestDescription = JsonObject->GetStringField(TEXT("Description"));
+                FString QuestCategory = JsonObject->GetStringField(TEXT("Category"));
 
                 TSharedPtr<FJsonObject> RewardsObject = JsonObject->GetObjectField(TEXT("Rewards"));
 
                 FQuestRewards Rewards;
                 Rewards.Experience = RewardsObject->GetIntegerField(TEXT("Experience"));
+                Rewards.WisdomEssence = RewardsObject->GetIntegerField(TEXT("WisdomEssence"));
                 Rewards.TemperanceEssence = RewardsObject->GetIntegerField(TEXT("TemperanceEssence"));
+                Rewards.JusticeEssence = RewardsObject->GetIntegerField(TEXT("JusticeEssence"));
+                Rewards.CourageEssence = RewardsObject->GetIntegerField(TEXT("CourageEssence"));
+                Rewards.LegendaryEssence = RewardsObject->GetIntegerField(TEXT("LegendaryEssence"));
 
                 TSharedPtr<FJsonObject> ObjectivesObject = JsonObject->GetObjectField(TEXT("QuestObjectives"));
                 FQuestObjectives Objectives;
@@ -139,6 +144,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 NewQuest->Version = Version;
                 NewQuest->QuestName = QuestName;
                 NewQuest->QuestDescription = QuestDescription;
+                NewQuest->QuestCategory = QuestCategory;
                 NewQuest->Rewards = Rewards;
                 AllLoadedQuests.Add(NewQuest);
             }
@@ -255,6 +261,100 @@ void AQuestManager::PlayerHasTooManyQuestsMessage()
     GameChatManager->PostNotificationToUI(TEXT("You may only have 2 active quests at one time!"), FLinearColor::Red);
 }
 
+void AQuestManager::GetCurrentEssenceCounts()
+{
+    PlayFab::ClientModels::FGetUserDataRequest GetRequest;
+    clientAPI->GetUserData(GetRequest,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &AQuestManager::OnSuccessFetchEssenceCounts),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &AQuestManager::OnErrorFetchEssenceCounts));
+}
+
+void AQuestManager::OnSuccessFetchEssenceCounts(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    FString EssenceDataJsonString;
+
+    // Assuming "EssenceAddedToCoffer" is the key for the essence counts data
+    if (Result.Data.Contains(TEXT("EssenceAddedToCoffer")))
+    {
+        EssenceDataJsonString = Result.Data[TEXT("EssenceAddedToCoffer")].Value;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Essence counts data not found."));
+        return;
+    }
+
+    TSharedPtr<FJsonObject> JsonObject;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(EssenceDataJsonString);
+
+    if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+    {
+        // Parse and assign the values to your int32 variables
+        PlayFabWisdom = JsonObject->GetIntegerField(TEXT("Wisdom"));
+        PlayFabJustice = JsonObject->GetIntegerField(TEXT("Justice"));
+        PlayFabTemperance = JsonObject->GetIntegerField(TEXT("Temperance"));
+        PlayFabCourage = JsonObject->GetIntegerField(TEXT("Courage"));
+        PlayFabLegendary = JsonObject->GetIntegerField(TEXT("Legendary"));
+
+        // Log or use these values as needed
+        UE_LOG(LogTemp, Log, TEXT("Wisdom: %d, Justice: %d, Temperance: %d, Courage: %d, Legendary: %d"), PlayFabWisdom, PlayFabJustice, PlayFabTemperance, PlayFabCourage, PlayFabLegendary);
+
+        // Update any relevant game data structures or variables here
+        PlayFabWisdom += WisdomReward;
+        PlayFabTemperance += TemperanceReward;
+        PlayFabJustice += JusticeReward;
+        PlayFabCourage += CourageReward;
+        PlayFabLegendary += LegendaryReward;
+
+        SendUpdatedEssenceCountsToPlayFab();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to parse essence counts JSON."));
+    }
+}
+
+void AQuestManager::OnErrorFetchEssenceCounts(const PlayFab::FPlayFabCppError& Error)
+{
+    FString ErrorMessage = Error.GenerateErrorReport();
+    UE_LOG(LogTemp, Error, TEXT("Failed to get essence counts in NPC_Investor: %s"), *ErrorMessage);
+}
+
+void AQuestManager::SendUpdatedEssenceCountsToPlayFab()
+{
+    TSharedPtr<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+    JsonObject->SetNumberField(TEXT("Wisdom"), PlayFabWisdom);
+    JsonObject->SetNumberField(TEXT("Temperance"), PlayFabTemperance);
+    JsonObject->SetNumberField(TEXT("Justice"), PlayFabJustice);
+    JsonObject->SetNumberField(TEXT("Courage"), PlayFabCourage);
+    JsonObject->SetNumberField(TEXT("Legendary"), PlayFabLegendary);
+
+    FString UpdatedDataString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedDataString);
+    FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+    PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
+    UpdateRequest.Data.Add(TEXT("EssenceAddedToCoffer"), UpdatedDataString);
+
+    clientAPI->UpdateUserData(UpdateRequest,
+        PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &AQuestManager::OnSuccessUpdateEssenceCounts),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &AQuestManager::OnErrorUpdateEssenceCounts));
+}
+
+void AQuestManager::OnSuccessUpdateEssenceCounts(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Log, TEXT("Successfully updated essence counts on PlayFab."));
+    //Broadcast to UI
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    PlayFabManager->OnEssenceUpdate.Broadcast(PlayFabWisdom, PlayFabTemperance, PlayFabJustice, PlayFabCourage, PlayFabLegendary);
+}
+
+void AQuestManager::OnErrorUpdateEssenceCounts(const PlayFab::FPlayFabCppError& Error)
+{
+    FString ErrorMessage = Error.GenerateErrorReport();
+    UE_LOG(LogTemp, Error, TEXT("Failed to update essence counts on PlayFab: %s"), *ErrorMessage);
+}
+
 void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)
 {
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
@@ -262,4 +362,12 @@ void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorld());
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Quest->Rewards.Experience);
+    //give the player justice essence reward and save it to playfab
+    GetCurrentEssenceCounts();
+    
+    WisdomReward = Quest->Rewards.WisdomEssence;
+    TemperanceReward = Quest->Rewards.TemperanceEssence;
+    JusticeReward = Quest->Rewards.JusticeEssence;
+    CourageReward = Quest->Rewards.CourageEssence;
+    LegendaryReward = Quest->Rewards.LegendaryEssence;
 }

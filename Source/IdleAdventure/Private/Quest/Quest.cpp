@@ -130,7 +130,7 @@ void UQuest::Complete()
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
     QuestManager->questCount--;
     // Format the message using FString::Printf
-    FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience!"), *this->QuestName, this->Rewards.Experience);
+    FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience, and %i Justice Essence!"), *this->QuestName, this->Rewards.Experience, this->Rewards.JusticeEssence);
     // Convert FLinearColor to FSlateColor
     FSlateColor NotificationColor = FSlateColor(FLinearColor::Green);
     // Call the function with the formatted message and color

@@ -95,6 +95,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     //Deactivate particle effect from the character
     PC->IdleInteractionComponent->EndTreeCutEffect();
     PC->IdleInteractionComponent->StopStaffCastingSound();
+    PC->IdleInteractionComponent->PlayStaffDinkSound();
     
     PS->AbilitySystemComponent->RemoveActiveGameplayEffect(PC->WoodcuttingEffectHandle);
     UAnimMontage* AnimMontage = Character->WoodcutMontage;

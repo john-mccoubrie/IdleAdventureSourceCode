@@ -53,14 +53,30 @@ struct FQuestRewards
 	int32 Experience;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 WisdomEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 TemperanceEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 JusticeEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 CourageEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 LegendaryEssence;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FQuestObjectives Objectives;
 
 	FQuestRewards()
 		: Experience(0)
+		, WisdomEssence(0)
 		, TemperanceEssence(0)
+		, JusticeEssence(0)
+		, CourageEssence(0)
+		, LegendaryEssence(0)
 		, Objectives()
 	{
 	}
@@ -177,10 +193,25 @@ public:
 	FString QuestDescription;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString QuestCategory;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 Experience;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 WisdomEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 TemperanceEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 JusticeEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 CourageEssence;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 LegendaryEssence;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FQuestRewards Rewards;

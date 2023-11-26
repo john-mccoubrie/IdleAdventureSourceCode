@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <PlayerEquipment/BonusManager.h>
+#include <PlayFab/PlayFabManager.h>
 
 //this needs to be called somewhere
 void ANPC_Investor::Interact()
@@ -127,7 +128,8 @@ void ANPC_Investor::UpdatePlayerEssenceCounts(int32 WisdomAmt, int32 TemperanceA
     SendUpdatedEssenceCountsToPlayFab();
 
     // Broadcast the delegate with updated essence counts
-    OnEssenceUpdate.Broadcast(PlayFabWisdom, PlayFabTemperance, PlayFabJustice, PlayFabCourage, PlayFabLegendary);
+    APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    PlayFabManager->OnEssenceUpdate.Broadcast(PlayFabWisdom, PlayFabTemperance, PlayFabJustice, PlayFabCourage, PlayFabLegendary);
 }
 
 float ANPC_Investor::CalculateSuccessChance(int32 TotalInvestment, int32 EquipmentBonus)

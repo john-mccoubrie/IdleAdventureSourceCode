@@ -114,6 +114,29 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Quests")
     void PlayerHasTooManyQuestsMessage();
 
+
+
+    void GetCurrentEssenceCounts();
+    void OnSuccessFetchEssenceCounts(const PlayFab::ClientModels::FGetUserDataResult& Result);
+    void OnErrorFetchEssenceCounts(const PlayFab::FPlayFabCppError& Error);
+    void SendUpdatedEssenceCountsToPlayFab();
+    void OnSuccessUpdateEssenceCounts(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
+    void OnErrorUpdateEssenceCounts(const PlayFab::FPlayFabCppError& Error);
+
+    //PlayFab stored
+    int32 PlayFabWisdom;
+    int32 PlayFabTemperance;
+    int32 PlayFabJustice;
+    int32 PlayFabCourage;
+    int32 PlayFabLegendary;
+
+    //Rewards from quest stored
+    int32 WisdomReward = 0;
+    int32 TemperanceReward = 0;
+    int32 JusticeReward = 0;
+    int32 CourageReward = 0;
+    int32 LegendaryReward = 0;
+
     //FQuestProgress QuestProgress;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
@@ -136,6 +159,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
     int32 questCount;
+
+    
 
 private:
 	static AQuestManager* QuestManagerSingletonInstance;

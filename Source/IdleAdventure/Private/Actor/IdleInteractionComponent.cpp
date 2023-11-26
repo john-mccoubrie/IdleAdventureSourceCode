@@ -17,6 +17,8 @@ UIdleInteractionComponent::UIdleInteractionComponent()
     // Initialize the Audio Component
     StaffAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffAudioComponent"));
     StaffAudioComponent->bAutoActivate = false;
+    //StaffDinkAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffDinkAudioComponent"));
+    //StaffDinkAudioComponent->bAutoActivate = false;
 
 }
 
@@ -113,11 +115,14 @@ void UIdleInteractionComponent::EndTreeCutEffect()
 
 void UIdleInteractionComponent::PlayStaffCastingSound()
 {
+    /*
     if (StaffCastingSound && StaffAudioComponent && !StaffAudioComponent->IsPlaying())
     {
         StaffAudioComponent->SetSound(StaffCastingSound);
         StaffAudioComponent->Play();
     }
+    */
+    PlaySound(StaffCastingSound);
 }
 
 void UIdleInteractionComponent::StopStaffCastingSound()
@@ -125,6 +130,37 @@ void UIdleInteractionComponent::StopStaffCastingSound()
     if (StaffAudioComponent && StaffAudioComponent->IsPlaying())
     {
         StaffAudioComponent->Stop();
+    }
+}
+
+void UIdleInteractionComponent::PlayStaffDinkSound()
+{
+    /*
+    if (StaffDinkSound && StaffDinkAudioComponent && !StaffDinkAudioComponent->IsPlaying())
+    {
+        StaffDinkAudioComponent->SetSound(StaffDinkSound);
+        StaffDinkAudioComponent->Play();
+        UE_LOG(LogTemp, Warning, TEXT("Staff dink sound reached."));
+    }
+    */
+
+    PlaySound(StaffDinkSound);
+}
+
+void UIdleInteractionComponent::StopStaffDinkSound()
+{
+    if (StaffDinkAudioComponent && !StaffDinkAudioComponent->IsPlaying())
+    {
+        StaffDinkAudioComponent->Stop();
+    }
+}
+
+void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
+{
+    if (SoundToPlay && StaffAudioComponent && !StaffAudioComponent->IsPlaying())
+    {
+        StaffAudioComponent->SetSound(SoundToPlay);
+        StaffAudioComponent->Play();
     }
 }
 

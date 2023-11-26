@@ -310,6 +310,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("NPC"))
 	{
 		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
+		UE_LOG(LogTemp, Warning, TEXT("You have hit: %s"), ClickResult.GetActor());
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
 			InterruptTreeCutting();
