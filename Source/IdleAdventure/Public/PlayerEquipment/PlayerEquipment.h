@@ -63,6 +63,8 @@ public:
 	TMap<FString, USkeletalMeshComponent*> EquippedItemMeshes;
 	TMap<FString, FString> EquippedItemNames;
 
+	void UpdateItemName(const FEquipmentData& ItemData);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

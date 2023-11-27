@@ -7,6 +7,7 @@
 #include "Base_NPCActor.generated.h"
 
 class UCapsuleComponent;
+class UBoxComponent;
 
 UCLASS()
 class IDLEADVENTURE_API ABase_NPCActor : public AActor
@@ -19,10 +20,12 @@ public:
 
 	virtual void Interact();
 
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCapsuleComponent* CapsuleComponent;
-
+	
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//UBoxComponent* CapsuleComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* NPCMeshComponent;
 

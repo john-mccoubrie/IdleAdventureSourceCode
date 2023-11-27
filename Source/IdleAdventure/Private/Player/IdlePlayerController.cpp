@@ -10,6 +10,8 @@
 #include "NiagaraComponent.h"
 #include "Styling/SlateColor.h"
 #include "NavigationSystem.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
+#include "AI/NavigationSystemBase.h"
 #include "EngineUtils.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "DrawDebugHelpers.h"
@@ -354,15 +356,21 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
+	UE_LOG(LogTemp, Warning, TEXT("Move to click location"));
 	TargetDestination = CursorHit.ImpactPoint;
+
+	// Log the target destination
+	UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
 
 	// Start moving towards the target using the NavMesh
 	if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
 	{
 		if (PlayerPawn)
 		{
+			// Call SimpleMoveToLocation without expecting a return value
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+			// Log that we've issued a move command
+			UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
 		}
 	}
 }

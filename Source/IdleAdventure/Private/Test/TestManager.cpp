@@ -1,24 +1,34 @@
 
 #include "Test/TestManager.h"
 #include "EngineUtils.h"
+#include <Engine/DataTable.h>
 
 ATestManager* ATestManager::TestManagerSingletonInstance = nullptr;
 
 // Sets default values
 ATestManager::ATestManager()
 {
+    UDataTable* GatheringSettingsDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/DataTables/DT_GatheringGameSettings.DT_GatheringGameSettings")));
+
+    FName RowKey = "GatheringGameSettings";
+    FGameSettings* InvestingValues = GatheringSettingsDataTable->FindRow<FGameSettings>(RowKey, TEXT("Context String"), true);
+
     // Set default values for the game settings
-    CurrentSettings.EssenceYieldSpeed = 1.0f;
-    CurrentSettings.LevelUpMultiplier = 1.50f; 
-    CurrentSettings.CofferMeterReductionRate = 1.0f;
-    CurrentSettings.EquipmentBonusAmout = 1.0f; 
-    CurrentSettings.EssenceYieldAmount = 1.0f; 
-    CurrentSettings.LegendaryExpAmount = 1.0f; 
-    CurrentSettings.TreeCutTimeMin = 5.0f;
-    CurrentSettings.TreeCutTimeMax = 10.0f;
-    CurrentSettings.TreeRespawnDelay = 500.0f;
-    CurrentSettings.CofferDropOffTime = 10.0f;
-    CurrentSettings.EssenceAddToCofferMultiply = 10.f;
+    if (InvestingValues)
+    {
+        CurrentSettings.EssenceYieldSpeed = InvestingValues->EssenceYieldSpeed;
+        CurrentSettings.LevelUpMultiplier = InvestingValues->LevelUpMultiplier;
+        CurrentSettings.CofferMeterReductionRate = InvestingValues->CofferMeterReductionRate;
+        CurrentSettings.EquipmentBonusAmout = InvestingValues->EquipmentBonusAmout;
+        CurrentSettings.EssenceYieldAmount = InvestingValues->EssenceYieldAmount;
+        CurrentSettings.LegendaryExpAmount = InvestingValues->LegendaryExpAmount;
+        CurrentSettings.TreeCutTimeMin = InvestingValues->TreeCutTimeMin;
+        CurrentSettings.TreeCutTimeMax = InvestingValues->TreeCutTimeMax;
+        CurrentSettings.TreeRespawnDelay = InvestingValues->TreeRespawnDelay;
+        CurrentSettings.CofferDropOffTime = InvestingValues->CofferDropOffTime;
+        CurrentSettings.EssenceAddToCofferMultiply = InvestingValues->EssenceAddToCofferMultiply;
+        CurrentSettings.LogYieldFrequencyFactor = InvestingValues->LogYieldFrequencyFactor;
+    } 
 }
 
 void ATestManager::ChangeSettings(FGameSettings NewSettings)

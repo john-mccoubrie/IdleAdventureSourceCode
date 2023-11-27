@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "BonusManager.h"
 #include "CoreMinimal.h"
-#include "Engine/DataTable.h" 
+#include "Engine/DataTable.h"
+#include "BonusManager.h"
 #include "UObject/NoExportTypes.h"
 #include "EquipmentManager.generated.h"
 
@@ -68,6 +68,7 @@ struct FEquipmentData : public FTableRowBase
     }
 };
 
+
 UCLASS(Blueprintable)
 class IDLEADVENTURE_API UEquipmentManager : public UObject
 {
@@ -95,6 +96,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	TArray<FEquipmentData> GetUnlockedEquipment() const;
+
 
 private:
 

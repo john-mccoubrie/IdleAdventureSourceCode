@@ -142,7 +142,7 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     {
         return; // Exit the function if chopping a legendary tree
     }
-
+    ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
@@ -150,28 +150,29 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
     //Woodcutting algorithm
     float LevelMultiplier = IdleAttributeSet->GetWoodcuttingLevel();
-    //UE_LOG(LogTemp, Warning, TEXT("LevelMultiplier: %f"), LevelMultiplier);
+    UE_LOG(LogTemp, Warning, TEXT("LevelMultiplier: %f"), LevelMultiplier);
 
     // Adjust the base chance and the level influence to balance the ease of gathering logs
     float BaseChance = 10.0f;
     float LevelInfluence = 0.5f;
     float ChanceToYield = BaseChance + (LevelMultiplier * LevelInfluence);
-    //UE_LOG(LogTemp, Warning, TEXT("ChanceToYield: %f"), ChanceToYield);
+    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield: %f"), ChanceToYield);
 
     // Random factor to add some unpredictability
     float RandomFactor = FMath::RandRange(-10.0f, 10.0f);
     ChanceToYield += RandomFactor;
+    ChanceToYield *= TestManager->CurrentSettings.LogYieldFrequencyFactor;
     ChanceToYield = FMath::Clamp(ChanceToYield, 0.0f, 100.0f);  // Ensure chance stays between 0 and 100
-    //UE_LOG(LogTemp, Warning, TEXT("ChanceToYield after RandomFactor: %f"), ChanceToYield);
+    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield after RandomFactor: %f"), ChanceToYield);
 
     float RandomRoll = FMath::RandRange(0, 100);
-    //UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
+    UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
 
     //uncomment this to return to normal algorithm
-    RandomRoll = 1;
-    ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
+    //RandomRoll = 1;
+    
     //if (RandomRoll <= ChanceToYield)
-    if(TestManager->CurrentSettings.EssenceYieldSpeed <= ChanceToYield)
+    if(RandomRoll <= ChanceToYield)
     {
         //UE_LOG(LogTemp, Warning, TEXT("EssenceYieldSpeed Value: %f"), TestManager->CurrentSettings.EssenceYieldSpeed);
         // Award the log
@@ -186,18 +187,18 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         JusticeThreshold = 95.0f;
         CourageThreshold = 100.0f;
 
-        WisdomThreshold -= BonusManager->WisdomEssenceChanceMultiplier;
-        TemperanceThreshold -= BonusManager->TemperanceEssenceChanceMultiplier;
-        JusticeThreshold -= BonusManager->JusticeEssenceChanceMultiplier;
-        CourageThreshold -= BonusManager->CourageEssenceChanceMultiplier;
+        WisdomThreshold -= BonusManager->MultiplierSet.WisdomEssenceChanceMultiplier;
+        TemperanceThreshold -= BonusManager->MultiplierSet.TemperanceEssenceChanceMultiplier;
+        JusticeThreshold -= BonusManager->MultiplierSet.JusticeEssenceChanceMultiplier;
+        CourageThreshold -= BonusManager->MultiplierSet.CourageEssenceChanceMultiplier;
 
         float RarityRoll = FMath::RandRange(0.f, 100.f);
 
-        //UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
-        //UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
-        //UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
-        //UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
-        //UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
+        UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
+        UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
 
 
         //Default Essence to add multiper
@@ -205,26 +206,26 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         if (RarityRoll <= WisdomThreshold)  // 50% chance for Wisdom
         {
             NewLog->EssenceRarity = "Wisdom";
-            ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->WisdomEssenceMultiplier));
-            EssenceToAdd *= BonusManager->WisdomYieldMultiplier;
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->MultiplierSet.WisdomEssenceMultiplier));
+            EssenceToAdd *= BonusManager->MultiplierSet.WisdomYieldMultiplier;
         }
         else if (RarityRoll <= TemperanceThreshold)  // 25% chance for Temperance
         {
             NewLog->EssenceRarity = "Temperance";
-            ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->TemperanceEssenceMultiplier));
-            EssenceToAdd *= BonusManager->TemperanceYieldMultiplier;
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->MultiplierSet.TemperanceEssenceMultiplier));
+            EssenceToAdd *= BonusManager->MultiplierSet.TemperanceYieldMultiplier;
         }
         else if (RarityRoll <= JusticeThreshold)  // 20% chance for Justice
         {
             NewLog->EssenceRarity = "Justice";
-            ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->JusticeEssenceMultiplier));
-            EssenceToAdd *= BonusManager->JusticeYieldMultiplier;
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->MultiplierSet.JusticeEssenceMultiplier));
+            EssenceToAdd *= BonusManager->MultiplierSet.JusticeYieldMultiplier;
         }
         else // if (RarityRoll <= CourageThreshold)  // 5% chance for Courage
         {
             NewLog->EssenceRarity = "Courage";
-            ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->CourageEssenceMultiplier));
-            EssenceToAdd *= BonusManager->CourageYieldMultiplier;
+            ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->MultiplierSet.CourageEssenceMultiplier));
+            EssenceToAdd *= BonusManager->MultiplierSet.CourageYieldMultiplier;
         }
 
         AddExperience(ExperienceGain);
@@ -243,25 +244,25 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 if (NewLog->EssenceRarity == "Wisdom")
                 {
                     //CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
-                    Character->UpdateAllActiveQuests("Wisdom", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Wisdom", EssenceToAdd * BonusManager->MultiplierSet.WisdomYieldMultiplier);
                     //UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Temperance")
                 {
                     //CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
-                    Character->UpdateAllActiveQuests("Temperance", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Temperance", EssenceToAdd * BonusManager->MultiplierSet.TemperanceYieldMultiplier);
                     //UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Justice")
                 {
                     //CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
-                    Character->UpdateAllActiveQuests("Justice", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Justice", EssenceToAdd * BonusManager->MultiplierSet.JusticeYieldMultiplier);
                     //UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Courage")
                 {
                     //CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
-                    Character->UpdateAllActiveQuests("Courage", EssenceToAdd);
+                    Character->UpdateAllActiveQuests("Courage", EssenceToAdd * BonusManager->MultiplierSet.CourageYieldMultiplier);
                     //UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
                 }
                 
@@ -337,8 +338,8 @@ void UWoodcuttingAbility::GetLegendaryEssence()
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     float LegendaryExpGain = 5000;
     
-    ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->LegendaryEssenceMultiplier));
-    EssenceToAdd *= BonusManager->LegendaryYieldMultiplier;
+    ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->MultiplierSet.LegendaryEssenceMultiplier));
+    EssenceToAdd *= BonusManager->MultiplierSet.LegendaryYieldMultiplier;
 
     AddExperience(ExperienceGain);
 

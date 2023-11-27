@@ -7,6 +7,25 @@
 #include <PlayerEquipment/BonusManager.h>
 #include <PlayFab/PlayFabManager.h>
 
+ANPC_Investor::ANPC_Investor()
+{
+    UDataTable* InvestingDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/DataTables/DT_InvestingValues.DT_InvestingValues")));
+
+    FName RowKey = "InvestingValues";
+    FInvestingValues* InvestingValues = InvestingDataTable->FindRow<FInvestingValues>(RowKey, TEXT("Context String"), true);
+
+    if (InvestingValues)
+    {
+        BaseSuccessChance = InvestingValues->BaseSuccessChance;
+        WisdomInvestmentMultiplier = InvestingValues->WisdomInvestmentMultiplier;
+        TemperanceInvestmentMultiplier = InvestingValues->TemperanceInvestmentMultiplier;
+        JusticeInvestmentMultiplier = InvestingValues->JusticeInvestmentMultiplier;
+        LegendaryInvestmentMultiplier = InvestingValues->LegendaryInvestmentMultiplier;
+        PowerFactor = InvestingValues->PowerFactor;
+        LossPercentage = InvestingValues->LossPercentage;
+    }
+}
+
 //this needs to be called somewhere
 void ANPC_Investor::Interact()
 {
@@ -47,15 +66,18 @@ int32 ANPC_Investor::HandleInvest(int32 PlayerWisdomAmt, int32 PlayerTemperanceA
 
     // Calculate total invested essence
     int32 TotalInvestment = PlayerWisdomAmt + PlayerTemperanceAmt + PlayerJusticeAmt + PlayerLegendaryAmt;
-    UE_LOG(LogTemp, Log, TEXT("Total Investment: %d"), TotalInvestment);
+    //UE_LOG(LogTemp, Log, TEXT("Total Investment: %d"), TotalInvestment);
 
     // Calculate equipment bonus
     int32 EquipmentBonus = GetEquipmentBonus();
-    UE_LOG(LogTemp, Log, TEXT("Equipment Bonus: %d"), EquipmentBonus);
+    //UE_LOG(LogTemp, Log, TEXT("Equipment Bonus: %d"), EquipmentBonus);
 
     // Calculate success chance
-    float SuccessChance = CalculateSuccessChance(TotalInvestment, EquipmentBonus);
-    UE_LOG(LogTemp, Log, TEXT("Success Chance: %f"), SuccessChance);
+    float SuccessChance = CalculateSuccessChance(PlayerWisdomAmt, PlayerTemperanceAmt, PlayerJusticeAmt, PlayerLegendaryAmt, EquipmentBonus);
+    //UE_LOG(LogTemp, Log, TEXT("Success Chance: %f"), SuccessChance);
+
+    OnBroadcastInvestNumbers.Broadcast(TotalInvestment, EquipmentBonus, SuccessChance);
+
 
     // Determine if investment is successful
     bool bIsSuccessful = (std::rand() % 100) < (SuccessChance * 100);
@@ -132,24 +154,33 @@ void ANPC_Investor::UpdatePlayerEssenceCounts(int32 WisdomAmt, int32 TemperanceA
     PlayFabManager->OnEssenceUpdate.Broadcast(PlayFabWisdom, PlayFabTemperance, PlayFabJustice, PlayFabCourage, PlayFabLegendary);
 }
 
-float ANPC_Investor::CalculateSuccessChance(int32 TotalInvestment, int32 EquipmentBonus)
+float ANPC_Investor::CalculateSuccessChance(int32 PlayerWisdomAmt, int32 PlayerTemperanceAmt, int32 PlayerJusticeAmt, int32 PlayerLegendaryAmt, int32 EquipmentBonus)
 {
-    // Adjust the success chance calculation to include both total investment and equipment bonus
-    float BaseChance = 0.2f; // Base success chance
-    float InvestmentFactor = TotalInvestment / 10000.0f; // Factor from the total investment
-    float BonusFactor = EquipmentBonus / 50.0f; // Factor from the equipment bonus
 
-    // Calculate the final success chance
-    float SuccessChance = BaseChance + InvestmentFactor + BonusFactor;
-    return FMath::Clamp(SuccessChance, BaseChance, 0.95f); // Clamp between base chance and 95%
+    // Calculate the weighted and powered contribution of each essence type to the success chance
+    float WisdomContribution = FMath::Pow(PlayerWisdomAmt, PowerFactor) * WisdomInvestmentMultiplier;
+    float TemperanceContribution = FMath::Pow(PlayerTemperanceAmt, PowerFactor) * TemperanceInvestmentMultiplier;
+    float JusticeContribution = FMath::Pow(PlayerJusticeAmt, PowerFactor) * JusticeInvestmentMultiplier;
+    float LegendaryContribution = FMath::Pow(PlayerLegendaryAmt, PowerFactor) * LegendaryInvestmentMultiplier;
+
+    UE_LOG(LogTemp, Log, TEXT("Wisdom Contribution: %f"), WisdomContribution);
+    UE_LOG(LogTemp, Log, TEXT("Temperance Contribution: %f"), TemperanceContribution);
+    UE_LOG(LogTemp, Log, TEXT("Justice Contribution: %f"), JusticeContribution);
+    UE_LOG(LogTemp, Log, TEXT("Legendary Contribution: %f"), LegendaryContribution);
+
+    // Sum the contributions of each essence type
+    float TotalContribution = WisdomContribution + TemperanceContribution + JusticeContribution + LegendaryContribution;
+    UE_LOG(LogTemp, Log, TEXT("Total Essence Contribution: %f"), TotalContribution / 10000.0f);
+
+    // Calculate the final success chance using the total contribution and equipment bonus
+    float SuccessChance = BaseSuccessChance + (TotalContribution / 10000.0f) + (EquipmentBonus / 50.0f);
+
+    return FMath::Clamp(SuccessChance, BaseSuccessChance, 0.95f); // Clamp between base chance and 95%
 }
 
 // This method now returns a struct or a tuple containing the losses of each essence
 FInvestmentLossResult ANPC_Investor::HandleInvestmentLoss(int32 PlayerWisdomAmt, int32 PlayerTemperanceAmt, int32 PlayerJusticeAmt, int32 PlayerLegendaryAmt)
 {
-    // Assume a LossPercentage of 0.5 (50% loss on failure)
-    //float LossPercentage = 0.5f;
-    float LossPercentage = 1.0f;
 
     // Calculate the essence loss for each type
     int32 WisdomLoss = static_cast<int32>(PlayerWisdomAmt * LossPercentage);
@@ -171,8 +202,8 @@ int32 ANPC_Investor::GetEquipmentBonus()
 {
     //int32 Bonus = std::rand() % 10 + 1; // Random number between 1 and 10
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
-    UE_LOG(LogTemp, Log, TEXT("Generated Equipment Bonus: %i"), BonusManager->InvestingBonusChance);
-    return BonusManager->InvestingBonusChance;
+    UE_LOG(LogTemp, Log, TEXT("Generated Equipment Bonus: %i"), BonusManager->MultiplierSet.InvestingBonusChance);
+    return BonusManager->MultiplierSet.InvestingBonusChance;
 }
 
 int32 ANPC_Investor::CalculateCourageEssenceReturn(int32 Points)

@@ -155,6 +155,21 @@ void UIdleInteractionComponent::StopStaffDinkSound()
     }
 }
 
+void UIdleInteractionComponent::PlayCofferAddSound()
+{
+    PlaySound(AddToCofferSound);
+}
+
+void UIdleInteractionComponent::PlayAddToLegendaryMeterSound()
+{
+    PlaySound(AddToLegendaryMeterSound);
+}
+
+void UIdleInteractionComponent::PlayLegendaryTreeSpawnSound()
+{
+    PlaySound(LegendaryTreeSpawnSound);
+}
+
 void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
 {
     if (SoundToPlay && StaffAudioComponent && !StaffAudioComponent->IsPlaying())

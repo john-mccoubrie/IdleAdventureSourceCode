@@ -32,6 +32,9 @@ void UConversionAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	AIdleCharacter* Character = Cast<AIdleCharacter>(ActorInfo->AvatarActor.Get());
 	UAnimMontage* AnimMontage = Character->CofferMontage;
 	//Character->PlayAnimMontage(AnimMontage);
+	AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+	PC->IdleInteractionComponent->PlayCofferAddSound();
+
 	CovertEssenceToEXP();
 
 

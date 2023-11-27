@@ -7,7 +7,7 @@
 #include "TestManager.generated.h"
 
 USTRUCT(BlueprintType)
-struct FGameSettings
+struct FGameSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -44,23 +44,27 @@ struct FGameSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	float EssenceAddToCofferMultiply;
 
-	FGameSettings();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	float LogYieldFrequencyFactor;
+
+	FGameSettings()
+	: EssenceYieldSpeed(1.0f)
+	, LevelUpMultiplier(1.50f)
+	, CofferMeterReductionRate(1.0f)
+	, EquipmentBonusAmout(1.0f)
+	, EssenceYieldAmount(1.0f)
+	, LegendaryExpAmount(1.0f)
+	, TreeCutTimeMin(15.0f)
+	, TreeCutTimeMax(45.0f)
+	, TreeRespawnDelay(500.0f)
+	, CofferDropOffTime(10.0f)
+	, EssenceAddToCofferMultiply(10.0f)
+	, LogYieldFrequencyFactor(1.0f)
+
+	{
+	}
 };
 
-inline FGameSettings::FGameSettings()
-{
-	EssenceYieldSpeed = 1.0f; // Replace with your desired default value
-	LevelUpMultiplier = 1.0f; // Replace with your desired default value
-	CofferMeterReductionRate = 1.0f; // Replace with your desired default value
-	EquipmentBonusAmout = 1.0f; // Replace with your desired default value
-	EssenceYieldAmount = 1.0f; // Replace with your desired default value
-	LegendaryExpAmount = 1.0f; // Replace with your desired default value
-	TreeCutTimeMin = 1.0f; // Replace with your desired default value
-	TreeCutTimeMax = 1.0f; // Replace with your desired default value
-	TreeRespawnDelay = 1.0f; // Replace with your desired default value
-	CofferDropOffTime = 1.0f; // Replace with your desired default value
-	EssenceAddToCofferMultiply = 1.0f; // Replace with your desired default value
-}
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSettingsChanged, FGameSettings, NewSettings);
 

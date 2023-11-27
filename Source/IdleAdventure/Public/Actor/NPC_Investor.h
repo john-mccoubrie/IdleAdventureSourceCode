@@ -12,7 +12,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteractedWithInvestor);
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEssenceUpdate, int32, Wisdom, int32, Temperance, int32, Justice, int32, Courage, int32, Legendary);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBroadcastInvestNumbers, int32, Points, int32, EquipmentBonus, float, SuccessChance);
 
 
 
@@ -38,12 +38,53 @@ struct FInvestmentLossResult
 };
 
 
+USTRUCT(BlueprintType)
+struct FInvestingValues : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float BaseSuccessChance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float WisdomInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float TemperanceInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float JusticeInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float LegendaryInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float PowerFactor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float LossPercentage;
+
+	// Constructor for defaults
+	FInvestingValues()
+		: BaseSuccessChance(0.2f)
+		, WisdomInvestmentMultiplier(0.5f)
+		, TemperanceInvestmentMultiplier(0.75f)
+		, JusticeInvestmentMultiplier(1.0f)
+		, LegendaryInvestmentMultiplier(1.5f)
+		, PowerFactor(1.0f)
+		, LossPercentage(1.0f)
+	{
+	}
+};
+
+
 UCLASS()
 class IDLEADVENTURE_API ANPC_Investor : public ABase_NPCActor
 {
 	GENERATED_BODY()
 
 public:
+	ANPC_Investor();
 
 	virtual void Interact() override;
 	virtual void BeginPlay() override;
@@ -53,7 +94,7 @@ public:
 	int32 HandleInvest(int32 PlayerWisdomAmt, int32 PlayerTemperanceAmt, int32 PlayerJusticeAmt, int32 PlayerLegendaryAmt); //takes in struct or essence types
 	int32 GetEquipmentBonus();
 	int32 CalculateCourageEssenceReturn(int32 Points);
-	float CalculateSuccessChance(int32 TotalInvestment, int32 EquipmentBonus);
+	float CalculateSuccessChance(int32 PlayerWisdomAmt, int32 PlayerTemperanceAmt, int32 PlayerJusticeAmt, int32 PlayerLegendaryAmt, int32 EquipmentBonus);
 	FInvestmentLossResult HandleInvestmentLoss(int32 PlayerWisdomAmt, int32 PlayerTemperanceAmt, int32 PlayerJusticeAmt, int32 PlayerLegendaryAmt);
 	void UpdatePlayerEssenceCounts(int32 WisdomAmt, int32 TemperanceAmt, int32 JusticeAmt, int32 LegendaryAmt, int32 CourageEssence, bool bIsSuccessful);
 
@@ -68,8 +109,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInteractedWithInvestor OnInteractedWithInvestor;
 
-	//UPROPERTY(BlueprintAssignable, Category = "Events")
-	//FOnEssenceUpdate OnEssenceUpdate;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnBroadcastInvestNumbers OnBroadcastInvestNumbers;
 
 	//PlayFab stored
 	int32 PlayFabWisdom;
@@ -77,6 +118,27 @@ public:
 	int32 PlayFabJustice;
 	int32 PlayFabCourage;
 	int32 PlayFabLegendary;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float BaseSuccessChance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float WisdomInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float TemperanceInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float JusticeInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float LegendaryInvestmentMultiplier;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float PowerFactor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Investing")
+	float LossPercentage;
 
 private:
 	PlayFabClientPtr clientAPI = nullptr;

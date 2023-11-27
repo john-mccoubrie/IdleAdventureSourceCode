@@ -32,6 +32,7 @@ void AInventory::BeginPlay()
 
 void AInventory::AddItem(UItem* Item)
 {
+    UE_LOG(LogTemp, Warning, TEXT("Add Item"));
     if (Item != nullptr)
     {
         // Ensure all essence types are initialized to 0 if they don't already exist in the map

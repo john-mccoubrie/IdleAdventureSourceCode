@@ -56,6 +56,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void StopStaffDinkSound();
 
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayCofferAddSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayAddToLegendaryMeterSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayLegendaryTreeSpawnSound();
+
 	void PlaySound(USoundBase* SoundToPlay);
 
 	UNiagaraComponent* SpawnedTreeEffect;
@@ -94,6 +103,15 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Sound Properties")
 	USoundCue* StaffDinkSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* AddToCofferSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* AddToLegendaryMeterSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* LegendaryTreeSpawnSound;
 
 	UPROPERTY(VisibleAnywhere, Category = "Sound Properties")
 	UAudioComponent* StaffDinkAudioComponent;

@@ -167,6 +167,7 @@ void UPlayerEquipment::ApplyEquipmentEffects(const FEquipmentData& ItemData)
     UE_LOG(LogTemp, Error, TEXT("Applying Equipment Effects for Item: %s"), *ItemData.Name);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
     BonusManager->ApplyEssenceBonus(ItemData.ItemBonus);
+    UpdateItemName(ItemData);
 }
 
 void UPlayerEquipment::RemoveEquipmentEffects(const FEquipmentData& ItemData)
@@ -174,6 +175,7 @@ void UPlayerEquipment::RemoveEquipmentEffects(const FEquipmentData& ItemData)
     UE_LOG(LogTemp, Error, TEXT("Removing Equipment Effects for Item: %s"), *ItemData.Name);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
     BonusManager->RemoveEssenceBonus(ItemData.ItemBonus);
+    UpdateItemName(ItemData);
 }
 
 FEquipmentData* UPlayerEquipment::GetEquipmentDataByName(const FString& ItemName)
@@ -200,6 +202,9 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
     if (PlayerEquipmentInventory.Contains(ItemData.Name))
     {
         UE_LOG(LogTemp, Warning, TEXT("Player already owns the item in playerequipment class"));
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        FString formattedMessage = FString::Printf(TEXT("You already own the %s"), *ItemData.Name);
+        GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Red);
         return false;
     }
 
@@ -241,6 +246,10 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
             PlayerEquipmentInventory.GenerateValueArray(NewPlayerEquipmentInventory);
             PlayFabManager->UpdatePlayerEquipmentInventory(NewPlayerEquipmentInventory);
 
+            AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+            FString formattedMessage = FString::Printf(TEXT("Successfully purchased the %s"), *ItemData.Name);
+            GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Green);
+
             UE_LOG(LogTemp, Warning, TEXT("Item added to Player Equipment Inventory"));
             
             //EquipItem(ItemData);
@@ -259,6 +268,25 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
 void UPlayerEquipment::AddEquipmentItem(const FEquipmentData& ItemData)
 {
     PlayerEquipmentInventory.Add(ItemData.Name, ItemData);
+}
+
+void UPlayerEquipment::UpdateItemName(const FEquipmentData& ItemData)
+{
+    if (ItemData.SocketName == "WeaponHandSocket")
+    {
+        ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+        BonusManager->UpdateStaffName(ItemData.Name);
+    }
+    else if (ItemData.SocketName == "CapeSocket")
+    {
+        ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+        BonusManager->UpdateCapeName(ItemData.Name);
+    }
+    else if (ItemData.SocketName == "AuraSocket")
+    {
+        ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+        BonusManager->UpdateAuraName(ItemData.Name);
+    }
 }
 
 // Called when the game starts

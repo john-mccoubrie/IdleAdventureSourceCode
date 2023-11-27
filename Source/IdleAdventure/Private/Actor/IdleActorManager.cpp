@@ -204,6 +204,8 @@ void AIdleActorManager::GetLegendaryTree()
         {
             // Activate the legendary effect particle system
             LegendaryIdleEffectActor->ActivateLegendaryEffect();
+            //AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+            //PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
         }
         else
         {

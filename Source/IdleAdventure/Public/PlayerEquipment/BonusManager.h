@@ -6,10 +6,6 @@
 #include "GameFramework/Actor.h"
 #include "BonusManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_EightParams(FOnBonusesUpdated, float, WisdomEssenceMultiplier, 
-    float, TemperanceEssenceMultiplier, float, JusticeEssenceMultiplier, float, CourageEssenceMultiplier, 
-    int32, WisdomYieldMultiplier, int32, TemperanceYieldMultiplier, int32, JusticeYieldMultiplier, int32, CourageYieldMultiplier);
-
 USTRUCT(BlueprintType)
 struct FItemBonus
 {
@@ -82,10 +78,111 @@ struct FItemBonus
 
 };
 
+USTRUCT(BlueprintType)
+struct FMultiplierSet
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WisdomEssenceMultiplier = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float TemperanceEssenceMultiplier = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float JusticeEssenceMultiplier = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float CourageEssenceMultiplier = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float LegendaryEssenceMultiplier = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 WisdomYieldMultiplier = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 TemperanceYieldMultiplier = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 JusticeYieldMultiplier = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 CourageYieldMultiplier = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 LegendaryYieldMultiplier = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WisdomEssenceChanceMultiplier = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float TemperanceEssenceChanceMultiplier = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float JusticeEssenceChanceMultiplier = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float CourageEssenceChanceMultiplier = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 InvestingBonusChance = 0;
+
+    void ApplyBonus(const FItemBonus& ItemBonus)
+    {
+        WisdomEssenceMultiplier *= ItemBonus.WisdomEssenceMultiplier;
+        TemperanceEssenceMultiplier *= ItemBonus.TemperanceEssenceMultiplier;
+        JusticeEssenceMultiplier *= ItemBonus.JusticeEssenceMultiplier;
+        CourageEssenceMultiplier *= ItemBonus.CourageEssenceMultiplier;
+        LegendaryEssenceMultiplier *= ItemBonus.LegendaryEssenceMultiplier;
+
+        WisdomYieldMultiplier += ItemBonus.WisdomYieldMultiplier;
+        TemperanceYieldMultiplier += ItemBonus.TemperanceYieldMultiplier;
+        JusticeYieldMultiplier += ItemBonus.JusticeYieldMultiplier;
+        CourageYieldMultiplier += ItemBonus.CourageYieldMultiplier;
+        LegendaryYieldMultiplier += ItemBonus.LegendaryYieldMultiplier;
+
+        WisdomEssenceChanceMultiplier += ItemBonus.WisdomEssenceChanceBonus;
+        TemperanceEssenceChanceMultiplier += ItemBonus.TemperanceEssenceChanceBonus;
+        JusticeEssenceChanceMultiplier += ItemBonus.JusticeEssenceChanceBonus;
+        CourageEssenceChanceMultiplier += ItemBonus.CourageEssenceChanceBonus;
+
+        InvestingBonusChance += ItemBonus.InvestingBonusChance;
+    }
+
+    void RemoveBonus(const FItemBonus& ItemBonus)
+    {
+        WisdomEssenceMultiplier /= ItemBonus.WisdomEssenceMultiplier;
+        TemperanceEssenceMultiplier /= ItemBonus.TemperanceEssenceMultiplier;
+        JusticeEssenceMultiplier /= ItemBonus.JusticeEssenceMultiplier;
+        CourageEssenceMultiplier /= ItemBonus.CourageEssenceMultiplier;
+        LegendaryEssenceMultiplier /= ItemBonus.LegendaryEssenceMultiplier;
+
+        WisdomYieldMultiplier -= ItemBonus.WisdomYieldMultiplier;
+        TemperanceYieldMultiplier -= ItemBonus.TemperanceYieldMultiplier;
+        JusticeYieldMultiplier -= ItemBonus.JusticeYieldMultiplier;
+        CourageYieldMultiplier -= ItemBonus.CourageYieldMultiplier;
+        LegendaryYieldMultiplier -= ItemBonus.LegendaryYieldMultiplier;
+
+        WisdomEssenceChanceMultiplier -= ItemBonus.WisdomEssenceChanceBonus;
+        TemperanceEssenceChanceMultiplier -= ItemBonus.TemperanceEssenceChanceBonus;
+        JusticeEssenceChanceMultiplier -= ItemBonus.JusticeEssenceChanceBonus;
+        CourageEssenceChanceMultiplier -= ItemBonus.CourageEssenceChanceBonus;
+
+        InvestingBonusChance -= ItemBonus.InvestingBonusChance;
+    }
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBroadcastToBonusUI, FItemBonus, ItemBonusStruct);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBroadcastStaff, FString, StaffName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBroadcastCape, FString, CapeName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBroadcastAura, FString, AuraName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBonusesUpdated, FMultiplierSet, MultiplierSetStruct);
+
 UCLASS()
 class IDLEADVENTURE_API ABonusManager : public AActor
 {
-	GENERATED_BODY()
+	GENERATED_BODY(Blueprintable)
 
 public:
 
@@ -98,6 +195,9 @@ public:
     void ApplyExperienceBonus(float Multiplier);
     void ApplyEssenceBonus(const FItemBonus& ItemBonus);
     void RemoveEssenceBonus(const FItemBonus& ItemBonus);
+    void UpdateStaffName(FString StaffName);
+    void UpdateCapeName(FString CapeName);
+    void UpdateAuraName(FString AuraName);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemIdentifier;
@@ -122,8 +222,21 @@ public:
     int32 InvestingBonusChance;
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bonuses")
+    UPROPERTY(BlueprintAssignable, Category = "Bonuses")
     FOnBonusesUpdated OnBonusesUpdated;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FMultiplierSet MultiplierSet;
+
+    UPROPERTY(BlueprintAssignable, Category = "Bonuses")
+    FOnBroadcastToBonusUI OnBroadcastToBonusUI;
+
+    UPROPERTY(BlueprintAssignable, Category = "Bonuses")
+    FOnBroadcastStaff OnBroadcastStaff;
+    UPROPERTY(BlueprintAssignable, Category = "Bonuses")
+    FOnBroadcastCape OnBroadcastCape;
+    UPROPERTY(BlueprintAssignable, Category = "Bonuses")
+    FOnBroadcastAura OnBroadcastAura;
 
 private:
     static ABonusManager* BonusManagerSingletonInstance;

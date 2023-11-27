@@ -6,6 +6,7 @@
 #include <Chat/GameChatManager.h>
 #include <Actor/IdleActorManager.h>
 #include <Character/IdleCharacter.h>
+#include <Player/IdlePlayerController.h>
 
 ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
@@ -115,10 +116,14 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
             // Broadcast to the UI to update the star count
             OnLegendaryCountChanged.Broadcast(LegendaryCount);
 
+            AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+            PC->IdleInteractionComponent->PlayAddToLegendaryMeterSound();
+
             // Check if StarCount is 4, if yes, respawn the legendary tree
             if (LegendaryCount > 3)
             {
                 AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+                PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
                 IdleActorManager->GetLegendaryTree();
             }
         }
