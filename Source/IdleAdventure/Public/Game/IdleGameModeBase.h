@@ -8,6 +8,7 @@
 #include <Actor/CofferManager.h>
 #include <Chat/GameChatManager.h>
 #include <Quest/QuestManager.h>
+#include <Combat/CombatManager.h>
 #include <StoicStore/StoicStoreManager.h>
 #include <Test/TestManager.h>
 #include <Sound/SoundManager.h>
@@ -16,6 +17,7 @@
 #include <Leaderboard/UpdatePlayerDisplayName.h>
 #include "GameFramework/GameModeBase.h"
 #include "IdleGameModeBase.generated.h"
+
 
 
 //class APhotonChatManager;
@@ -50,6 +52,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StoicStore")
 	AStoicStoreManager* StoicStoreManagerInstance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StoicStore")
+	ACombatManager* CombatManagerInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Manager")
 	AGameChatManager* GameChatManagerInstance;

@@ -25,6 +25,9 @@ ABonusManager::ABonusManager()
     CourageEssenceChanceMultiplier = 0.0f;
 
     InvestingBonusChance = 0;
+
+    Damage = 0.0f;
+    Armor = 0.0f;
 }
 
 void ABonusManager::BeginPlay()

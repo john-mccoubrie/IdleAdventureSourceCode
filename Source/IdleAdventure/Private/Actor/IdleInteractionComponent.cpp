@@ -69,6 +69,40 @@ void UIdleInteractionComponent::StartWoodcuttingAbility(APawn* PlayerPawn)
 
 }
 
+void UIdleInteractionComponent::StartCombatAbility(APawn* PlayerPawn, AActor* Enemy)
+{
+    // Rotate PlayerPawn to face Enemy
+    UE_LOG(LogTemp, Warning, TEXT("Start Combat Ability in IdleInteractionComponent"));
+    //CurrentPlayerState = EPlayerState::InCombat;
+    // Step 1: Calculate direction to the enemy from the character's current location
+    FVector DirectionToEnemy = (Enemy->GetActorLocation() - PlayerPawn->GetActorLocation()).GetSafeNormal();
+    FRotator RotationTowardsEnemy = DirectionToEnemy.Rotation();
+
+    // Preserve the current Pitch and Roll of the character
+    RotationTowardsEnemy.Pitch = PlayerPawn->GetActorRotation().Pitch;
+    RotationTowardsEnemy.Roll = PlayerPawn->GetActorRotation().Roll;
+
+    // Step 2: Set the character's rotation to face that direction
+    PlayerPawn->SetActorRotation(RotationTowardsEnemy);
+
+    // Start combat animations or abilities
+    //SpawnCombatEffect(PlayerPawn, Enemy);
+
+    // If using Gameplay Abilities:
+    // PS->ActivateAbility(UCombatAbility::StaticClass());
+
+    // If using Animation Montages:
+    AIdleCharacter* Character = Cast<AIdleCharacter>(PlayerPawn);
+    UAnimMontage* AnimMontage = Character->PlayerAttackMontage;
+    Character->PlayAnimMontage(AnimMontage);
+
+    // You can also spawn particle effects or play sounds here
+    // ...
+
+    // Handle damage dealing
+    // ...
+}
+
 void UIdleInteractionComponent::SpawnTreeCutEffect(APawn* PlayerPawn)
 {
     //UE_LOG(LogTemp, Warning, TEXT("SpawnTreeCutEffect IdleInteractionComponent"));
@@ -94,6 +128,7 @@ void UIdleInteractionComponent::SpawnTreeCutEffect(APawn* PlayerPawn)
     if (GetWorld() && TreeCutEffect && TargetTree)
     {
         //UE_LOG(LogTemp, Warning, TEXT("Spawned effect"));
+        //effect on the tree
         SpawnedTreeEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeCutEffect, TargetTree->GetActorLocation());
     }
     else
@@ -110,6 +145,61 @@ void UIdleInteractionComponent::EndTreeCutEffect()
     {
         SpawnedTreeEffect->Deactivate();
         SpawnedStaffEffect->Deactivate();
+    }
+}
+
+void UIdleInteractionComponent::SpawnCombatEffect(APawn* PlayerPawn, AEnemyBase* TargetEnemy)
+{
+    UE_LOG(LogTemp, Warning, TEXT("SpawnCombatEffect in IdleInteractionComponent"));
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdleCharacter* ParticleCharacter = Cast<AIdleCharacter>(PlayerPawn);
+    if (!ParticleCharacter)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No particle character"));
+        return;
+    }
+
+
+    USkeletalMeshComponent* CharacterWeapon = ParticleCharacter->GetMesh();
+    StaffEndLocation = CharacterWeapon->GetSocketLocation(FName("StaffEndSocket"));
+    FVector EnemyLocation = TargetEnemy->GetActorLocation();
+
+    FRotator RotationTowardsEnemy = UKismetMathLibrary::FindLookAtRotation(StaffEndLocation, EnemyLocation);
+    RotationTowardsEnemy.Yaw += PC->YawRotationStaffMultiplier;
+    RotationTowardsEnemy.Pitch += PC->PitchRotationStaffMultiplier;
+    RotationTowardsEnemy.Roll += PC->RollRotationStaffMultiplier;
+    //UE_LOG(LogTemp, Warning, TEXT("before Spawned effect"));
+    // Spawn the Niagara effects
+    if (GetWorld() && TargetEnemy)
+    {
+        // Spawn the effect
+        SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PlayerAttackEffect, StaffEndLocation);
+
+        // Set a timer to automatically destroy the effect after 2 seconds
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]() {
+            if (SpawnedAttackEffect)
+            {
+                EndCombatEffect();
+            }
+            }, 2.0f, false);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Target Tree is null"));
+    }
+
+    //SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), StaffAttackEffect, StaffEndLocation, RotationTowardsEnemy);
+  
+}
+
+void UIdleInteractionComponent::EndCombatEffect()
+{
+    if (SpawnedAttackEffect)
+    {
+        SpawnedAttackEffect->Deactivate();
+        SpawnedAttackEffect->DestroyComponent();
+        SpawnedAttackEffect = nullptr; // Setting it to nullptr to avoid dangling references
     }
 }
 

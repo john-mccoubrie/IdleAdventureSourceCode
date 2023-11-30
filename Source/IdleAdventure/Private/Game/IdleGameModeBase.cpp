@@ -54,6 +54,8 @@ void AIdleGameModeBase::BeginPlay()
      
      //BonusManagerInstance = NewObject<UBonusManager>();
      
+     CombatManagerInstance = GetWorld()->SpawnActor<ACombatManager>(ACombatManager::StaticClass());
+
      //Spawn the TestManager instance
      TestManagerInstance = GetWorld()->SpawnActor<ATestManager>(ATestManager::StaticClass());
 

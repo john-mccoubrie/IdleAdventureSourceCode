@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "Combat/CharacterCombatComponent.h"
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include "Interact/WoodcuttingInterface.h"
 #include "GameFramework/Character.h"
@@ -28,7 +29,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Abilities")
 		TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
-		
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat") 
+	UCharacterCombatComponent* CombatComponent;
 
 protected:
 	virtual void BeginPlay() override;

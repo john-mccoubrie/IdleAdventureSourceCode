@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Actor/Base_NPCActor.h"
 #include <Chat/GameChatManager.h>
+#include "Engine/DataTable.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <PlayFab.h>

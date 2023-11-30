@@ -36,7 +36,10 @@ public:
 		float EssenceCount;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
-		UAnimMontage* WoodcutMontage;
+	UAnimMontage* WoodcutMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* PlayerAttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* CofferMontage;

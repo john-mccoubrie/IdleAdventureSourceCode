@@ -59,6 +59,12 @@ struct FItemBonus
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 InvestingBonusChance = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Damage = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Armor = 0.0f;
+
     bool operator==(const FItemBonus& Other) const
     {
         return WisdomEssenceMultiplier == Other.WisdomEssenceMultiplier &&
@@ -73,7 +79,9 @@ struct FItemBonus
             TemperanceEssenceChanceBonus == Other.TemperanceEssenceChanceBonus &&
             JusticeEssenceChanceBonus == Other.JusticeEssenceChanceBonus &&
             CourageEssenceChanceBonus == Other.CourageEssenceChanceBonus &&
-            InvestingBonusChance == Other.InvestingBonusChance;
+            InvestingBonusChance == Other.InvestingBonusChance &&
+            Damage == Other.Damage &&
+            Armor == Other.Armor;
     }
 
 };
@@ -128,6 +136,12 @@ struct FMultiplierSet
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 InvestingBonusChance = 0;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Damage = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Armor = 0.0f;
+
     void ApplyBonus(const FItemBonus& ItemBonus)
     {
         WisdomEssenceMultiplier *= ItemBonus.WisdomEssenceMultiplier;
@@ -148,6 +162,9 @@ struct FMultiplierSet
         CourageEssenceChanceMultiplier += ItemBonus.CourageEssenceChanceBonus;
 
         InvestingBonusChance += ItemBonus.InvestingBonusChance;
+
+        Damage += ItemBonus.Damage;
+        Armor += ItemBonus.Armor;
     }
 
     void RemoveBonus(const FItemBonus& ItemBonus)
@@ -170,6 +187,9 @@ struct FMultiplierSet
         CourageEssenceChanceMultiplier -= ItemBonus.CourageEssenceChanceBonus;
 
         InvestingBonusChance -= ItemBonus.InvestingBonusChance;
+
+        Damage -= ItemBonus.Damage;
+        Damage -= ItemBonus.Armor;
     }
 };
 
@@ -220,6 +240,9 @@ public:
     float CourageEssenceChanceMultiplier;
 
     int32 InvestingBonusChance;
+
+    float Damage;
+    float Armor;
 
 public:
     UPROPERTY(BlueprintAssignable, Category = "Bonuses")

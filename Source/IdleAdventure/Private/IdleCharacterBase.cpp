@@ -14,6 +14,9 @@ AIdleCharacterBase::AIdleCharacterBase()
 	Weapon->SetupAttachment(GetMesh(), FName("WeaponHandSocket"));
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Create and attach the combat component
+	CombatComponent = CreateDefaultSubobject<UCharacterCombatComponent>(TEXT("CharacterCombatComponent"));
+
 }
 
 UAbilitySystemComponent* AIdleCharacterBase::GetAbilitySystemComponent() const

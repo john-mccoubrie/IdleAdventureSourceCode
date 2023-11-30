@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "IdleEffectActor.h"
 #include "GameplayEffectTypes.h"
+#include "Character/EnemyBase.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "NiagaraComponent.h"
@@ -32,6 +33,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tree Interaction")
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
 
+	UFUNCTION(BlueprintCallable, Category = "Tree Interaction")
+	void StartCombatAbility(APawn* PlayerPawn, AActor* Enemy);
 
 
 	//Click actors
@@ -43,6 +46,8 @@ public:
 	//Begin animations
 	void SpawnTreeCutEffect(APawn* PlayerPawn);
 	void EndTreeCutEffect();
+	void SpawnCombatEffect(APawn* PlayerPawn, AEnemyBase* TargetEnemy);
+	void EndCombatEffect();
 
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void PlayStaffCastingSound();
@@ -69,11 +74,21 @@ public:
 
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
+	UNiagaraComponent* SpawnedAttackEffect;
+
+
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* TreeCutEffect;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* PlayerAttackEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* StaffEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* StaffAttackEffect;
+
 	UPROPERTY(EditAnywhere, Category = "Initial values")
 	FVector StaffEndLocation;
 	UPROPERTY(EditAnywhere, Category = "Initial values")

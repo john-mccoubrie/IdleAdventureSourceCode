@@ -18,6 +18,7 @@
 #include "Components/SplineComponent.h"
 #include "Actor/IdleActorManager.h"
 #include "Character/IdleCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include <Player/IdlePlayerState.h>
 #include <Actor/IdleEffectActor.h>
@@ -56,6 +57,7 @@ AIdlePlayerController::AIdlePlayerController()
 			MinZoomDistance = Defaults->MinZoomDistance;
 			MaxZoomDistance = Defaults->MaxZoomDistance;
 			NPCTalkingDistance = Defaults->NPCTalkingDistance;
+			EnemyFightingDistance = Defaults->EnemyFightingDistance;
 		}
 	}
 
@@ -93,6 +95,15 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 		{
 			MoveTowardsTarget(TargetNPC, NPCTalkingDistance, [this](APawn* PlayerPawn) {
 				StartNPCInteraction(PlayerPawn);
+				return;
+				});
+		}
+		break;
+	case EPlayerState::MovingToEnemy:
+		if (TargetEnemy)
+		{
+			MoveTowardsTarget(TargetEnemy, EnemyFightingDistance, [this](APawn* PlayerPawn) {
+				StartEnemyInteraction(PlayerPawn);
 				return;
 				});
 		}
@@ -306,6 +317,10 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		{
 			InterruptTreeCutting();
 		}
+		if (CurrentPlayerState == EPlayerState::InCombat)
+		{
+			InteruptCombat();
+		}
 		CurrentPlayerState = EPlayerState::MovingToCoffer;
 		OnCofferClicked(ClickResult, PlayerPawn);	
 	}
@@ -317,8 +332,24 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		{
 			InterruptTreeCutting();
 		}
+		if (CurrentPlayerState == EPlayerState::InCombat)
+		{
+			InteruptCombat();
+		}
 		CurrentPlayerState = EPlayerState::MovingToNPC;
 		TargetNPC = Cast<ABase_NPCActor>(ClickResult.GetActor());
+		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
+	}
+	else if (ClickResult.GetComponent()->ComponentTags.Contains("EnemyGoblin"))
+	{
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
+		UE_LOG(LogTemp, Warning, TEXT("You have hit: %s"), ClickResult.GetActor());
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
+		{
+			InterruptTreeCutting();
+		}
+		CurrentPlayerState = EPlayerState::MovingToEnemy;
+		TargetEnemy = Cast<AEnemyBase>(ClickResult.GetActor());
 		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
 	else
@@ -327,6 +358,10 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
 		{
 			InterruptTreeCutting();
+		}
+		if (CurrentPlayerState == EPlayerState::InCombat)
+		{
+			InteruptCombat();
 		}
 		//CurrentPlayerState = EPlayerState::Idle;
 		MouseClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MouseClickEffectSystem, ClickResult.Location);
@@ -356,11 +391,11 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Move to click location"));
+	//UE_LOG(LogTemp, Warning, TEXT("Move to click location"));
 	TargetDestination = CursorHit.ImpactPoint;
 
 	// Log the target destination
-	UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
 
 	// Start moving towards the target using the NavMesh
 	if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
@@ -370,7 +405,7 @@ void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputAc
 			// Call SimpleMoveToLocation without expecting a return value
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
 			// Log that we've issued a move command
-			UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+			//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
 		}
 	}
 }
@@ -425,6 +460,7 @@ void AIdlePlayerController::InterruptTreeCutting()
 	}
 }
 
+//Used to set the enemy in IdleInteractionComponent
 void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 {
 	if (IdleInteractionComponent)
@@ -520,6 +556,54 @@ void AIdlePlayerController::StartNPCInteraction(APawn* PlayerPawn)
 	CurrentPlayerState = EPlayerState::Idle;
 
 	TargetNPC->Interact();
+}
+
+void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
+{
+	//Might need to put this up in handle click so nothing gets called
+	if (CurrentPlayerState == EPlayerState::InCombat)
+	{
+		return;
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("StartEnemyInteraction in PlayerController called."));
+	//CurrentPlayerState = EPlayerState::Idle;
+	CurrentPlayerState = EPlayerState::InCombat;
+
+	UCharacterMovementComponent* MovementComponent = PlayerPawn->FindComponentByClass<UCharacterMovementComponent>();
+	MovementComponent->StopMovementImmediately();
+
+	//called from anim notify now
+	
+	TargetEnemy->Interact();
+	IdleInteractionComponent->StartCombatAbility(PlayerPawn, TargetEnemy);
+	IdleInteractionComponent->SpawnCombatEffect(PlayerPawn, TargetEnemy);
+}
+
+void AIdlePlayerController::StartAnimNotifyEnemyInteraction(APawn* PlayerPawn)
+{
+	/*
+	UE_LOG(LogTemp, Warning, TEXT("Anim notify called"));
+	TargetEnemy->Interact();
+	IdleInteractionComponent->StartCombatAbility(PlayerPawn, TargetEnemy);
+	IdleInteractionComponent->SpawnCombatEffect(PlayerPawn, TargetEnemy);
+	*/
+}
+
+void AIdlePlayerController::InteruptCombat()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Interrupt Combat"));
+
+	if (CurrentPlayerState == EPlayerState::InCombat)
+	{
+		CurrentPlayerState = EPlayerState::Idle;
+		AIdleCharacter* MyCharacter = Cast<AIdleCharacter>(GetCharacter());
+		UAnimMontage* AnimMontage = MyCharacter->PlayerAttackMontage;
+		MyCharacter->StopAnimMontage(AnimMontage);
+		IdleInteractionComponent->EndCombatEffect();
+		TargetEnemy->EndCombatEffects();
+	}	
 }
 
 

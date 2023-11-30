@@ -7,12 +7,14 @@
 #include <Actor/NPC_QuestGiver.h>
 #include "Actor/IdleInteractionComponent.h"
 #include "AbilitySystemInterface.h"
+#include <Character/EnemyBase.h>
 #include "GameplayEffectTypes.h"
 #include "NiagaraComponent.h"
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "IdlePlayerController.generated.h"
+
 
 
 class UInputMappingContext;
@@ -48,6 +50,9 @@ struct FPlayerControllerDefaults : public FTableRowBase
 	float NPCTalkingDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
+	float EnemyFightingDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
 	float ZMultiplierStaffEndLoc;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defaults")
@@ -69,6 +74,7 @@ struct FPlayerControllerDefaults : public FTableRowBase
 		: WoodcuttingCastingDistance(0.0f)
 		, CofferCastingDistance(0.0f)
 		, NPCTalkingDistance(0.0f)
+		, EnemyFightingDistance(0.0f)
 		, ZMultiplierStaffEndLoc(0.0f)
 		, XMultiplierStaffEndLoc(0.0f)
 		, YMultiplierStaffEndLoc(0.0f)
@@ -86,6 +92,8 @@ enum class EPlayerState : uint8
 	MovingToTree,
 	MovingToCoffer,
 	MovingToNPC,
+	MovingToEnemy,
+	InCombat,
 	CuttingTree
 };
 
@@ -159,6 +167,9 @@ public:
 	float NPCTalkingDistance;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
+	float EnemyFightingDistance;
+
+	UPROPERTY(EditAnywhere, Category = "Initial values")
 	FVector StaffEndLocation;
 
 	UPROPERTY(EditAnywhere, Category = "Initial values")
@@ -204,6 +215,7 @@ public:
 	AIdleEffectActor* CurrentTree = nullptr;
 
 	void InterruptTreeCutting();
+	void StartAnimNotifyEnemyInteraction(APawn* PlayerPawn);
 
 protected:
 	virtual void BeginPlay() override;
@@ -268,10 +280,13 @@ private:
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
 	void StartConversionAbility(APawn* PlayerPawn);
 	void StartNPCInteraction(APawn* PlayerPawn);
+	void StartEnemyInteraction(APawn* PlayerPawn);
+	void InteruptCombat();
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;
 	ABase_NPCActor* TargetNPC = nullptr;
+	AEnemyBase* TargetEnemy = nullptr;
 
 	FHitResult CofferHitForCasting;
 
