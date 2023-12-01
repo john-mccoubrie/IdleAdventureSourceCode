@@ -26,6 +26,8 @@ public:
 	UFUNCTION()
 	void HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender);
 
+	void HandleMultiTargetCombat(UBaseCombatComponent* Attacker, const TArray<UBaseCombatComponent*>& Defenders);
+
 	//UPROPERTY(BlueprintAssignable, Category = "Events")
 	//FOnHealthChanged OnHealthChanged;
 

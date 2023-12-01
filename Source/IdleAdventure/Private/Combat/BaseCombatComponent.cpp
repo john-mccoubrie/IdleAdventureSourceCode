@@ -2,6 +2,9 @@
 
 
 #include "Combat/BaseCombatComponent.h"
+#include <PlayerEquipment/BonusManager.h>
+#include "GameFramework/Character.h"
+#include "UI/DamageTextComponent.h"
 
 // Sets default values for this component's properties
 UBaseCombatComponent::UBaseCombatComponent()
@@ -20,16 +23,7 @@ void UBaseCombatComponent::PerformAttack()
 
 void UBaseCombatComponent::TakeDamage(float amount)
 {
-	Health -= amount;
-	UE_LOG(LogTemp, Warning, TEXT("Defender took %f damage!"), amount);
-	UE_LOG(LogTemp, Warning, TEXT("They now have %f health!"), Health);
-	if (Health <= 0)
-	{
-		//Handle death
-		HandleDeath();
-	}
-
-	OnHealthChanged.Broadcast(this, Health, MaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("Base component Take Damage"));
 }
 
 void UBaseCombatComponent::IsAlive()
@@ -38,7 +32,19 @@ void UBaseCombatComponent::IsAlive()
 
 void UBaseCombatComponent::HandleDeath()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Handle Death"));
+	UE_LOG(LogTemp, Warning, TEXT("Base component Handle Death"));
+}
+
+void UBaseCombatComponent::ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color)
+{
+	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	{
+		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		DamageText->RegisterComponent();
+		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		DamageText->SetDamageText(DamageAmount, Color);
+	}
 }
 
 
@@ -47,7 +53,6 @@ void UBaseCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
 	
 }
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Combat/NPCCombatComponent.h"
 #include "Actor/Base_NPCActor.h"
+#include "NiagaraComponent.h"
 #include "AI/NPCAIController.h"
 #include "GameFramework/Character.h"
 #include "EnemyBase.generated.h"
@@ -24,6 +25,12 @@ public:
 	virtual void Interact();
 	virtual void EndCombatEffects();
 
+	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
+	virtual void SpawnEnemyAttackEffect();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy Attacks")
+	virtual void EnemyAttacksPlayer();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	UNPCCombatComponent* CombatComponent;
 
@@ -34,7 +41,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "AI")
 	TSubclassOf<ANPCAIController> NPCAIControllerClass;
 
-	//create the interact functions that work with the player controller
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* EnemyAttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* EnemyAttackEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* EnemyDeathMontage;
+
+	UNiagaraComponent* SpawnedEnemyAttackEffect;
 
 protected:
 	// Called when the game starts or when spawned

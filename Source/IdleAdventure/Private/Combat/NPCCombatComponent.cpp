@@ -3,44 +3,71 @@
 
 #include "Combat/NPCCombatComponent.h"
 #include <Character/Enemy_Goblin.h>
+#include <PlayerEquipment/BonusManager.h>
+
+void UNPCCombatComponent::TakeDamage(float amount)
+{
+    ABonusManager* bonusManager = ABonusManager::GetInstance(GetWorld());
+
+    // Retrieve and apply damage bonuses
+    PendingDamage = amount + bonusManager->MultiplierSet.Damage;
+
+    if (!GetWorld()->GetTimerManager().IsTimerActive(DamageCheckTimer))
+    {
+        // Start a repeating timer that checks for damage every second
+        GetWorld()->GetTimerManager().SetTimer(DamageCheckTimer, this, &UNPCCombatComponent::DamageCheck, 1.0f, true);
+    }
+}
+
+void UNPCCombatComponent::StopDamageCheckTimer()
+{
+    if (GetWorld()->GetTimerManager().IsTimerActive(DamageCheckTimer))
+    {
+        GetWorld()->GetTimerManager().ClearTimer(DamageCheckTimer);
+    }
+}
+
+void UNPCCombatComponent::DamageCheck()
+{
+    // Roll a random number to decide if damage is taken
+    if (FMath::RandBool()) // 50% chance, adjust as needed
+    {
+        Health -= PendingDamage;
+        if (Health <= 0)
+        {
+            HandleDeath();
+        }
+
+        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
+        if (OwningCharacter)
+        {
+            ShowDamageNumber(PendingDamage, OwningCharacter, FLinearColor::Red);
+        }
+
+        OnHealthChanged.Broadcast(Health, MaxHealth);
+        //UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
+        //UE_LOG(LogTemp, Warning, TEXT("MaxHealth: %f"), MaxHealth);
+    }
+    else
+    {
+        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
+        if (OwningCharacter)
+        {
+            ShowDamageNumber(0, OwningCharacter, FLinearColor::White);
+        }
+    }
+}
 
 void UNPCCombatComponent::HandleDeath()
 {
-    AActor* OwnerActor = GetOwner();
-    if (!OwnerActor)
+    // Stop the damage check timer
+    if (GetWorld()->GetTimerManager().IsTimerActive(DamageCheckTimer))
     {
-        UE_LOG(LogTemp, Warning, TEXT("OwnerActor is nullptr."));
-        return;
+        GetWorld()->GetTimerManager().ClearTimer(DamageCheckTimer);
     }
 
-    AEnemy_Goblin* Goblin = Cast<AEnemy_Goblin>(OwnerActor);
-    if (!Goblin)
+    if (AActor* Owner = GetOwner())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Cast to AEnemy_Goblin failed."));
-        return;
+        Owner->Destroy();
     }
-
-    /*
-    if (Goblin->IsDead())  // Make sure Goblin has a method IsDead() to check the state
-    {
-        // Goblin is already dead, so don't play the death animation again
-        return;
-    }
-
-    if (Goblin->IsAnyMontagePlaying())
-    {
-        // Decide how to handle if an animation is already playing. For now, just returning.
-        return;
-    }
-    */
-
-    UAnimMontage* AnimMontage = Goblin->EnemyDeathMontage;
-    if (!AnimMontage)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("AnimMontage is nullptr."));
-        return;
-    }
-
-    Goblin->PlayAnimMontage(AnimMontage);
-    UE_LOG(LogTemp, Warning, TEXT("Goblin died!"));
 }

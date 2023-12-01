@@ -173,7 +173,7 @@ void UIdleInteractionComponent::SpawnCombatEffect(APawn* PlayerPawn, AEnemyBase*
     if (GetWorld() && TargetEnemy)
     {
         // Spawn the effect
-        SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PlayerAttackEffect, StaffEndLocation);
+        SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PlayerAttackEffect, StaffEndLocation, RotationTowardsEnemy);
 
         // Set a timer to automatically destroy the effect after 2 seconds
         FTimerHandle TimerHandle;

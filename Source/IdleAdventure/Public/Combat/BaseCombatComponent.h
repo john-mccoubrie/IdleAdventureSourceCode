@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "UObject/Class.h"
+//#include "UI/DamageTextComponent.h"
 #include "BaseCombatComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthChangedDelegate, UBaseCombatComponent*, CombatComponent, float, NewHealth, float, MaxHealth);
+class UDamageTextComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedDelegate, float, NewHealth, float, MaxHealth);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class IDLEADVENTURE_API UBaseCombatComponent : public UActorComponent
@@ -19,9 +23,12 @@ public:
 	UBaseCombatComponent();
 
 	void PerformAttack();
-	void TakeDamage(float amount);
+	virtual void TakeDamage(float amount);
 	void IsAlive();
 	virtual void HandleDeath();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float Health;
@@ -37,7 +44,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnHealthChangedDelegate OnHealthChanged;
-	
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
 
 protected:
 	// Called when the game starts

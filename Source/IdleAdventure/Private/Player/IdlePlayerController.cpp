@@ -340,7 +340,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		TargetNPC = Cast<ABase_NPCActor>(ClickResult.GetActor());
 		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
-	else if (ClickResult.GetComponent()->ComponentTags.Contains("EnemyGoblin"))
+	else if (ClickResult.GetComponent()->ComponentTags.Contains("Enemy"))
 	{
 		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
 		UE_LOG(LogTemp, Warning, TEXT("You have hit: %s"), ClickResult.GetActor());
@@ -577,8 +577,10 @@ void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
 	//called from anim notify now
 	
 	TargetEnemy->Interact();
+	UE_LOG(LogTemp, Warning, TEXT("Actor clicked: %s"), *TargetEnemy->GetName());
 	IdleInteractionComponent->StartCombatAbility(PlayerPawn, TargetEnemy);
 	IdleInteractionComponent->SpawnCombatEffect(PlayerPawn, TargetEnemy);
+
 }
 
 void AIdlePlayerController::StartAnimNotifyEnemyInteraction(APawn* PlayerPawn)
@@ -602,7 +604,15 @@ void AIdlePlayerController::InteruptCombat()
 		UAnimMontage* AnimMontage = MyCharacter->PlayerAttackMontage;
 		MyCharacter->StopAnimMontage(AnimMontage);
 		IdleInteractionComponent->EndCombatEffect();
-		TargetEnemy->EndCombatEffects();
+		if (TargetEnemy)
+		{
+			UNPCCombatComponent* CombatComponent = Cast<UNPCCombatComponent>(TargetEnemy->GetComponentByClass(UNPCCombatComponent::StaticClass()));
+			if (CombatComponent)
+			{
+				CombatComponent->StopDamageCheckTimer();
+			}
+			TargetEnemy->EndCombatEffects();
+		}
 	}	
 }
 

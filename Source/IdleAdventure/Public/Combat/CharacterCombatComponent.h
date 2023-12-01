@@ -15,4 +15,5 @@ class IDLEADVENTURE_API UCharacterCombatComponent : public UBaseCombatComponent
 	GENERATED_BODY()
 	
 	virtual void HandleDeath() override;
+	virtual void TakeDamage(float amount) override;
 };

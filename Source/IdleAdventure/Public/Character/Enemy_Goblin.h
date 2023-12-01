@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "NiagaraComponent.h"
 #include "Character/EnemyBase.h"
 #include "Enemy_Goblin.generated.h"
 
@@ -17,23 +16,9 @@ class IDLEADVENTURE_API AEnemy_Goblin : public AEnemyBase
 public:
 
 	virtual void Interact() override;
-
-	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
-	void SpawnEnemyAttackEffect();
-	
+	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
+	virtual void EnemyAttacksPlayer() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Attacks")
-	void EnemyAttacksPlayer();
-
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* EnemyAttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Effects")
-	UNiagaraSystem* EnemyAttackEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* EnemyDeathMontage;
-
-	UNiagaraComponent* SpawnedEnemyAttackEffect;
+	
 };

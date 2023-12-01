@@ -57,16 +57,18 @@ void ACombatManager::ResetInstance()
 void ACombatManager::HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender)
 {
     //check range, attack type, etc.
-    ABonusManager* bonusManager = ABonusManager::GetInstance(GetWorld());
-
-    // Retrieve and apply damage bonuses
-    float DamageBonus = bonusManager->MultiplierSet.Damage;
-    float TotalDamage = attacker->Damage + DamageBonus;
-
-    UE_LOG(LogTemp, Warning, TEXT("Total Damage %f"), TotalDamage);
 
     // Apply the calculated damage
-    defender->TakeDamage(TotalDamage);
+    defender->TakeDamage(attacker->Damage);
+}
+
+void ACombatManager::HandleMultiTargetCombat(UBaseCombatComponent* Attacker, const TArray<UBaseCombatComponent*>& Defenders)
+{
+    for (UBaseCombatComponent* Defender : Defenders)
+    {
+        // Similar logic to HandleCombat
+        // Apply damage to each defender
+    }
 }
 
 

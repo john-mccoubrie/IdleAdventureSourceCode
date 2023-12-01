@@ -216,6 +216,7 @@ public:
 
 	void InterruptTreeCutting();
 	void StartAnimNotifyEnemyInteraction(APawn* PlayerPawn);
+	//void FindEnemiesInRange(const FVector& Location, TArray<AEnemyBase*>& OutEnemies);
 
 protected:
 	virtual void BeginPlay() override;
