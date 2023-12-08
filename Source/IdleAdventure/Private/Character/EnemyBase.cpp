@@ -6,15 +6,25 @@
 #include "Character/IdleCharacter.h"
 #include <Kismet/GameplayStatics.h>
 #include <Kismet/KismetMathLibrary.h>
+#include "GameFramework/CharacterMovementComponent.h" 
 #include <NiagaraFunctionLibrary.h>
 
 // Sets default values
 AEnemyBase::AEnemyBase()
 {
-	CombatComponent = CreateDefaultSubobject<UNPCCombatComponent>(TEXT("NPCCombatComponent"));
+    //GetCharacterMovement()->bOrientRotationToMovement = true;
+    //GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+    //GetCharacterMovement()->bConstrainToPlane = true;
+    //GetCharacterMovement()->bSnapToPlaneAtStart = true;
+
+    //bUseControllerRotationPitch = false;
+    //bUseControllerRotationRoll = false;
+    //bUseControllerRotationYaw = false;
 
 	//Set the default AI controller class
 	NPCAIControllerClass = ANPCAIController::StaticClass();
+
+    EquipWeapon();
 }
 
 void AEnemyBase::Interact()
@@ -46,6 +56,10 @@ void AEnemyBase::SpawnEnemyAttackEffect()
     // Calculate rotation towards player
     FRotator RotationTowardsPlayer = UKismetMathLibrary::FindLookAtRotation(EnemyLocation, PlayerLocation);
 
+    // Preserve the current Pitch and Roll of the enemy
+    RotationTowardsPlayer.Pitch = GetActorRotation().Pitch;
+    RotationTowardsPlayer.Roll = GetActorRotation().Roll;
+
     // Set enemy rotation to face the player
     SetActorRotation(RotationTowardsPlayer);
 
@@ -59,11 +73,27 @@ void AEnemyBase::EndCombatEffects()
         SpawnedEnemyAttackEffect->Deactivate();
 }
 
+void AEnemyBase::EquipWeapon()
+{
+    EnemyWeapon = CreateDefaultSubobject<USkeletalMeshComponent>("EnemyWeapon");
+    EnemyWeapon->SetupAttachment(GetMesh(), FName("LeftHandSocket"));
+    EnemyWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
 void AEnemyBase::EnemyAttacksPlayer()
 {
+    //UE_LOG(LogTemp, Warning, TEXT("Enemy attacks player in EnemyBase"));
     ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
     AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
     CombatManager->HandleCombat(this->CombatComponent, PlayerCharacter->CombatComponent);
+}
+
+void AEnemyBase::UpdateWalkSpeed(float NewSpeed)
+{
+    if (GetCharacterMovement())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = NewSpeed;
+    }
 }
 
 // Called when the game starts or when spawned

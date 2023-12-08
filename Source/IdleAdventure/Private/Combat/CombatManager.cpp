@@ -56,6 +56,7 @@ void ACombatManager::ResetInstance()
 
 void ACombatManager::HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender)
 {
+    //UE_LOG(LogTemp, Warning, TEXT("Handle combat in combat manager"));
     //check range, attack type, etc.
 
     // Apply the calculated damage

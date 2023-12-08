@@ -22,6 +22,7 @@
 #include "AbilitySystem/Abilities/WoodcuttingAbility.h"
 #include <Player/IdlePlayerState.h>
 #include <Actor/IdleEffectActor.h>
+#include "EngineUtils.h"
 #include <Kismet/GameplayStatics.h>
 #include <AbilitySystemBlueprintLibrary.h>
 #include <Actor/Coffer.h>
@@ -29,6 +30,7 @@
 #include <Kismet/KismetMathLibrary.h>
 #include <Chat/GameChatManager.h>
 #include <Actor/CofferManager.h>
+#include <Combat/GoblinBossCombatComponent.h>
 
 AIdlePlayerController::AIdlePlayerController()
 {
@@ -144,6 +146,7 @@ void AIdlePlayerController::BeginPlay()
     InitializeConversionAbility();
     SetupInputSubsystem();
     ConfigureMouseCursor();
+
 }
 
 
@@ -284,6 +287,7 @@ void AIdlePlayerController::RotateVertical(const FInputActionValue& InputActionV
 	}
 }
 
+
 void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActionValue)
 {
 	FHitResult ClickResult;
@@ -391,8 +395,10 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Move to click location"));
-	TargetDestination = CursorHit.ImpactPoint;
+	FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
+
+	// Now use AdjustedTargetLocation for moving the player
+	TargetDestination = AdjustedTargetLocation;
 
 	// Log the target destination
 	//UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
@@ -408,6 +414,18 @@ void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputAc
 			//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
 		}
 	}
+}
+
+FVector AIdlePlayerController::AdjustTargetZAxis(FVector NewTargetLocation)
+{
+	float MaxZOffset = 100.0f; // Maximum allowable Z-offset from the player's current Z-position
+	float PlayerZ = GetPawn()->GetActorLocation().Z;
+
+	// Clamp the Z-value of the target location to be within the allowable range above or below the player's Z-position
+	float ClampedZ = FMath::Clamp(NewTargetLocation.Z, PlayerZ - MaxZOffset, PlayerZ + MaxZOffset);
+
+	// Return the target location with the adjusted Z-value
+	return FVector(NewTargetLocation.X, NewTargetLocation.Y, ClampedZ);
 }
 
 void AIdlePlayerController::InterruptTreeCutting()
@@ -606,10 +624,16 @@ void AIdlePlayerController::InteruptCombat()
 		IdleInteractionComponent->EndCombatEffect();
 		if (TargetEnemy)
 		{
+			//can change this to base combat and call super and each specific timer
 			UNPCCombatComponent* CombatComponent = Cast<UNPCCombatComponent>(TargetEnemy->GetComponentByClass(UNPCCombatComponent::StaticClass()));
 			if (CombatComponent)
 			{
 				CombatComponent->StopDamageCheckTimer();
+			}
+			UGoblinBossCombatComponent* GoblinBossCombatComponent = Cast<UGoblinBossCombatComponent>(TargetEnemy->GetComponentByClass(UGoblinBossCombatComponent::StaticClass()));
+			if (GoblinBossCombatComponent)
+			{
+				GoblinBossCombatComponent->StopDamageCheckTimer();
 			}
 			TargetEnemy->EndCombatEffects();
 		}

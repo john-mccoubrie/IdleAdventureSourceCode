@@ -5,6 +5,7 @@
 
 #include "CoreMinimal.h"
 #include "TimerManager.h"
+#include "Quest/Quest.h"
 #include "AbilitySystem/Abilities/IdleGameplayAbility.h"
 #include "WoodcuttingAbility.generated.h"
 
@@ -70,6 +71,8 @@ public:
 	float ExperienceGain;
 
 	bool bAbilityIsActive;
+
+	UQuest* CurrentQuest = nullptr;
 
 
 private:

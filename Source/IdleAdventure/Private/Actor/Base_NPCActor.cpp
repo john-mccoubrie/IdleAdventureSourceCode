@@ -1,47 +1,30 @@
 
 #include "Actor/Base_NPCActor.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Components/StaticMeshComponent.h"
 
-// Sets default values
 ABase_NPCActor::ABase_NPCActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
-	/*
-	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
-	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-	RootComponent = CapsuleComponent;
-	CapsuleComponent->SetRelativeLocation(FVector(0.0f, 50.0f, CapsuleComponent->GetUnscaledCapsuleHalfHeight()));
+
+	// Initialize capsule size and collision properties
+	//GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f); // Use your desired size
+	//GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetCapsuleComponent()->ComponentTags.Add(FName("NPC"));
+
+	// Attach and position the NPC mesh component
 	NPCMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NPCMeshComponent"));
-	NPCMeshComponent->SetupAttachment(RootComponent);
-	*/
-	
-	// Create a root component
-	USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
-	SetRootComponent(SceneRoot);
+	NPCMeshComponent->SetupAttachment(GetCapsuleComponent());
+	// Make sure this is set to position the mesh correctly relative to the capsule
+	NPCMeshComponent->SetRelativeLocation(FVector(0.0f, 0.0f, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()));
 
-	// Create a capsule component and set it as the root component
-	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-	CapsuleComponent->InitCapsuleSize(730.f, 400.f); // Replace with your desired size
-	//CapsuleComponent->SetCollisionProfileName(TEXT("Pawn"));
-	CapsuleComponent->ComponentTags.Add(FName("NPC"));
-	CapsuleComponent->SetupAttachment(SceneRoot); // Attach the capsule to the scene root
-
-	// Create and setup the mesh component to be attached to the capsule
-	NPCMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NPCMeshComponent"));
-	NPCMeshComponent->SetupAttachment(CapsuleComponent); // Attach the mesh to the capsule
-	
-	// Create the money sign mesh component
-	NPCIndicatorMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MoneySignMeshComponent"));
-	NPCIndicatorMeshComponent->SetupAttachment(CapsuleComponent); // or SceneRoot if you prefer
-
-	// Position it above the NPC
-	NPCIndicatorMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, DesiredHeightAboveNPC)); // Set DesiredHeightAboveNPC to your desired value
-
-	
+	// Attach and position the indicator mesh component
+	NPCIndicatorMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("NPCIndicatorMeshComponent"));
+	NPCIndicatorMeshComponent->SetupAttachment(GetCapsuleComponent());
+	// The DesiredHeightAboveNPC should be adjusted to position the indicator correctly
+	NPCIndicatorMeshComponent->SetRelativeLocation(FVector(0.0f, 0.0f, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() + DesiredHeightAboveNPC));
 }
 
 

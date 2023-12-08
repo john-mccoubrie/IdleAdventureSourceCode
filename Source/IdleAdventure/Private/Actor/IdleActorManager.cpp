@@ -67,8 +67,10 @@ void AIdleActorManager::OnCountdownFinished(AIdleEffectActor* Tree)
         ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
         float RespawnDelay = TestManager->CurrentSettings.TreeRespawnDelay;
         FTimerHandle NewTimerHandle;
-        GetWorld()->GetTimerManager().SetTimer(NewTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::RespawnTree, Tree), RespawnDelay, false);
-        TreeTimers.Add(Tree->GetFName(), NewTimerHandle);
+
+        //Enable to enable tree respawning
+        //GetWorld()->GetTimerManager().SetTimer(NewTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::RespawnTree, Tree), RespawnDelay, false);
+        //TreeTimers.Add(Tree->GetFName(), NewTimerHandle);
     }
 }
 

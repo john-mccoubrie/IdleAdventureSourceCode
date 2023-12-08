@@ -14,6 +14,8 @@
 #include <Chat/GameChatManager.h>
 #include <Test/TestManager.h>
 #include <Actor/CofferManager.h>
+#include <Quest/DialogueManager.h>
+#include <Game/SpawnManager.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -101,6 +103,9 @@ void UWoodcuttingAbility::OnTreeCutDown()
     UAnimMontage* AnimMontage = Character->WoodcutMontage;
     Character->StopAnimMontage(AnimMontage);
     
+    ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+    SpawnManager->UpdateTreeCount(1);
+
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
     UE_LOG(LogTemp, Warning, TEXT("End ability"));
 }
@@ -145,6 +150,7 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
 
@@ -207,24 +213,28 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
         {
             NewLog->EssenceRarity = "Wisdom";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(10.0f * BonusManager->MultiplierSet.WisdomEssenceMultiplier));
+            Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::Blue);
             EssenceToAdd *= BonusManager->MultiplierSet.WisdomYieldMultiplier;
         }
         else if (RarityRoll <= TemperanceThreshold)  // 25% chance for Temperance
         {
             NewLog->EssenceRarity = "Temperance";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(20.0f * BonusManager->MultiplierSet.TemperanceEssenceMultiplier));
+            Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::Green);
             EssenceToAdd *= BonusManager->MultiplierSet.TemperanceYieldMultiplier;
         }
         else if (RarityRoll <= JusticeThreshold)  // 20% chance for Justice
         {
             NewLog->EssenceRarity = "Justice";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(30.0f * BonusManager->MultiplierSet.JusticeEssenceMultiplier));
+            Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::White);
             EssenceToAdd *= BonusManager->MultiplierSet.JusticeYieldMultiplier;
         }
         else // if (RarityRoll <= CourageThreshold)  // 5% chance for Courage
         {
             NewLog->EssenceRarity = "Courage";
             ExperienceGain = static_cast<float>(FMath::RoundToInt(50.0f * BonusManager->MultiplierSet.CourageEssenceMultiplier));
+            Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::Red);
             EssenceToAdd *= BonusManager->MultiplierSet.CourageYieldMultiplier;
         }
 
@@ -232,10 +242,15 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
 
         // Update quest progress here
-        AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+        //AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+        ADialogueManager* DialogueManager = ADialogueManager::GetInstance(GetWorld());
         if (Character)
         {
-            //UQuest* CurrentQuest = Character->GetCurrentActiveQuest();
+            if (Character->ActiveQuests.Num() > 0)
+            {
+                CurrentQuest = Character->ActiveQuests.Last();
+            }
+            
 
 
             //if (CurrentQuest && !CurrentQuest->bIsCompleted)
@@ -245,24 +260,32 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 {
                     //CurrentQuest->UpdateProgress("Wisdom", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Wisdom", EssenceToAdd * BonusManager->MultiplierSet.WisdomYieldMultiplier);
+                    if(CurrentQuest)
+                    DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Wisdom", EssenceToAdd);
                     //UE_LOG(LogTemp, Warning, TEXT("Wisdom added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Temperance")
                 {
                     //CurrentQuest->UpdateProgress("Temperance", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Temperance", EssenceToAdd * BonusManager->MultiplierSet.TemperanceYieldMultiplier);
+                    if (CurrentQuest)
+                    DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Temperance", EssenceToAdd);
                     //UE_LOG(LogTemp, Warning, TEXT("Temperance added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Justice")
                 {
                     //CurrentQuest->UpdateProgress("Justice", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Justice", EssenceToAdd * BonusManager->MultiplierSet.JusticeYieldMultiplier);
+                    if (CurrentQuest)
+                    DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Justice", EssenceToAdd);
                     //UE_LOG(LogTemp, Warning, TEXT("Justice added in quest"));
                 }
                 else if (NewLog->EssenceRarity == "Courage")
                 {
                     //CurrentQuest->UpdateProgress("Courage", EssenceToAdd);
                     Character->UpdateAllActiveQuests("Courage", EssenceToAdd * BonusManager->MultiplierSet.CourageYieldMultiplier);
+                    if (CurrentQuest)
+                    DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Courage", EssenceToAdd);
                     //UE_LOG(LogTemp, Warning, TEXT("Courage added in quest"));
                 }
                 
@@ -334,11 +357,21 @@ void UWoodcuttingAbility::GetLegendaryEssence()
 
     NewLog->EssenceRarity = "Legendary";
 
+    AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+    ADialogueManager* DialogueManager = ADialogueManager::GetInstance(GetWorld());
+    if (CurrentQuest)
+    {
+        CurrentQuest = Character->ActiveQuests.Last();
+        DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Legendary", EssenceToAdd);
+    }
+    Character->UpdateAllActiveQuests("Legendary", EssenceToAdd * BonusManager->MultiplierSet.CourageYieldMultiplier);
+    
     //Test values (originally 1000)
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
     float LegendaryExpGain = 5000;
     
     ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->MultiplierSet.LegendaryEssenceMultiplier));
+    Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::Yellow);
     EssenceToAdd *= BonusManager->MultiplierSet.LegendaryYieldMultiplier;
 
     AddExperience(ExperienceGain);
@@ -357,7 +390,7 @@ void UWoodcuttingAbility::GetLegendaryEssence()
             NewLog->ItemDescription = EssenceData->Description;
         }
     }
-    AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
+    //AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
     for (int i = 0; i < EssenceToAdd; ++i)
     {
         Character->CharacterInventory->AddItem(NewLog);

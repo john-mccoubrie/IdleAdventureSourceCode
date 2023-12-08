@@ -23,3 +23,20 @@ void UIdleSaveGame::LoadGame(int32& WoodcuttingExp, int32& PlayerLevel)
 		UE_LOG(LogTemp, Warning, TEXT("Loaded WoodcuttingExp: %d, PlayerLevel: %d in Save game class"), WoodcuttingExp, PlayerLevel);
 	}
 }
+
+void UIdleSaveGame::SaveDialogueStep(const int32 NewDialogueStep)
+{
+	UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+	SaveGameInstance->DialogueStep = NewDialogueStep;
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, "DialogueStepSaveSlot", 0);
+}
+
+int32 UIdleSaveGame::LoadDialogueStep()
+{
+	UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("DialogueStepSaveSlot", 0));
+	if (LoadGameInstance)
+	{
+		return LoadGameInstance->DialogueStep;
+	}
+	return 0;
+}

@@ -120,8 +120,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	
-
 	UPROPERTY(BlueprintAssignable)
 	FOnPeriodFiredDelegate OnPeriodFired;
 
@@ -215,6 +213,7 @@ public:
 	AIdleEffectActor* CurrentTree = nullptr;
 
 	void InterruptTreeCutting();
+	void InteruptCombat();
 	void StartAnimNotifyEnemyInteraction(APawn* PlayerPawn);
 	//void FindEnemiesInRange(const FVector& Location, TArray<AEnemyBase*>& OutEnemies);
 
@@ -275,6 +274,7 @@ private:
 	void HandleZoomAction(const FInputActionValue& InputActionValue);
 
 	void MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn);
+	FVector AdjustTargetZAxis(FVector NewTargetLocation);
 	void ClickTree(FHitResult TreeHit, APawn* PlayerPawn);
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);
 	void ResetWoodcuttingAbilityTimer();
@@ -282,7 +282,6 @@ private:
 	void StartConversionAbility(APawn* PlayerPawn);
 	void StartNPCInteraction(APawn* PlayerPawn);
 	void StartEnemyInteraction(APawn* PlayerPawn);
-	void InteruptCombat();
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;

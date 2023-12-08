@@ -17,4 +17,5 @@ class IDLEADVENTURE_API UDamageTextComponent : public UWidgetComponent
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetDamageText(float Damage, FSlateColor Color);
+
 };

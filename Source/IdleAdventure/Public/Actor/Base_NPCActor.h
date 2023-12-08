@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "Base_NPCActor.generated.h"
 
 class UCapsuleComponent;
 class UBoxComponent;
 
 UCLASS()
-class IDLEADVENTURE_API ABase_NPCActor : public AActor
+class IDLEADVENTURE_API ABase_NPCActor : public ACharacter
 {
 	GENERATED_BODY()
 	
@@ -20,9 +20,9 @@ public:
 
 	virtual void Interact();
 
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UCapsuleComponent* CapsuleComponent;
+	//UCapsuleComponent* GetMyCapsuleComponent() const { return GetCapsuleComponent(); }
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//UCapsuleComponent* CapsuleComponent;
 	
 	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	//UBoxComponent* CapsuleComponent;

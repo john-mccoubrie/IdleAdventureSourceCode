@@ -28,6 +28,8 @@ ABonusManager::ABonusManager()
 
     Damage = 0.0f;
     Armor = 0.0f;
+
+    WeaponTypeIdentifier = "None";
 }
 
 void ABonusManager::BeginPlay()

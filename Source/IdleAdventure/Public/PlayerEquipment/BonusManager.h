@@ -65,6 +65,9 @@ struct FItemBonus
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Armor = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString WeaponTypeIdentifier;
+
     bool operator==(const FItemBonus& Other) const
     {
         return WisdomEssenceMultiplier == Other.WisdomEssenceMultiplier &&
@@ -81,7 +84,8 @@ struct FItemBonus
             CourageEssenceChanceBonus == Other.CourageEssenceChanceBonus &&
             InvestingBonusChance == Other.InvestingBonusChance &&
             Damage == Other.Damage &&
-            Armor == Other.Armor;
+            Armor == Other.Armor &&
+            WeaponTypeIdentifier == Other.WeaponTypeIdentifier;
     }
 
 };
@@ -142,6 +146,9 @@ struct FMultiplierSet
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Armor = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString WeaponTypeIdentifier = "None";
+
     void ApplyBonus(const FItemBonus& ItemBonus)
     {
         WisdomEssenceMultiplier *= ItemBonus.WisdomEssenceMultiplier;
@@ -165,6 +172,7 @@ struct FMultiplierSet
 
         Damage += ItemBonus.Damage;
         Armor += ItemBonus.Armor;
+        WeaponTypeIdentifier = ItemBonus.WeaponTypeIdentifier;
     }
 
     void RemoveBonus(const FItemBonus& ItemBonus)
@@ -190,6 +198,8 @@ struct FMultiplierSet
 
         Damage -= ItemBonus.Damage;
         Damage -= ItemBonus.Armor;
+
+        WeaponTypeIdentifier = "None";
     }
 };
 
@@ -243,6 +253,10 @@ public:
 
     float Damage;
     float Armor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString WeaponTypeIdentifier;
+
 
 public:
     UPROPERTY(BlueprintAssignable, Category = "Bonuses")

@@ -11,7 +11,7 @@
 
 void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
 {
-
+    UE_LOG(LogTemp, Warning, TEXT("Update quest progress"));
     QuestProgress.UpdateProgress(ObjectiveType, Amount);
 
     if (QuestProgress.IsComplete(Rewards.Objectives))
@@ -24,9 +24,11 @@ void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
     float TemperanceProgress = (Rewards.Objectives.Temperance > 0) ? static_cast<float>(QuestProgress.Temperance) / static_cast<float>(Rewards.Objectives.Temperance) : 0.f;
     float JusticeProgress = (Rewards.Objectives.Justice > 0) ? static_cast<float>(QuestProgress.Justice) / static_cast<float>(Rewards.Objectives.Justice) : 0.f;
     float CourageProgress = (Rewards.Objectives.Courage > 0) ? static_cast<float>(QuestProgress.Courage) / static_cast<float>(Rewards.Objectives.Courage) : 0.f;
-    float OtherProgress = (Rewards.Objectives.Other > 0) ? static_cast<float>(QuestProgress.Other) / static_cast<float>(Rewards.Objectives.Other) : 0.f;
+    float LegendaryProgress = (Rewards.Objectives.Legendary > 0) ? static_cast<float>(QuestProgress.Legendary) / static_cast<float>(Rewards.Objectives.Legendary) : 0.f;
+    float EnemyKillsProgress = (Rewards.Objectives.EnemyKills > 0) ? static_cast<float>(QuestProgress.EnemyKills) / static_cast<float>(Rewards.Objectives.EnemyKills) : 0.f;
+    float BossKillsProgress = (Rewards.Objectives.BossKills > 0) ? static_cast<float>(QuestProgress.BossKills) / static_cast<float>(Rewards.Objectives.BossKills) : 0.f;
 
-    UpdateQuestProgressDelegate.Broadcast(WisdomProgress, TemperanceProgress, JusticeProgress, CourageProgress, OtherProgress);
+    UpdateQuestProgressDelegate.Broadcast(WisdomProgress, TemperanceProgress, JusticeProgress, CourageProgress, LegendaryProgress, EnemyKillsProgress, BossKillsProgress);
     //UpdateQuestTextValuesDelegate.Broadcast(QuestProgress.Wisdom, QuestProgress.Temperance, QuestProgress.Justice, QuestProgress.Courage, QuestProgress.Other,
         //Rewards.Objectives.Courage, Rewards.Objectives.Temperance, Rewards.Objectives.Justice, Rewards.Objectives.Courage, Rewards.Objectives.Other);
 
@@ -110,7 +112,14 @@ void UQuest::Start()
     AQuestManager* QuestManager = AQuestManager::GetInstance(GetWorldContext());
     QuestManager->questCount++;
     FTimerHandle TimerHandle;
-    WorldContext->GetTimerManager().SetTimer(TimerHandle, this, &UQuest::SetInitialQuestValues, 1.0f, false);
+    if (WorldContext)
+    {
+        WorldContext->GetTimerManager().SetTimer(TimerHandle, this, &UQuest::SetInitialQuestValues, 1.0f, false);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No world context in UQuest!"));
+    }
 }
 
 void UQuest::SetInitialQuestValues()

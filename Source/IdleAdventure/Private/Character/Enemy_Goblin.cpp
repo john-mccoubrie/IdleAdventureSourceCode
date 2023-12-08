@@ -9,8 +9,15 @@
 #include <Kismet/KismetMathLibrary.h>
 #include <NiagaraFunctionLibrary.h>
 
+AEnemy_Goblin::AEnemy_Goblin()
+{
+	CombatComponent = CreateDefaultSubobject<UNPCCombatComponent>(TEXT("NPCCombatComponent"));
+}
+
 void AEnemy_Goblin::Interact()
 {
+	Super::Interact();
+
 	UE_LOG(LogTemp, Warning, TEXT("Enemy goblin interact called)"));
 	//ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
 	//AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -20,17 +27,22 @@ void AEnemy_Goblin::Interact()
     //EnemyAttacksPlayer();
 }
 
+void AEnemy_Goblin::EquipWeapon()
+{
+	Super::EquipWeapon();
+}
+
 void AEnemy_Goblin::SpawnEnemyAttackEffect()
 {
-    
+	Super::SpawnEnemyAttackEffect();
 }
 
 void AEnemy_Goblin::EndCombatEffects()
 {
-    
+	Super::EndCombatEffects();
 }
 
 void AEnemy_Goblin::EnemyAttacksPlayer()
 {
-    
+	Super::EnemyAttacksPlayer();
 }

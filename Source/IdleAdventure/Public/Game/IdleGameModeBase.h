@@ -6,7 +6,9 @@
 #include "Chat/PhotonChatManager.h"
 #include <Leaderboard/LeaderboardManager.h>
 #include <Actor/CofferManager.h>
+#include "SpawnManager.h"
 #include <Chat/GameChatManager.h>
+#include <Quest/DialogueManager.h>
 #include <Quest/QuestManager.h>
 #include <Combat/CombatManager.h>
 #include <StoicStore/StoicStoreManager.h>
@@ -17,6 +19,7 @@
 #include <Leaderboard/UpdatePlayerDisplayName.h>
 #include "GameFramework/GameModeBase.h"
 #include "IdleGameModeBase.generated.h"
+
 
 
 
@@ -53,11 +56,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StoicStore")
 	AStoicStoreManager* StoicStoreManagerInstance;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnManager")
+	ASpawnManager* SpawnManagerInstance;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "StoicStore")
 	ACombatManager* CombatManagerInstance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Manager")
 	AGameChatManager* GameChatManagerInstance;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Main Story")
+	ADialogueManager* DialogueManagerInstance;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Equipment")
 	ABonusManager* BonusManagerInstance;
@@ -79,6 +88,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sound")
 	TSubclassOf<class ASoundManager> SoundManagerBlueprint;
+
+	void SpawnEnemyBoss();
+	
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayFabManager")
 	//APlayFabManager* PlayFabManagerInstance;

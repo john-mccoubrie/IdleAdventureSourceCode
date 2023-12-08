@@ -13,6 +13,7 @@
 class UAnimMontage;
 class UAttributeSet;
 class UAbilitySystemComponent;
+class UDamageTextComponent;
 
 /**
  * 
@@ -69,6 +70,12 @@ public:
 		void NotifyQuestCompletionStatus(FString QuestID, bool bCanAccept);
 
 		bool HasQuestWithVersion(const FString& QuestID, const FString& Version) const;
+
+		UFUNCTION(BlueprintCallable, Category = "Combat")
+		void ShowExpNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color);
+
+		UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
 
 private:
 	void InitAbilityActorInfo();

@@ -27,6 +27,15 @@ public:
 	static void SaveGame(int32 WoodcuttingExp, int32 PlayerLevel);
 	static void LoadGame(int32& WoodcuttingExp, int32& PlayerLevel);
 
+	void SaveDialogueStep(const int32 NewDialogueStep);
+	int32 LoadDialogueStep();
+
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	int32 DialogueStep;
+
+	//UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	//FQuestProgress SavedQuestProgress;
 };

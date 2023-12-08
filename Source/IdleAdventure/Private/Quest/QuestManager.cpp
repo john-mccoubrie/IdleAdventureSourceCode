@@ -85,10 +85,12 @@ void AQuestManager::GetQuestData()
     Request.Keys.Add("DailyLegendaryQuest");
     Request.Keys.Add("TheDailyGrind");
     Request.Keys.Add("TheDailyStoic");
+    Request.Keys.Add("DailyRun");
     RequestedKeys.Add("DailyEasyQuest");
     RequestedKeys.Add("DailyLegendaryQuest");
     RequestedKeys.Add("TheDailyGrind");
     RequestedKeys.Add("TheDailyStoic");
+    RequestedKeys.Add("DailyRun");
 
     clientAPI->GetTitleData(Request,
         PlayFab::UPlayFabClientAPI::FGetTitleDataDelegate::CreateUObject(this, &AQuestManager::OnGetQuestDataSuccess),
@@ -117,6 +119,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 FString QuestName = JsonObject->GetStringField(TEXT("Name"));
                 FString QuestDescription = JsonObject->GetStringField(TEXT("Description"));
                 FString QuestCategory = JsonObject->GetStringField(TEXT("Category"));
+                //bool IsStarted = JsonObject->GetBoolField(TEXT("IsStarted"));
 
                 TSharedPtr<FJsonObject> RewardsObject = JsonObject->GetObjectField(TEXT("Rewards"));
 
@@ -134,11 +137,22 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 Objectives.Temperance = ObjectivesObject->GetIntegerField(TEXT("Temperance"));
                 Objectives.Justice = ObjectivesObject->GetIntegerField(TEXT("Justice"));
                 Objectives.Courage = ObjectivesObject->GetIntegerField(TEXT("Courage"));
-                Objectives.Other = ObjectivesObject->GetIntegerField(TEXT("Other"));
+                Objectives.Legendary = ObjectivesObject->GetIntegerField(TEXT("Legendary"));
+                Objectives.EnemyKills = ObjectivesObject->GetIntegerField(TEXT("EnemyKills"));
+                Objectives.BossKills = ObjectivesObject->GetIntegerField(TEXT("BossKills"));
 
                 Rewards.Objectives = Objectives;
 
                 UQuest* NewQuest = NewObject<UQuest>();
+                /*
+                NewQuest->bIsStarted = IsStarted;
+
+                if (NewQuest->QuestName == "DailyRun" && NewQuest->bIsStarted = true)
+                {
+                    UE_LOG(LogTemp, Error, TEXT("Daily run already completed, log out player"));
+                    return;
+                }
+                */
                 NewQuest->SetWorldContext(GetWorld());
                 NewQuest->QuestID = QuestID;
                 NewQuest->Version = Version;
@@ -151,12 +165,20 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
         }
                 
     }
+    
             // After all quests have been loaded, determine if they are completed or available
             for (UQuest* Quest : AllLoadedQuests)
             {
+                //&& !QuestIsStoryQuest(Quest);
                 if (PlayerHasCompletedQuest(Quest) && !CompletedQuests.Contains(Quest))
                 {
                     CompletedQuests.Add(Quest);
+                    if (Quest->QuestName == "DailyRun")
+                    {
+                        APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+                        PlayFabManager->CompleteQuest(Quest);
+                        UE_LOG(LogTemp, Error, TEXT("Daily run is complete player is logged out."));
+                    }
                     UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
                 }
                 else
@@ -164,6 +186,12 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                     if (!AvailableQuests.Contains(Quest))
                     {
                         AvailableQuests.Add(Quest);
+                        if (Quest->QuestName == "DailyRun")
+                        {
+                            APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+                            PlayFabManager->CompleteQuest(Quest);
+                            UE_LOG(LogTemp, Error, TEXT("Daily run set to complete"));
+                        }
                         UE_LOG(LogTemp, Warning, TEXT("Added to Available Quests: %s"), *Quest->QuestName);
                     } 
                 }
@@ -354,6 +382,8 @@ void AQuestManager::OnErrorUpdateEssenceCounts(const PlayFab::FPlayFabCppError& 
     FString ErrorMessage = Error.GenerateErrorReport();
     UE_LOG(LogTemp, Error, TEXT("Failed to update essence counts on PlayFab: %s"), *ErrorMessage);
 }
+
+
 
 void AQuestManager::GivePlayerQuestRewards(UQuest* Quest)
 {

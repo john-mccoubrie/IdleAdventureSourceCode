@@ -4,6 +4,8 @@
 #include "Game/IdleGameModeBase.h"
 #include <IdleGameInstance.h>
 #include "PlayFab/PlayFabManager.h"
+#include <Character/Enemy_Goblin_Boss.h>
+#include "EngineUtils.h"
 
 //#include <Actor/IdleActorManager.h>
 
@@ -32,6 +34,7 @@ AIdleGameModeBase::AIdleGameModeBase()
 
 void AIdleGameModeBase::BeginPlay()
 {
+    //SpawnEnemyBoss();
     //Spawn the Game Chat Manager (Message of the day)
     GameChatManagerInstance = GetWorld()->SpawnActor<AGameChatManager>(AGameChatManager::StaticClass());
 
@@ -56,8 +59,14 @@ void AIdleGameModeBase::BeginPlay()
      
      CombatManagerInstance = GetWorld()->SpawnActor<ACombatManager>(ACombatManager::StaticClass());
 
+     //Spawn the SpawnManager instance
+     SpawnManagerInstance = GetWorld()->SpawnActor<ASpawnManager>(ASpawnManager::StaticClass());
+
      //Spawn the TestManager instance
      TestManagerInstance = GetWorld()->SpawnActor<ATestManager>(ATestManager::StaticClass());
+
+     //Spawn the dialogue manager instance
+     DialogueManagerInstance = GetWorld()->SpawnActor<ADialogueManager>(ADialogueManager::StaticClass());
 
      //Spawn the QuestManager instance
      QuestManagerInstance = GetWorld()->SpawnActor<AQuestManager>(AQuestManager::StaticClass());
@@ -79,7 +88,7 @@ void AIdleGameModeBase::BeginPlay()
      CofferManagerInstance = GetWorld()->SpawnActor<ACofferManager>(ACofferManager::StaticClass());
      CofferManagerInstance->SetUpAllCoffers();
 
-
+     
      //Load quest data
      //PlayFabManagerInstance->FetchCompletedQuestsData();
 }
@@ -102,6 +111,22 @@ void AIdleGameModeBase::BeginUpdateLeaderboard()
 {
     LeaderboardManagerInstance->Initialize(GetWorld());
 }
+
+void AIdleGameModeBase::SpawnEnemyBoss()
+{
+    // Define the spawn parameters
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = GetInstigator();
+
+    // Define the location and rotation for the new actor
+    FVector Location = FVector(-21030.0, -11887.897393, 1623.752156); // Change this to your desired location
+    FRotator Rotation = FRotator(0.0f, 0.0f, 0.0f); // Change this to your desired rotation
+
+    // Spawn the actor
+    AEnemy_Goblin_Boss* SpawnedActor = GetWorld()->SpawnActor<AEnemy_Goblin_Boss>(AEnemy_Goblin_Boss::StaticClass(), Location, Rotation, SpawnParams);
+}
+
 
 
 

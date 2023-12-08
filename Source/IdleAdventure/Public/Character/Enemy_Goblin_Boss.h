@@ -3,23 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Combat/GoblinBossCombatComponent.h"
 #include "Character/EnemyBase.h"
-#include "Enemy_Goblin.generated.h"
+#include "Enemy_Goblin_Boss.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class IDLEADVENTURE_API AEnemy_Goblin : public AEnemyBase
+class IDLEADVENTURE_API AEnemy_Goblin_Boss : public AEnemyBase
 {
 	GENERATED_BODY()
+
 public:
-	AEnemy_Goblin();
+
+	AEnemy_Goblin_Boss();
 	virtual void Interact() override;
 	virtual void EquipWeapon() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
 
-	
+	UPROPERTY()
+	UGoblinBossCombatComponent* BossCombatComponent;
+
+private:
+	bool bIsTimerSet = false;
 };

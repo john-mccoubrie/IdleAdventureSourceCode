@@ -13,7 +13,7 @@
 
 class UBehaviorTree;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class IDLEADVENTURE_API AEnemyBase : public ACharacter
 {
 	GENERATED_BODY()
@@ -24,6 +24,7 @@ public:
 
 	virtual void Interact();
 	virtual void EndCombatEffects();
+	virtual void EquipWeapon();
 
 	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
 	virtual void SpawnEnemyAttackEffect();
@@ -31,8 +32,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy Attacks")
 	virtual void EnemyAttacksPlayer();
 
+	UFUNCTION(BlueprintCallable, Category = "Enemy Attacks")
+	virtual void UpdateWalkSpeed(float NewSpeed);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
-	UNPCCombatComponent* CombatComponent;
+	UBaseCombatComponent* CombatComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI")
 	TSubclassOf<UBehaviorTree> BehaviorTree;
@@ -51,6 +55,9 @@ public:
 	UAnimMontage* EnemyDeathMontage;
 
 	UNiagaraComponent* SpawnedEnemyAttackEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<USkeletalMeshComponent> EnemyWeapon;
 
 protected:
 	// Called when the game starts or when spawned

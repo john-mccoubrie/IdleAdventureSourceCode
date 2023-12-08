@@ -10,6 +10,7 @@
 
 
 class UDamageTextComponent;
+class UStoicTypeIndicatorComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedDelegate, float, NewHealth, float, MaxHealth);
 
@@ -30,6 +31,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color);
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void ChangeStoicImage(FString StoicType, ACharacter* TargetCharacter);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float Health;
 
@@ -42,11 +46,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float Damage;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	float BossIconOffset;
+
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnHealthChangedDelegate OnHealthChanged;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UStoicTypeIndicatorComponent> StoicTypeComponentClass;
 
 protected:
 	// Called when the game starts

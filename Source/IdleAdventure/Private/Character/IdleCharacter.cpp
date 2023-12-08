@@ -12,6 +12,7 @@
 #include <PlayerEquipment/PlayerEquipment.h>
 #include <Quest/QuestManager.h>
 #include <PlayFab/PlayFabManager.h>
+#include "UI/DamageTextComponent.h"
 
 AIdleCharacter::AIdleCharacter()
 {
@@ -199,6 +200,18 @@ bool AIdleCharacter::HasQuestWithVersion(const FString& QuestID, const FString& 
 
 	// If no matching quest is found, return false
 	return false;
+}
+
+void AIdleCharacter::ShowExpNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color)
+{
+	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	{
+		UDamageTextComponent* ExpText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		ExpText->RegisterComponent();
+		ExpText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+		ExpText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		ExpText->SetDamageText(DamageAmount, Color);
+	}
 }
 
 void AIdleCharacter::CheckQuestCompletionFromPlayFab(UQuest* Quest)

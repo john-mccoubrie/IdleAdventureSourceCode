@@ -172,8 +172,8 @@ void UIdleInteractionComponent::SpawnCombatEffect(APawn* PlayerPawn, AEnemyBase*
     // Spawn the Niagara effects
     if (GetWorld() && TargetEnemy)
     {
-        // Spawn the effect
-        SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PlayerAttackEffect, StaffEndLocation, RotationTowardsEnemy);
+        // Spawn the effect was EndOfStaffLocation
+        SpawnedAttackEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PlayerAttackEffect, EnemyLocation, RotationTowardsEnemy);
 
         // Set a timer to automatically destroy the effect after 2 seconds
         FTimerHandle TimerHandle;
