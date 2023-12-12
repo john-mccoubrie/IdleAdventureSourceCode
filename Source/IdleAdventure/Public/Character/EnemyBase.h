@@ -25,6 +25,7 @@ public:
 	virtual void Interact();
 	virtual void EndCombatEffects();
 	virtual void EquipWeapon();
+	virtual void EnemyDeathAnimation();
 
 	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
 	virtual void SpawnEnemyAttackEffect();

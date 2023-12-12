@@ -284,8 +284,9 @@ void APlayLoginActor::OnLoginSuccess(const PlayFab::ClientModels::FLoginResult& 
                 if (UpdatePlayerDisplayNameInstance->HasDisplayName())
                 {
                     //TestPhotonUserIDToPlayFabDisplayNameMap.Add(IdleGameInstance->StoredPlayFabUserID, UpdatePlayerDisplayNameInstance->TestDisplayName);
-                    UE_LOG(LogTemp, Error, TEXT("Player has display name...loading map 1"));
-                    UGameplayStatics::OpenLevel(this, TEXT("Map1"));
+                    UE_LOG(LogTemp, Error, TEXT("Player has display name...loading level select screen"));
+                    UGameplayStatics::OpenLevel(this, TEXT("LevelSelectScreenBasic"));
+                    //UGameplayStatics::OpenLevel(this, TEXT("EasyMap"));
                 }
                 else
                 {

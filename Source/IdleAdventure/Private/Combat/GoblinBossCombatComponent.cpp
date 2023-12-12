@@ -11,6 +11,9 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include <Combat/CombatManager.h>
+#include <AbilitySystem/IdleAttributeSet.h>
+#include <Player/IdlePlayerState.h>
+#include <Game/SpawnManager.h>
 
 void UGoblinBossCombatComponent::BeginPlay()
 {
@@ -31,15 +34,24 @@ void UGoblinBossCombatComponent::HandleDeath()
 {
 	Super::HandleDeath();
 
+    ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+    SpawnManager->UpdateBossCount(1);
+
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+
     //Update quest
     ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
     Character->UpdateAllActiveQuests("BossKills", 1);
 
     //Handle Exp
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 5000.0f);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 5000.0f);
+    Character->ShowExpNumber(5000.0f, Character, FLinearColor::White);
 
     //Update player controller values
-    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     PC->InteruptCombat();
 
     // Stop the damage check timer
@@ -208,7 +220,7 @@ void UGoblinBossCombatComponent::CheckForPlayerInCircle()
         {
             UE_LOG(LogTemp, Error, TEXT("Player take 50 damage"));
             ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
-            CombatManager->HandleCombat(this, PlayerCharacter->CombatComponent);
+            CombatManager->HandleCombat(this, PlayerCharacter->CombatComponent, 40);
         }
         else
         {

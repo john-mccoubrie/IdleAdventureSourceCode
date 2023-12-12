@@ -75,8 +75,9 @@ void UConversionAbility::CovertEssenceToEXP()
 	float CofferDuration = PS->AbilitySystemComponent->GetActiveGameplayEffect(NewEffectHandle)->GetDuration();
 	//UE_LOG(LogTemp, Warning, TEXT("Coffer Duration: %f"), CofferDuration);
 	//ClickedCoffer->StartExperienceTimer(CofferDuration);
-	CofferManager->StartExperienceTimer(CofferDuration);
-		
+	//CofferManager->StartExperienceTimer(CofferDuration);
+	CofferManager->LegendaryBarProgress += Character->EssenceCount;
+	CofferManager->UpdateLegendaryProgressBar(CofferManager->LegendaryBarProgress);
 	// Built in delegate that calls "OnDurationEffectRemoved" When the conversion gameplay effect's duration automatically removes it
 	FOnActiveGameplayEffectRemoved_Info* WaitEffectRemovedDelegate = PS->AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(NewEffectHandle);
 	WaitEffectRemovedDelegate->AddUObject(this, &UConversionAbility::OnDurationEffectRemoved, CofferDuration, ClickedCoffer);

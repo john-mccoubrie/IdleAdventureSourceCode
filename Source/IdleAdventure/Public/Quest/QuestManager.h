@@ -16,6 +16,7 @@ class UQuest;
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAddAvailableQuestsToUI, UQuest*, QuestObject, FString, QuestName, FString, QuestDescription, FQuestRewards, Rewards);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddAvailableQuestsToUI, const TArray<UQuest*>&, Quests);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddCompletedQuestsToUI, const TArray<UQuest*>&, Quests);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRunAlreadyAttempted);
 
 UCLASS(Blueprintable)
 class IDLEADVENTURE_API AQuestManager : public AActor
@@ -79,6 +80,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnAddCompletedQuestsToUI OnAddCompletedQuestsToUI;
+
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnRunAlreadyAttempted OnRunAlreadyAttempted;
 
     UPROPERTY(BlueprintReadOnly, Category = "Quests")
     TArray<UQuest*> AvailableQuests;

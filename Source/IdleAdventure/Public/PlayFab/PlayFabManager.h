@@ -4,6 +4,7 @@
 
 #include <PlayerEquipment/EquipmentManager.h>
 #include <Character/IdleCharacter.h>
+#include "Game/SpawnManager.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <PlayFab.h>
@@ -11,6 +12,8 @@
 #include "GameFramework/Actor.h"
 #include "PlayFabManager.generated.h"
 
+
+//class ASpawnManager;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEssenceUpdate, int32, Wisdom, int32, Temperance, int32, Justice, int32, Courage, int32, Legendary);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPurchaseCompleted, bool, bSuccess);
@@ -74,6 +77,28 @@ public:
 	void FetchCompletedQuestsData();
 	void OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
 	void OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult);
+
+
+	//Basic fetch and update methods
+	// Method to initiate fetching current essence counts from PlayFab
+	void FetchCurrentEssenceCounts();
+	// Callback for successful fetch of essence counts
+	void OnFetchCurrentEssenceCountsSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result);
+	// Callback for failed fetch of essence counts
+	void OnFetchCurrentEssenceCountsFailure(const PlayFab::FPlayFabCppError& Error);
+	// Method to update essence counts on PlayFab
+	void UpdateEssenceCountsOnPlayFab(const TMap<FName, int32>& NewEssenceCounts);
+	void OnSuccessUpdateEssenceCounts(const PlayFab::ClientModels::FUpdateUserDataResult& Result);
+	void OnErrorUpdateEssenceCounts(const PlayFab::FPlayFabCppError& Error);
+
+	void UpdatePlayerRewardsOnPlayFab(FRunCompleteRewards Rewards);
+	void CombineAndSendUpdatedCounts(const TMap<FName, int32>& CurrentEssenceCounts);
+
+	int32 WisdomToAdd = 0;
+	int32 TemperanceToAdd = 0;
+	int32 JusticeToAdd = 0;
+	int32 CourageToAdd = 0;
+	int32 LegendaryToAdd = 0;
 
 
 	FString PendingQuestID;

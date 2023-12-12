@@ -9,6 +9,7 @@
 #include <PlayerEquipment/PlayerEquipment.h>
 #include <Chat/GameChatManager.h>
 #include <Quest/QuestManager.h>
+#include <Game/SpawnManager.h>
 
 //Define the static member variable
 APlayFabManager* APlayFabManager::SingletonInstance = nullptr;
@@ -30,7 +31,7 @@ void APlayFabManager::BeginPlay()
         SingletonInstance = this;
     }
     Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-    UE_LOG(LogTemp, Warning, TEXT("PLa"))
+    //UE_LOG(LogTemp, Warning, TEXT("PLa"))
     FetchCompletedQuestsData();
     LoadPlayerEquipmentInventory();
    
@@ -316,7 +317,7 @@ void APlayFabManager::OnSuccessUpdateEssence(const PlayFab::ClientModels::FUpdat
 {
     //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     //OnPurchaseCompleted.Broadcast(true);
-    //UE_LOG(LogTemp, Log, TEXT("Successfully updated essence count on PlayFab"));
+    UE_LOG(LogTemp, Error, TEXT("Successfully updated essence count on PlayFab"));
 
     // Create an array of FEssenceCoffer to be broadcasted
     TArray<FEssenceCoffer> EssenceCofferArray;
@@ -372,6 +373,7 @@ TSharedPtr<FJsonObject> APlayFabManager::TMapToJsonObject(const TMap<FName, int3
 
 bool APlayFabManager::UpdateEssenceAddedToCofferOnPlayFab()
 {
+    UE_LOG(LogTemp, Error, TEXT("UpdateEssenceAddedToCoffer called!!"));
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
 
     //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -731,4 +733,101 @@ void APlayFabManager::OnFetchCompletedQuestsDataSuccess(const PlayFab::ClientMod
 void APlayFabManager::OnFetchCompletedQuestsDataFailure(const PlayFab::FPlayFabCppError& ErrorResult)
 {
     UE_LOG(LogTemp, Error, TEXT("Failed to retrieve user data: %s"), *ErrorResult.ErrorMessage);
+}
+
+void APlayFabManager::FetchCurrentEssenceCounts()
+{
+    PlayFab::ClientModels::FGetUserDataRequest Request;
+    Request.Keys.Add(TEXT("EssenceAddedToCoffer"));
+    clientAPI->GetUserData(Request,
+        PlayFab::UPlayFabClientAPI::FGetUserDataDelegate::CreateUObject(this, &APlayFabManager::OnFetchCurrentEssenceCountsSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnFetchCurrentEssenceCountsFailure));
+}
+
+void APlayFabManager::OnFetchCurrentEssenceCountsSuccess(const PlayFab::ClientModels::FGetUserDataResult& Result)
+{
+    if (Result.Data.Contains(TEXT("EssenceAddedToCoffer")))
+    {
+        FString CurrentCountsString = Result.Data[TEXT("EssenceAddedToCoffer")].Value;
+        TSharedPtr<FJsonObject> JsonObject;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(CurrentCountsString);
+
+        TMap<FName, int32> CurrentEssenceCounts;
+        if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+        {
+            CurrentEssenceCounts.Add(FName(TEXT("Wisdom")), JsonObject->GetIntegerField(TEXT("Wisdom")));
+            CurrentEssenceCounts.Add(FName(TEXT("Temperance")), JsonObject->GetIntegerField(TEXT("Temperance")));
+            CurrentEssenceCounts.Add(FName(TEXT("Justice")), JsonObject->GetIntegerField(TEXT("Justice")));
+            CurrentEssenceCounts.Add(FName(TEXT("Courage")), JsonObject->GetIntegerField(TEXT("Courage")));
+            CurrentEssenceCounts.Add(FName(TEXT("Legendary")), JsonObject->GetIntegerField(TEXT("Legendary")));
+        }
+
+        CombineAndSendUpdatedCounts(CurrentEssenceCounts);
+    }
+}
+
+void APlayFabManager::OnFetchCurrentEssenceCountsFailure(const PlayFab::FPlayFabCppError& Error)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to fetch current essence counts: %s"), *Error.GenerateErrorReport());
+}
+
+void APlayFabManager::UpdateEssenceCountsOnPlayFab(const TMap<FName, int32>& NewEssenceCounts)
+{
+    TSharedPtr<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+    for (const auto& Elem : NewEssenceCounts)
+    {
+        JsonObject->SetNumberField(Elem.Key.ToString(), Elem.Value);
+    }
+
+    FString UpdatedDataString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&UpdatedDataString);
+    FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+    PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
+    UpdateRequest.Data.Add(TEXT("EssenceAddedToCoffer"), UpdatedDataString);
+    clientAPI->UpdateUserData(UpdateRequest,
+        PlayFab::UPlayFabClientAPI::FUpdateUserDataDelegate::CreateUObject(this, &APlayFabManager::OnSuccessUpdateEssence),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnErrorUpdateEssence));
+}
+
+void APlayFabManager::OnSuccessUpdateEssenceCounts(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
+{
+    UE_LOG(LogTemp, Log, TEXT("Essence counts successfully updated on PlayFab."));
+}
+
+void APlayFabManager::OnErrorUpdateEssenceCounts(const PlayFab::FPlayFabCppError& Error)
+{
+    UE_LOG(LogTemp, Error, TEXT("Failed to update essence counts on PlayFab: %s"), *Error.GenerateErrorReport());
+}
+
+void APlayFabManager::UpdatePlayerRewardsOnPlayFab(FRunCompleteRewards Rewards)
+{
+    // Store the rewards to be added
+    WisdomToAdd = Rewards.Wisdom;
+    TemperanceToAdd = Rewards.Temperance;
+    JusticeToAdd = Rewards.Justice;
+    CourageToAdd = Rewards.Courage;
+    LegendaryToAdd = Rewards.LegendaryEssence;
+
+    // Start the process by fetching the current essence counts
+    FetchCurrentEssenceCounts();
+}
+
+void APlayFabManager::CombineAndSendUpdatedCounts(const TMap<FName, int32>& CurrentEssenceCounts)
+{
+    // Create a new TMap to hold the updated counts
+    TMap<FName, int32> UpdatedCounts = CurrentEssenceCounts;
+
+    // Add the rewards to the current counts
+    UpdatedCounts[FName(TEXT("Wisdom"))] += WisdomToAdd;
+    UpdatedCounts[FName(TEXT("Temperance"))] += TemperanceToAdd;
+    UpdatedCounts[FName(TEXT("Justice"))] += JusticeToAdd;
+    UpdatedCounts[FName(TEXT("Courage"))] += CourageToAdd;
+    UpdatedCounts[FName(TEXT("Legendary"))] += LegendaryToAdd;
+
+    // Update the essence counts to UI
+    OnEssenceUpdate.Broadcast(UpdatedCounts[FName(TEXT("Wisdom"))], UpdatedCounts[FName(TEXT("Temperance"))], UpdatedCounts[FName(TEXT("Justice"))], UpdatedCounts[FName(TEXT("Courage"))], UpdatedCounts[FName(TEXT("Legendary"))]);
+
+    // Update the essence counts on PlayFab
+    UpdateEssenceCountsOnPlayFab(UpdatedCounts);
 }

@@ -4,22 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Character/EnemyBase.h"
-#include "Enemy_Goblin.generated.h"
+#include "Enemy_Demon.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class IDLEADVENTURE_API AEnemy_Goblin : public AEnemyBase
+class IDLEADVENTURE_API AEnemy_Demon : public AEnemyBase
 {
 	GENERATED_BODY()
-public:
-	AEnemy_Goblin();
+	AEnemy_Demon();
 	virtual void Interact() override;
 	virtual void EquipWeapon() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
-	virtual void EnemyDeathAnimation() override;
-	
+	virtual void UpdateWalkSpeed(float NewSpeed) override;
 };

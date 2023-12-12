@@ -56,6 +56,8 @@ void AIdleCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CombatComponent->OnHealthChanged.Broadcast(CombatComponent->Health, CombatComponent->MaxHealth);
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

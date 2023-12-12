@@ -7,6 +7,7 @@
 #include <Actor/IdleActorManager.h>
 #include <Character/IdleCharacter.h>
 #include <Player/IdlePlayerController.h>
+#include <PlayFab/PlayFabManager.h>
 
 ACofferManager* ACofferManager::CofferManagerSingletonInstance = nullptr;
 
@@ -103,21 +104,33 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
 
     // Cast the character to your specific character class
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
-    if (Character->EssenceCount >= 24)
-    {
+
+
+    //APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
+    //PlayFabManager->UpdateEssenceAddedToCofferOnPlayFab();
+
+    //if (Character->EssenceCount >= 24)
+    //{
         ActiveCoffers.Add(NewCoffer);
 
         // Check if essence has been added to this coffer before
-        if (!CoffersWithEssence.Contains(NewCoffer))
+        if (LegendaryBarProgress >= 10)
         {
-            CoffersWithEssence.Add(NewCoffer);
+            LegendaryBarProgress = 0;
+            //update UI
+            UpdateLegendaryProgressBar(LegendaryBarProgress);
+            //CoffersWithEssence.Add(NewCoffer);
             LegendaryCount++;
+
+            //Give the player 10 armor
+            Character->CombatComponent->AddHealth(10.0f);
+            Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
 
             // Broadcast to the UI to update the star count
             OnLegendaryCountChanged.Broadcast(LegendaryCount);
 
             AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-            PC->IdleInteractionComponent->PlayAddToLegendaryMeterSound();
+            //PC->IdleInteractionComponent->PlayAddToLegendaryMeterSound();
 
             // Check if StarCount is 4, if yes, respawn the legendary tree
             if (LegendaryCount > 3)
@@ -129,7 +142,8 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
         }
 
         OnActiveCofferCountChanged.Broadcast(NewCoffer);
-    }
+        UpdateLegendaryProgressBar(LegendaryBarProgress);
+    //}
     UE_LOG(LogTemp, Error, TEXT("Not full inventory"));
 }
 
@@ -151,6 +165,11 @@ void ACofferManager::UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRat
     //UE_LOG(LogTemp, Error, TEXT("ProgressRatio: %f"), ProgressRatio);
     //OnCofferClicked.Broadcast(UpdatedCoffer, ProgressRatio);
     //}
+}
+
+void ACofferManager::UpdateLegendaryProgressBar(int32 EssenceToAdd)
+{
+    OnEssenceAddedToCoffer.Broadcast(EssenceToAdd);
 }
 
 void ACofferManager::StartExperienceTimer(float Duration)

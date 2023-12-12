@@ -46,3 +46,8 @@ void AEnemy_Goblin::EnemyAttacksPlayer()
 {
 	Super::EnemyAttacksPlayer();
 }
+
+void AEnemy_Goblin::EnemyDeathAnimation()
+{
+	Super::EnemyDeathAnimation();
+}

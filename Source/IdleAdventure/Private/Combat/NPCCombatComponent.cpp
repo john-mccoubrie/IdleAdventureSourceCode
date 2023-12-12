@@ -7,6 +7,9 @@
 #include <Kismet/GameplayStatics.h>
 #include <Character/IdleCharacter.h>
 #include <Player/IdlePlayerController.h>
+#include <AbilitySystem/IdleAttributeSet.h>
+#include <Player/IdlePlayerState.h>
+#include <Game/SpawnManager.h>
 
 void UNPCCombatComponent::TakeDamage(float amount)
 {
@@ -28,6 +31,14 @@ void UNPCCombatComponent::StopDamageCheckTimer()
     if (GetWorld()->GetTimerManager().IsTimerActive(DamageCheckTimer))
     {
         GetWorld()->GetTimerManager().ClearTimer(DamageCheckTimer);
+    }
+}
+
+void UNPCCombatComponent::DestroyOwner()
+{
+    if (AActor* Owner = GetOwner())
+    {
+        Owner->Destroy();
     }
 }
 
@@ -66,15 +77,43 @@ void UNPCCombatComponent::HandleDeath()
 {
     Super::HandleDeath();
 
+    ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+    SpawnManager->UpdateEnemyCount(1);
+
     //Update Quest
     ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
     Character->UpdateAllActiveQuests("EnemyKills", 1);
 
+    //Handle health potion drop
+    if (FMath::RandBool() && HealthPotionBlueprint)
+    {
+        AActor* Owner = GetOwner();
+        FVector SpawnLocation = Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
+        FRotator SpawnRotation = Owner ? Owner->GetActorRotation() : FRotator::ZeroRotator;
+
+        UWorld* World = GetWorld();
+        if (World)
+        {
+            // Spawn the health potion using the Blueprint reference
+            AHealthPotion* SpawnedPotion = World->SpawnActor<AHealthPotion>(HealthPotionBlueprint, SpawnLocation, SpawnRotation);
+            if (SpawnedPotion)
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Enemy dropped health potion"));
+                // Additional code for the spawned potion if necessary
+            }
+        }
+    }
+
     //Handle Exp
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 200.0f);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 200.0f);
+    Character->ShowExpNumber(200.0f, Character, FLinearColor::White);
 
     //Update player controller values
-    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     PC->InteruptCombat();
 
     // Stop the damage check timer
@@ -83,9 +122,17 @@ void UNPCCombatComponent::HandleDeath()
         GetWorld()->GetTimerManager().ClearTimer(DamageCheckTimer);
     }
 
-    //Destroy the enemy actor
-    if (AActor* Owner = GetOwner())
+    //Handle death animation
+    AEnemy_Goblin* OwningCharacter = Cast<AEnemy_Goblin>(GetOwner());
+    if (OwningCharacter)
     {
-        Owner->Destroy();
+        OwningCharacter->EnemyDeathAnimation();
+    }
+
+    // Delay the destruction of the owner
+    if (GetWorld())
+    {
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UNPCCombatComponent::DestroyOwner, 1.0f, false);
     }
 }

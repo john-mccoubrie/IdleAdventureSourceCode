@@ -6,9 +6,9 @@
 #include "Combat/BaseCombatComponent.h"
 #include "NPCCombatComponent.generated.h"
 
-/**
- * 
- */
+
+class AHealthPotion;
+
 UCLASS()
 class IDLEADVENTURE_API UNPCCombatComponent : public UBaseCombatComponent
 {
@@ -19,6 +19,10 @@ public:
 	virtual void HandleDeath() override;
 	virtual void TakeDamage(float amount) override;
 	void StopDamageCheckTimer();
+	void DestroyOwner();
+
+	UPROPERTY(EditDefaultsOnly, Category = "HealthPotion")
+	TSubclassOf<AHealthPotion> HealthPotionBlueprint;
 
 private:
 	FTimerHandle DamageCheckTimer;

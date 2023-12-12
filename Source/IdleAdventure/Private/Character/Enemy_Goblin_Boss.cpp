@@ -13,7 +13,7 @@ AEnemy_Goblin_Boss::AEnemy_Goblin_Boss()
 void AEnemy_Goblin_Boss::Interact()
 {
 	Super::Interact();
-	UE_LOG(LogTemp, Warning, TEXT("Enemy boss interact called)"));
+	UE_LOG(LogTemp, Warning, TEXT("Enemy boss interact called"));
 }
 
 void AEnemy_Goblin_Boss::EquipWeapon()

@@ -19,5 +19,5 @@ void ANPC_Goblin::Interact()
 {
 	ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
 	AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	CombatManager->HandleCombat(PlayerCharacter->CombatComponent, this->CombatComponent);
+	CombatManager->HandleCombat(PlayerCharacter->CombatComponent, this->CombatComponent, 0);
 }

@@ -54,13 +54,26 @@ void ACombatManager::ResetInstance()
     CombatManagerSingletonInstance = nullptr;
 }
 
-void ACombatManager::HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender)
+void ACombatManager::HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender, int32 DamageMultiplier)
 {
     //UE_LOG(LogTemp, Warning, TEXT("Handle combat in combat manager"));
     //check range, attack type, etc.
-
-    // Apply the calculated damage
-    defender->TakeDamage(attacker->Damage);
+    if (defender)
+    {
+        if (attacker)
+        {
+            // Apply the calculated damage
+            defender->TakeDamage(attacker->Damage + DamageMultiplier);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("attacker is null in combat component"));
+        }
+    }
+    else {
+        UE_LOG(LogTemp, Warning, TEXT("defender is null in combat component"));
+    }
+    
 }
 
 void ACombatManager::HandleMultiTargetCombat(UBaseCombatComponent* Attacker, const TArray<UBaseCombatComponent*>& Defenders)

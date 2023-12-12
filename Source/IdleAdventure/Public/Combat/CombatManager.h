@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,6 +8,7 @@
 
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, Health, float, MaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeath);
 
 UCLASS()
 class IDLEADVENTURE_API ACombatManager : public AActor
@@ -24,9 +24,14 @@ public:
 	void ResetInstance();
 
 	UFUNCTION()
-	void HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender);
+	void HandleCombat(UBaseCombatComponent* attacker, UBaseCombatComponent* defender, int32 DamageMultiplier);
 
 	void HandleMultiTargetCombat(UBaseCombatComponent* Attacker, const TArray<UBaseCombatComponent*>& Defenders);
+
+	
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnCharacterDeath OnCharacterDeath;
 
 	//UPROPERTY(BlueprintAssignable, Category = "Events")
 	//FOnHealthChanged OnHealthChanged;

@@ -178,6 +178,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                         APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
                         PlayFabManager->CompleteQuest(Quest);
                         UE_LOG(LogTemp, Error, TEXT("Daily run is complete player is logged out."));
+                        //OnRunAlreadyAttempted.Broadcast();
                     }
                     UE_LOG(LogTemp, Warning, TEXT("Added to Completed Quests: %s"), *Quest->QuestName);
                 }

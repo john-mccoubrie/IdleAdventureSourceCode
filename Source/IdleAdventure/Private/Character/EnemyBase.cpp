@@ -31,7 +31,7 @@ void AEnemyBase::Interact()
 {
 	ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
 	AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	CombatManager->HandleCombat(PlayerCharacter->CombatComponent, this->CombatComponent);
+	CombatManager->HandleCombat(PlayerCharacter->CombatComponent, this->CombatComponent, 0);
 }
 
 void AEnemyBase::SpawnEnemyAttackEffect()
@@ -70,7 +70,13 @@ void AEnemyBase::SpawnEnemyAttackEffect()
 void AEnemyBase::EndCombatEffects()
 {
     if (SpawnedEnemyAttackEffect)
+    {
         SpawnedEnemyAttackEffect->Deactivate();
+    }  
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnedEnemyAttackEffect is null in Enemy base"));
+    }
 }
 
 void AEnemyBase::EquipWeapon()
@@ -80,12 +86,18 @@ void AEnemyBase::EquipWeapon()
     EnemyWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
+void AEnemyBase::EnemyDeathAnimation()
+{
+    UAnimMontage* DeathMontage = EnemyDeathMontage;
+    PlayAnimMontage(DeathMontage);
+}
+
 void AEnemyBase::EnemyAttacksPlayer()
 {
     //UE_LOG(LogTemp, Warning, TEXT("Enemy attacks player in EnemyBase"));
     ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
     AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-    CombatManager->HandleCombat(this->CombatComponent, PlayerCharacter->CombatComponent);
+    CombatManager->HandleCombat(this->CombatComponent, PlayerCharacter->CombatComponent, 0);
 }
 
 void AEnemyBase::UpdateWalkSpeed(float NewSpeed)

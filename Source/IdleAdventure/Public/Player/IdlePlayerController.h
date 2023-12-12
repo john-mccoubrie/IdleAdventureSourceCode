@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include <Actor/NPC_QuestGiver.h>
+#include <Actor/HealthPotion.h>
 #include "Actor/IdleInteractionComponent.h"
 #include "AbilitySystemInterface.h"
 #include <Character/EnemyBase.h>
@@ -14,6 +15,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "IdlePlayerController.generated.h"
+
 
 
 
@@ -93,6 +95,7 @@ enum class EPlayerState : uint8
 	MovingToCoffer,
 	MovingToNPC,
 	MovingToEnemy,
+	MovingToObject,
 	InCombat,
 	CuttingTree
 };
@@ -282,11 +285,13 @@ private:
 	void StartConversionAbility(APawn* PlayerPawn);
 	void StartNPCInteraction(APawn* PlayerPawn);
 	void StartEnemyInteraction(APawn* PlayerPawn);
+	void StartObjectInteraction(APawn* PlayerPawn);
 
 	AActor* TargetTree = nullptr;
 	AActor* TargetCoffer = nullptr;
 	ABase_NPCActor* TargetNPC = nullptr;
 	AEnemyBase* TargetEnemy = nullptr;
+	AHealthPotion* TargetHealthPotion = nullptr;
 
 	FHitResult CofferHitForCasting;
 

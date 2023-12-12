@@ -110,6 +110,15 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 				});
 		}
 		break;
+	case EPlayerState::MovingToObject:
+		if (TargetHealthPotion)
+		{
+			MoveTowardsTarget(TargetHealthPotion, NPCTalkingDistance, [this](APawn* PlayerPawn) {
+				StartObjectInteraction(PlayerPawn);
+				return;
+				});
+		}
+		break;
 
 	default:
 		break;
@@ -356,6 +365,21 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		TargetEnemy = Cast<AEnemyBase>(ClickResult.GetActor());
 		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
+	else if (ClickResult.GetComponent()->ComponentTags.Contains("HealthPotion"))
+	{
+		CofferClickEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CofferClickEffectSystem, ClickResult.Location);
+		if (CurrentPlayerState == EPlayerState::CuttingTree)
+		{
+			InterruptTreeCutting();
+		}
+		if (CurrentPlayerState == EPlayerState::InCombat)
+		{
+			InteruptCombat();
+		}
+		CurrentPlayerState = EPlayerState::MovingToObject;
+		TargetHealthPotion = Cast<AHealthPotion>(ClickResult.GetActor());
+		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
+	}
 	else
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Clicked on the ground"));
@@ -395,23 +419,41 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
-
-	// Now use AdjustedTargetLocation for moving the player
-	TargetDestination = AdjustedTargetLocation;
-
-	// Log the target destination
-	//UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
-
-	// Start moving towards the target using the NavMesh
-	if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
+	//FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
+	if (CursorHit.GetComponent()->ComponentTags.Contains("Enemy"))
 	{
-		if (PlayerPawn)
+		FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
+		TargetDestination = AdjustedTargetLocation;
+		if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
 		{
-			// Call SimpleMoveToLocation without expecting a return value
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
-			// Log that we've issued a move command
-			//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+			if (PlayerPawn)
+			{
+				// Call SimpleMoveToLocation without expecting a return value
+				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+				// Log that we've issued a move command
+				//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+			}
+		}
+	}
+	else
+	{
+		// Now use AdjustedTargetLocation for moving the player
+	//TargetDestination = AdjustedTargetLocation;
+		TargetDestination = CursorHit.ImpactPoint;
+
+		// Log the target destination
+		//UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
+
+		// Start moving towards the target using the NavMesh
+		if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
+		{
+			if (PlayerPawn)
+			{
+				// Call SimpleMoveToLocation without expecting a return value
+				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+				// Log that we've issued a move command
+				//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+			}
 		}
 	}
 }
@@ -492,7 +534,10 @@ void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 	// Start moving towards the tree using the NavMesh
 	if (PlayerPawn)
 	{
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetTree->GetActorLocation());
+		FVector AdjustedTargetLocation = AdjustTargetZAxis(TreeHit.ImpactPoint);
+		//FVector TargetTreeDestination = TargetTree->GetActorLocation();
+		FVector TargetTreeDestination = AdjustedTargetLocation;
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetTreeDestination);
 	}
 }
 
@@ -599,6 +644,14 @@ void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
 	IdleInteractionComponent->StartCombatAbility(PlayerPawn, TargetEnemy);
 	IdleInteractionComponent->SpawnCombatEffect(PlayerPawn, TargetEnemy);
 
+}
+
+void AIdlePlayerController::StartObjectInteraction(APawn* PlayerPawn)
+{
+	UE_LOG(LogTemp, Warning, TEXT("StartObjectInteraction in PlayerController called."));
+	CurrentPlayerState = EPlayerState::Idle;
+
+	TargetHealthPotion->Interact();
 }
 
 void AIdlePlayerController::StartAnimNotifyEnemyInteraction(APawn* PlayerPawn)

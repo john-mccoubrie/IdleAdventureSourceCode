@@ -37,8 +37,13 @@ void UBaseCombatComponent::HandleDeath()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Base component Handle Death"));
 
-    ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
-    SpawnManager->UpdateEnemyCount(1);
+    //ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+    //SpawnManager->UpdateEnemyCount(1);
+}
+
+void UBaseCombatComponent::AddHealth(float HealthToAdd)
+{
+
 }
 
 void UBaseCombatComponent::ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color)
@@ -98,7 +103,6 @@ void UBaseCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
 }
 
 

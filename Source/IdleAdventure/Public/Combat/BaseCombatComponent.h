@@ -27,6 +27,7 @@ public:
 	virtual void TakeDamage(float amount);
 	void IsAlive();
 	virtual void HandleDeath();
+	virtual void AddHealth(float HealthToAdd);
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color);

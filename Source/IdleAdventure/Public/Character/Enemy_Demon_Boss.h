@@ -3,23 +3,29 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Combat/DemonBossCombatComponent.h>
 #include "Character/EnemyBase.h"
-#include "Enemy_Goblin.generated.h"
+#include "Enemy_Demon_Boss.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class IDLEADVENTURE_API AEnemy_Goblin : public AEnemyBase
+class IDLEADVENTURE_API AEnemy_Demon_Boss : public AEnemyBase
 {
 	GENERATED_BODY()
+	
 public:
-	AEnemy_Goblin();
+	AEnemy_Demon_Boss();
 	virtual void Interact() override;
 	virtual void EquipWeapon() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
-	virtual void EnemyDeathAnimation() override;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Component")
+	UDemonBossCombatComponent* DemonBossCombatComponent;
+
+private:
+	float TestingFloat;
 };

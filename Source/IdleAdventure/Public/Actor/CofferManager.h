@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActiveCofferCountChanged, ACoffer*, ClickedCoffer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLegendaryCountChanged, int32, LegendaryCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceAddedToCoffer, int32, EssenceCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCofferClicked, float, ProgressRatio, float, TotalTime, float, RemainingTime);
 
 UCLASS()
@@ -30,6 +31,7 @@ public:
 	void AddActiveCoffer(ACoffer* NewCoffer);
 	void RemoveActiveCoffers();
 	void UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRatio);
+	void UpdateLegendaryProgressBar(int32 EssenceToAdd);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CofferManager")
 	TArray<ACoffer*> AllCoffers;
@@ -42,10 +44,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Coffer")
 	FOnLegendaryCountChanged OnLegendaryCountChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "Coffer")
+	FOnEssenceAddedToCoffer OnEssenceAddedToCoffer;
+
 	UPROPERTY(BlueprintAssignable)
 	FOnCofferClicked OnCofferClicked;
 
 	int32 ProgressBarIndex;
+
+	int32 LegendaryBarProgress;
 
 	TMap<ACoffer*, int32> CofferProgressBarMapping;
 
