@@ -24,7 +24,7 @@ void UBaseCombatComponent::PerformAttack()
 {
 }
 
-void UBaseCombatComponent::TakeDamage(float amount)
+void UBaseCombatComponent::TakeDamage(float amount, float level)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Base component Take Damage"));
 }

@@ -24,7 +24,7 @@ public:
 	UBaseCombatComponent();
 
 	void PerformAttack();
-	virtual void TakeDamage(float amount);
+	virtual void TakeDamage(float amount, float level);
 	void IsAlive();
 	virtual void HandleDeath();
 	virtual void AddHealth(float HealthToAdd);
@@ -46,6 +46,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float Damage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	float Level;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float BossIconOffset;

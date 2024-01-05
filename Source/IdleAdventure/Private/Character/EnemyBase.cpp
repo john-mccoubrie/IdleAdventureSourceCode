@@ -23,8 +23,6 @@ AEnemyBase::AEnemyBase()
 
 	//Set the default AI controller class
 	NPCAIControllerClass = ANPCAIController::StaticClass();
-
-    EquipWeapon();
 }
 
 void AEnemyBase::Interact()
@@ -77,13 +75,6 @@ void AEnemyBase::EndCombatEffects()
     {
         UE_LOG(LogTemp, Warning, TEXT("SpawnedEnemyAttackEffect is null in Enemy base"));
     }
-}
-
-void AEnemyBase::EquipWeapon()
-{
-    EnemyWeapon = CreateDefaultSubobject<USkeletalMeshComponent>("EnemyWeapon");
-    EnemyWeapon->SetupAttachment(GetMesh(), FName("LeftHandSocket"));
-    EnemyWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AEnemyBase::EnemyDeathAnimation()

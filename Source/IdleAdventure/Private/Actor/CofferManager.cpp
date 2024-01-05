@@ -105,7 +105,7 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
     // Cast the character to your specific character class
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
 
-
+    AddEssenceToMeter(Character->EssenceCount);
     //APlayFabManager* PlayFabManager = APlayFabManager::GetInstance(GetWorld());
     //PlayFabManager->UpdateEssenceAddedToCofferOnPlayFab();
 
@@ -113,10 +113,11 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
     //{
         ActiveCoffers.Add(NewCoffer);
 
+        /*
         // Check if essence has been added to this coffer before
-        if (LegendaryBarProgress >= 10)
+        if (LegendaryBarProgress >= 20)
         {
-            LegendaryBarProgress = 0;
+            LegendaryBarProgress -= 20;
             //update UI
             UpdateLegendaryProgressBar(LegendaryBarProgress);
             //CoffersWithEssence.Add(NewCoffer);
@@ -135,24 +136,68 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
             // Check if StarCount is 4, if yes, respawn the legendary tree
             if (LegendaryCount > 3)
             {
-                AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
-                PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
-                IdleActorManager->GetLegendaryTree();
+                SpawnLegendaryTreeAndSounds();
             }
         }
+        */
 
         OnActiveCofferCountChanged.Broadcast(NewCoffer);
-        UpdateLegendaryProgressBar(LegendaryBarProgress);
+        //UpdateLegendaryProgressBar(LegendaryBarProgress);
     //}
-    UE_LOG(LogTemp, Error, TEXT("Not full inventory"));
+    //UE_LOG(LogTemp, Error, TEXT("Not full inventory"));
+}
+
+void ACofferManager::AddEssenceToMeter(float EssenceToAdd)
+{
+    EssenceMeter += EssenceToAdd;
+    UE_LOG(LogTemp, Error, TEXT("Essence meter: %f"), EssenceMeter);
+    UE_LOG(LogTemp, Error, TEXT("Essence to add: %f"), EssenceToAdd);
+
+    // Check if the meter is full or overflows
+    while (EssenceMeter >= 24)
+    {
+        EssenceMeter -= 24; // Subtract 24 for each legendary count increment
+        LegendaryCount++;
+        OnLegendaryCountChanged.Broadcast(LegendaryCount); // Update UI or other systems
+        AddHealthToPlayer();
+        // Check for legendary tree spawn
+        if (LegendaryCount > 3)
+        {
+            AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+            IdleActorManager->GetLegendaryTree();
+            AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+            PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
+            LegendaryCount = 0;
+            OnLegendaryCountChanged.Broadcast(LegendaryCount);
+        }
+    }
+
+    UpdateCofferProgressBar(EssenceMeter); // Update the UI meter
+}
+
+void ACofferManager::SpawnLegendaryTreeAndSounds()
+{
+    AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
+    IdleActorManager->GetLegendaryTree();
+}
+
+void ACofferManager::AddHealthToPlayer()
+{
+    //Give the player 10 health
+    ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
+    AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
+    Character->CombatComponent->AddHealth(40.0f);
+    Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
 }
 
 void ACofferManager::RemoveActiveCoffers()
 {
     //Called in woodcutting ability
-    LegendaryCount = 0;
+    //LegendaryCount = 0;
     CoffersWithEssence.Empty();
-    OnLegendaryCountChanged.Broadcast(LegendaryCount);
+    //OnLegendaryCountChanged.Broadcast(LegendaryCount);
     ActiveCoffers.Empty();
 }
 
@@ -167,7 +212,7 @@ void ACofferManager::UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRat
     //}
 }
 
-void ACofferManager::UpdateLegendaryProgressBar(int32 EssenceToAdd)
+void ACofferManager::UpdateCofferProgressBar(float EssenceToAdd)
 {
     OnEssenceAddedToCoffer.Broadcast(EssenceToAdd);
 }

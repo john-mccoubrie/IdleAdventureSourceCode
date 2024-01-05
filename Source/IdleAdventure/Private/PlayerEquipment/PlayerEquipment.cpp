@@ -1,6 +1,4 @@
 
-
-
 #include "PlayerEquipment/PlayerEquipment.h"
 #include <Player/IdlePlayerState.h>
 #include <Player/IdlePlayerController.h>
@@ -15,7 +13,7 @@
 // Sets default values for this component's properties
 UPlayerEquipment::UPlayerEquipment()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 
@@ -250,8 +248,10 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
             FString formattedMessage = FString::Printf(TEXT("Successfully purchased the %s"), *ItemData.Name);
             GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Green);
 
+            PlayFabManager->OnPurchaseCompleted.Broadcast();
+
             UE_LOG(LogTemp, Warning, TEXT("Item added to Player Equipment Inventory"));
-            
+
             //EquipItem(ItemData);
             return true;
         }
@@ -260,9 +260,13 @@ bool UPlayerEquipment::PurchaseAndAddItemToPlayerEquipmentInventory(const FEquip
             UE_LOG(LogTemp, Warning, TEXT("Character is null"));
         }
     }
-    
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("PurchaseEquipment from playfabmanager failed in PlayerEquipment"));
+    }
+
     return false;
-    
+
 }
 
 void UPlayerEquipment::AddEquipmentItem(const FEquipmentData& ItemData)
@@ -292,20 +296,20 @@ void UPlayerEquipment::UpdateItemName(const FEquipmentData& ItemData)
 // Called when the game starts
 void UPlayerEquipment::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// ...
-	//EquipDefaultItem();
+    // ...
+    //EquipDefaultItem();
 }
 
 void UPlayerEquipment::EquipDefaultItem(const FEquipmentData& ItemData)
 {
     /*
-	FEquipmentData DefaultEquipmentData;
-	DefaultEquipmentData.Name = "Default Staff";
-	DefaultEquipmentData.LevelRequired = 1;
-	DefaultEquipmentData.Mesh = DefaultStaffMesh;  // Assuming you have a reference to the default staff mesh
-	DefaultEquipmentData.SocketName = "WeaponHandSocket";  // Adjust this to match your skeleton's socket name
+    FEquipmentData DefaultEquipmentData;
+    DefaultEquipmentData.Name = "Default Staff";
+    DefaultEquipmentData.LevelRequired = 1;
+    DefaultEquipmentData.Mesh = DefaultStaffMesh;  // Assuming you have a reference to the default staff mesh
+    DefaultEquipmentData.SocketName = "WeaponHandSocket";  // Adjust this to match your skeleton's socket name
     */
 
     AActor* Owner = GetOwner();
@@ -329,8 +333,7 @@ void UPlayerEquipment::EquipDefaultItem(const FEquipmentData& ItemData)
 // Called every frame
 void UPlayerEquipment::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+    // ...
 }
-

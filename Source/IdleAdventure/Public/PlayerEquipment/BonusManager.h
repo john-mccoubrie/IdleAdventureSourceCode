@@ -30,19 +30,19 @@ struct FItemBonus
     float LegendaryEssenceMultiplier = 1.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int WisdomYieldMultiplier = 1;
+    int WisdomYieldMultiplier = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int TemperanceYieldMultiplier = 1;
+    int TemperanceYieldMultiplier = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int JusticeYieldMultiplier = 1;
+    int JusticeYieldMultiplier = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int CourageYieldMultiplier = 1;
+    int CourageYieldMultiplier = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int LegendaryYieldMultiplier = 1;
+    int LegendaryYieldMultiplier = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float WisdomEssenceChanceBonus = 0.0f;
@@ -66,6 +66,9 @@ struct FItemBonus
     float Armor = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Speed = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString WeaponTypeIdentifier;
 
     bool operator==(const FItemBonus& Other) const
@@ -85,6 +88,7 @@ struct FItemBonus
             InvestingBonusChance == Other.InvestingBonusChance &&
             Damage == Other.Damage &&
             Armor == Other.Armor &&
+            Speed == Other.Speed &&
             WeaponTypeIdentifier == Other.WeaponTypeIdentifier;
     }
 
@@ -147,6 +151,9 @@ struct FMultiplierSet
     float Armor = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Speed = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString WeaponTypeIdentifier = "None";
 
     void ApplyBonus(const FItemBonus& ItemBonus)
@@ -172,6 +179,7 @@ struct FMultiplierSet
 
         Damage += ItemBonus.Damage;
         Armor += ItemBonus.Armor;
+        Speed += ItemBonus.Speed;
         WeaponTypeIdentifier = ItemBonus.WeaponTypeIdentifier;
     }
 
@@ -197,7 +205,8 @@ struct FMultiplierSet
         InvestingBonusChance -= ItemBonus.InvestingBonusChance;
 
         Damage -= ItemBonus.Damage;
-        Damage -= ItemBonus.Armor;
+        Armor -= ItemBonus.Armor;
+        Speed -= ItemBonus.Speed;
 
         WeaponTypeIdentifier = "None";
     }
@@ -253,6 +262,8 @@ public:
 
     float Damage;
     float Armor;
+
+    float Speed;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString WeaponTypeIdentifier;

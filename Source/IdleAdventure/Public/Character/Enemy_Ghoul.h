@@ -4,26 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Character/EnemyBase.h"
-#include "Enemy_Goblin.generated.h"
+#include "Enemy_Ghoul.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class IDLEADVENTURE_API AEnemy_Goblin : public AEnemyBase
+class IDLEADVENTURE_API AEnemy_Ghoul : public AEnemyBase
 {
 	GENERATED_BODY()
-public:
-	AEnemy_Goblin();
+	AEnemy_Ghoul();
 	virtual void Interact() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
 	virtual void EnemyDeathAnimation() override;
 	virtual void UpdateWalkSpeed(float NewSpeed) override;
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GoblinWeapon")
-	USkeletalMeshComponent* GoblinWeapon;
-
+	
 };

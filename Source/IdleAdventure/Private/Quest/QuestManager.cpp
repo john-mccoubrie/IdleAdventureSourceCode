@@ -86,11 +86,13 @@ void AQuestManager::GetQuestData()
     Request.Keys.Add("TheDailyGrind");
     Request.Keys.Add("TheDailyStoic");
     Request.Keys.Add("DailyRun");
+    Request.Keys.Add("TestQuest");
     RequestedKeys.Add("DailyEasyQuest");
     RequestedKeys.Add("DailyLegendaryQuest");
     RequestedKeys.Add("TheDailyGrind");
     RequestedKeys.Add("TheDailyStoic");
     RequestedKeys.Add("DailyRun");
+    RequestedKeys.Add("TestQuest");
 
     clientAPI->GetTitleData(Request,
         PlayFab::UPlayFabClientAPI::FGetTitleDataDelegate::CreateUObject(this, &AQuestManager::OnGetQuestDataSuccess),
@@ -119,6 +121,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 FString QuestName = JsonObject->GetStringField(TEXT("Name"));
                 FString QuestDescription = JsonObject->GetStringField(TEXT("Description"));
                 FString QuestCategory = JsonObject->GetStringField(TEXT("Category"));
+                FString QuestQuote = JsonObject->GetStringField(TEXT("Quote"));
                 //bool IsStarted = JsonObject->GetBoolField(TEXT("IsStarted"));
 
                 TSharedPtr<FJsonObject> RewardsObject = JsonObject->GetObjectField(TEXT("Rewards"));
@@ -160,6 +163,7 @@ void AQuestManager::OnGetQuestDataSuccess(const PlayFab::ClientModels::FGetTitle
                 NewQuest->QuestDescription = QuestDescription;
                 NewQuest->QuestCategory = QuestCategory;
                 NewQuest->Rewards = Rewards;
+                NewQuest->Quote = QuestQuote;
                 AllLoadedQuests.Add(NewQuest);
             }
         }

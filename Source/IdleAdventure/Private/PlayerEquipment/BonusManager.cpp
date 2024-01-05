@@ -29,6 +29,8 @@ ABonusManager::ABonusManager()
     Damage = 0.0f;
     Armor = 0.0f;
 
+    Speed = 1000.0f;
+
     WeaponTypeIdentifier = "None";
 }
 

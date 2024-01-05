@@ -14,6 +14,6 @@ class IDLEADVENTURE_API UCharacterCombatComponent : public UBaseCombatComponent
 public:
 
 	virtual void HandleDeath() override;
-	virtual void TakeDamage(float amount) override;
+	virtual void TakeDamage(float amount, float level) override;
 	virtual void AddHealth(float HealthToAdd) override;	
 };

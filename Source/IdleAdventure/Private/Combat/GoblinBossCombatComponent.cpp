@@ -14,6 +14,7 @@
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <Player/IdlePlayerState.h>
 #include <Game/SpawnManager.h>
+#include <Game/SteamManager.h>
 
 void UGoblinBossCombatComponent::BeginPlay()
 {
@@ -45,6 +46,14 @@ void UGoblinBossCombatComponent::HandleDeath()
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
     Character->UpdateAllActiveQuests("BossKills", 1);
 
+    //Unlock Steam Achievement
+    ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+    if (SteamManager)
+    {
+        SteamManager->UnlockSteamAchievement(TEXT("KILL_THE_SHAMAN"));
+        SteamManager->UnlockSteamAchievement(TEXT("KILL_A_BOSS"));
+    }
+
     //Handle Exp
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 5000.0f);
@@ -72,7 +81,7 @@ void UGoblinBossCombatComponent::HandleDeath()
 	}
 }
 
-void UGoblinBossCombatComponent::TakeDamage(float amount)
+void UGoblinBossCombatComponent::TakeDamage(float amount, float level)
 {
 	//Super::TakeDamage(float amount);
 	UE_LOG(LogTemp, Warning, TEXT("Take Damage called in GoblinBossCombatComponent"));
@@ -100,40 +109,70 @@ void UGoblinBossCombatComponent::StopDamageCheckTimer()
 
 void UGoblinBossCombatComponent::DamageCheck()
 {
-    ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
+    // Getting player's level from the player state
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
+    float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
+    float goblinLevel = this->Level; // Goblin's level
+
+    float baseDamage = PendingDamage; // Base damage
+
+    // Calculate hit probability based on player and goblin levels
+    float levelRatio = playerLevel / goblinLevel;
+    float hitProbability = FMath::Clamp(levelRatio * 0.5f, 0.0f, 1.0f); // Adjust for higher miss chance
 
     FString PlayerWeaponType = GetPlayerWeaponType();
+
+    // Random roll to decide if the hit lands
+    if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
+    {
+        // Skew the damage range towards lower values
+        float minDamage = 2.0f; // Fixed minimum
+        float maxDamage = baseDamage; // Max damage remains as base damage
+
+        // Generate two random numbers and use the lower one for more frequent low damage hits
+        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
+        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
+        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
+
+        // Round to nearest whole number
+        int32 finalDamageInt = FMath::RoundToInt(finalDamage);
+        finalDamage = static_cast<float>(finalDamageInt);
+
         if (PlayerWeaponType == CurrentStoicType)
         {
-            Health -= PendingDamage;
-            if (Health <= 0)
-            {
-                HandleDeath();
-            }
-
-            ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
+            // Apply damage
+            Health -= finalDamage;
             if (OwningCharacter)
             {
-                ShowDamageNumber(PendingDamage, OwningCharacter, FLinearColor::Red);
+                ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
             }
-
-            OnHealthChanged.Broadcast(Health, MaxHealth);
         }
-        else if(Health <= MaxHealth)
+        else
         {
-            Health += PendingDamage;
-            
-            AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-            //GameChatManager->PostNotificationToUI(TEXT("OH NO! Your staff is healing the Goblin!!!"), FLinearColor::Yellow);
-
-            ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
+            Health += finalDamage;
             if (OwningCharacter)
             {
-                ShowDamageNumber(PendingDamage, OwningCharacter, FLinearColor::Green);
-            }
-
-            OnHealthChanged.Broadcast(Health, MaxHealth);
+                ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Green);
+            } 
         }
+        if (Health <= 0)
+        {
+            HandleDeath();
+        }
+    }
+    else
+    {
+        if (OwningCharacter)
+        {
+            ShowDamageNumber(0, OwningCharacter, FLinearColor::White);
+        }
+    }
+
+    // Broadcast health change
+    OnHealthChanged.Broadcast(Health, MaxHealth);
 }
 
 FString UGoblinBossCombatComponent::BossChangeType()
@@ -220,7 +259,7 @@ void UGoblinBossCombatComponent::CheckForPlayerInCircle()
         {
             UE_LOG(LogTemp, Error, TEXT("Player take 50 damage"));
             ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
-            CombatManager->HandleCombat(this, PlayerCharacter->CombatComponent, 40);
+            CombatManager->HandleCombat(this, PlayerCharacter->CombatComponent, 190);
         }
         else
         {

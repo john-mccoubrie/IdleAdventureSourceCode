@@ -260,9 +260,13 @@ private:
 
 
 	float VerticalRotation = 0.0f; // Current vertical rotation in degrees
-	float MaxVerticalRotation = 80.0f; // Maximum allowed vertical rotation in degrees
-	float MinVerticalRotation = -80.0f; // Minimum allowed vertical rotation in degrees
+	UPROPERTY(EditAnywhere, Category = "Rotate Camera")
+	float MaxVerticalRotation = 40.0f; // Maximum allowed vertical rotation in degrees
+	UPROPERTY(EditAnywhere, Category = "Rotate Camera")
+	float MinVerticalRotation = -40.0f; // Minimum allowed vertical rotation in degrees
 
+	UPROPERTY(EditAnywhere, Category = "MoveTo")
+	float NavMeshRadius = 300.0f;
 
 
 	void Move(const FInputActionValue& InputActionValue);
@@ -277,6 +281,10 @@ private:
 	void HandleZoomAction(const FInputActionValue& InputActionValue);
 
 	void MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn);
+
+	void RecalculatePathToTarget();
+	void MoveToTarget(AActor* Target);
+
 	FVector AdjustTargetZAxis(FVector NewTargetLocation);
 	void ClickTree(FHitResult TreeHit, APawn* PlayerPawn);
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);

@@ -23,13 +23,15 @@ void AEnemy_Demon_Boss::Interact()
 	
 }
 
-void AEnemy_Demon_Boss::EquipWeapon()
-{
-	Super::EquipWeapon();
-}
 
 void AEnemy_Demon_Boss::SpawnEnemyAttackEffect()
 {
+    if (DemonBossCombatComponent && DemonBossCombatComponent->bIsTailspinActive)
+    {
+        // If tailspin is active, don't handle any standard combat here
+        UE_LOG(LogTemp, Warning, TEXT("Tailspin attack is active, skipping standard combat"));
+        return;
+    }
 	Super::SpawnEnemyAttackEffect();
 }
 
@@ -40,11 +42,32 @@ void AEnemy_Demon_Boss::EndCombatEffects()
 
 void AEnemy_Demon_Boss::EnemyAttacksPlayer()
 {
-	Super::EnemyAttacksPlayer();
-	
-	UE_LOG(LogTemp, Warning, TEXT("demon boss attacks player"));
-	ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
-	AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	CombatManager->HandleCombat(DemonBossCombatComponent, PlayerCharacter->CombatComponent, 0);
-	
+    // Check if the tailspin attack is active
+    if (DemonBossCombatComponent && DemonBossCombatComponent->bIsTailspinActive)
+    {
+        // If tailspin is active, don't handle any standard combat here
+        UE_LOG(LogTemp, Warning, TEXT("Tailspin attack is active, skipping standard combat"));
+        return;
+    }
+
+    // If tailspin is not active, proceed with standard combat
+    UE_LOG(LogTemp, Warning, TEXT("Demon boss attacks player"));
+    ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
+    AIdleCharacter* PlayerCharacter = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+    if (PlayerCharacter)
+    {
+        CombatManager->HandleCombat(DemonBossCombatComponent, PlayerCharacter->CombatComponent, 10.0f);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player character not found for combat"));
+    }
+
+    // Initialize tailspin attack timer if not already set
+    if (!bDemonIsTimerSet)
+    {
+        DemonBossCombatComponent->InitializeTailspinAttackTimer();
+        bDemonIsTimerSet = true;
+    }
 }

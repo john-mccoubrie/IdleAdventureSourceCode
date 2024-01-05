@@ -17,6 +17,7 @@ class UQuest;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddAvailableQuestsToUI, const TArray<UQuest*>&, Quests);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddCompletedQuestsToUI, const TArray<UQuest*>&, Quests);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRunAlreadyAttempted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTutorialComplete);
 
 UCLASS(Blueprintable)
 class IDLEADVENTURE_API AQuestManager : public AActor
@@ -99,7 +100,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quests")
     int32 questCount;
 
-    
+    UPROPERTY(BlueprintAssignable, Category = "Quest")
+    FOnTutorialComplete OnTutorialComplete;
+
 
 private:
 	static AQuestManager* QuestManagerSingletonInstance;

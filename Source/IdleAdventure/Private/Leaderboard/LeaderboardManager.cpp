@@ -2,6 +2,7 @@
 #include "PlayFab.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
+#include <Game/SteamManager.h>
 
 
 ULeaderboardManager::ULeaderboardManager()
@@ -85,6 +86,8 @@ void ULeaderboardManager::OnGetPlayerLeaderboardPositionSuccess(const PlayFab::C
     for (const auto& PlayerData : Result.Leaderboard)
     {
         FPlayerLeaderboardData DataEntry;
+        //ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+        //DataEntry.PlayerName = SteamManager->GetSteamName();
         DataEntry.PlayerName = PlayerData.DisplayName;
         DataEntry.Rank = PlayerData.Position + 1;  // 0-based to 1-based
         DataEntry.Exp = PlayerData.StatValue;

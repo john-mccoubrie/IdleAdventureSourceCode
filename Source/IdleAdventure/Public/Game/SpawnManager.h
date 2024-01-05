@@ -55,6 +55,7 @@ struct FRunCompleteRewards
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRunCountsUpdated, float, Tree, float, Enemy, float, Boss);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRunComplete, FRunCompleteRewards, RunCompleteData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownUpdated, const FString&, TimeRemaining);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnTimerAtZero, FString, Time, FString, Difficulty, FString, CauseOfDeath, FString, Tip);
 
 UCLASS()
 class IDLEADVENTURE_API ASpawnManager : public AActor
@@ -96,9 +97,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnRunComplete OnRunComplete;
 
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnTimerAtZero OnTimerAtZero;
+
+	float CountdownTime;
+
+	FRunCompleteRewards RewardsToSend;
 
 private:
 	static ASpawnManager* SpawnManagerSingletonInstance;
 	FTimerHandle CountdownTimerHandle;
-	float CountdownTime;
+	
 };

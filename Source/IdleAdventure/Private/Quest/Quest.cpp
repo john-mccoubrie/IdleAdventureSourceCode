@@ -8,6 +8,9 @@
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <PlayFab/PlayFabManager.h>
 #include <Chat/GameChatManager.h>
+#include <Save/IdleSaveGame.h>
+#include <Kismet/GameplayStatics.h>
+#include <Game/SteamManager.h>
 
 void UQuest::UpdateProgress(const FString& ObjectiveType, int32 Amount)
 {
@@ -61,7 +64,7 @@ void UQuest::MarkQuestReadyToTurnIn()
     if (QuestState == EQuestState::InProgress && IsQuestComplete())
     {
         QuestState = EQuestState::ReadyToTurnIn;
-        UE_LOG(LogTemp, Warning, TEXT("Quest is ready to be turned in."));
+        //UE_LOG(LogTemp, Warning, TEXT("Quest is ready to be turned in."));
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
         // Format the message using FString::Printf
         FString NotificationMessage = FString::Printf(TEXT("%s is ready to be turned in!"), *this->QuestName);
@@ -78,6 +81,24 @@ void UQuest::TurnInQuest()
     if (QuestState == EQuestState::ReadyToTurnIn)
     {
         QuestState = EQuestState::Completed;
+        
+        //check if the tutorial is complete and the quest has a quote to post
+        if (this->QuestCategory == "Wisdom" || this->QuestCategory == "Temperance" || this->QuestCategory == "Justice" || this->QuestCategory == "Courage")
+        {
+            UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("TutorialSaveSlot", 0));
+            if (LoadGameInstance && LoadGameInstance->IsTutorialCompleted())
+            {
+                AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
+                GameChatManager->PostQuoteToMeditationsJournal(this->Quote, this->QuestCategory);
+            }
+            else
+            {
+                AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
+                GameChatManager->PostQuoteToMeditationsJournal(this->Quote, this->QuestCategory);
+                UE_LOG(LogTemp, Warning, TEXT("Tutorial not completed, but still posting quote to meditations"));
+            }
+        }
+        
         Complete();
         //UE_LOG(LogTemp, Error, TEXT("Quest turned in and completed!!!"));
         // Reset the progress values
@@ -139,11 +160,47 @@ void UQuest::Complete()
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
     QuestManager->questCount--;
     // Format the message using FString::Printf
-    FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience, and %i Justice Essence!"), *this->QuestName, this->Rewards.Experience, this->Rewards.JusticeEssence);
+    FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience, %i wisdom essence, %i temperance essence, %i justice essence, %i courage essence, and %i legendary essence!"), *this->QuestName, this->Rewards.Experience, this->Rewards.WisdomEssence, this->Rewards.TemperanceEssence, this->Rewards.JusticeEssence, this->Rewards.CourageEssence, this->Rewards.LegendaryEssence);
     // Convert FLinearColor to FSlateColor
     FSlateColor NotificationColor = FSlateColor(FLinearColor::Green);
     // Call the function with the formatted message and color
     GameChatManager->PostNotificationToUI(NotificationMessage, NotificationColor);
+
+
+    if (this->QuestName == "TutorialComplete")
+    {
+        // Try to load an existing save game
+        UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("TutorialSaveSlot", 0));
+
+        // If it doesn't exist, create a new instance
+        if (!SaveGameInstance)
+        {
+            SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+        }
+
+        // Set the tutorial as completed
+        SaveGameInstance->SetTutorialCompleted(true); // Assuming bIsTutorialCompleted is marked with UPROPERTY(SaveGame)
+
+        // Save the game to the same slot to store the updated data
+        UGameplayStatics::SaveGameToSlot(SaveGameInstance, "TutorialSaveSlot", 0);
+
+        // Log completion and broadcast events
+        UE_LOG(LogTemp, Warning, TEXT("Completed quest for: %s"), *this->QuestName);
+        QuestManager->OnTutorialComplete.Broadcast();
+        GameChatManager->PostNotificationToUI(TEXT("You have completed the tutorial and gained access to Meditations, complete activities in the world to unlock more quotes!"), FLinearColor::Yellow);
+
+        //Unlock tutorial achievement
+        ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+        if (SteamManager)
+        {
+            SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_TUTORIAL"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Quest name is not TutorialComplete, it is: %s"), *this->QuestName);
+    }
+
    
 
     if (QuestManager && PlayFabManager)

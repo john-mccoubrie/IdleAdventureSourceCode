@@ -16,7 +16,7 @@
 //class ASpawnManager;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnEssenceUpdate, int32, Wisdom, int32, Temperance, int32, Justice, int32, Courage, int32, Legendary);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPurchaseCompleted, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPurchaseCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEssenceTransferredPlayFab, const TArray<FEssenceCoffer>&, EssenceCofferArray);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryLoaded, const TArray<FName>&, InventoryRowNames);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestVersionRetrieved, FString, QuestID, FString, QuestVersion);

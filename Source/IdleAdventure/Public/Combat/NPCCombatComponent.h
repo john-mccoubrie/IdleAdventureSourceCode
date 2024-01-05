@@ -17,7 +17,7 @@ class IDLEADVENTURE_API UNPCCombatComponent : public UBaseCombatComponent
 public:
 
 	virtual void HandleDeath() override;
-	virtual void TakeDamage(float amount) override;
+	virtual void TakeDamage(float amount, float level) override;
 	void StopDamageCheckTimer();
 	void DestroyOwner();
 

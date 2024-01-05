@@ -11,7 +11,7 @@
 #include <Player/IdlePlayerState.h>
 #include <Game/SpawnManager.h>
 
-void UNPCCombatComponent::TakeDamage(float amount)
+void UNPCCombatComponent::TakeDamage(float amount, float level)
 {
     UE_LOG(LogTemp, Warning, TEXT("Take damage called in NPC combat component"));
     ABonusManager* bonusManager = ABonusManager::GetInstance(GetWorld());
@@ -44,33 +44,61 @@ void UNPCCombatComponent::DestroyOwner()
 
 void UNPCCombatComponent::DamageCheck()
 {
-    // Roll a random number to decide if damage is taken
-    if (FMath::RandBool()) // 50% chance, adjust as needed
+    // Getting player's level from the player state
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
+    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
+    float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
+    float goblinLevel = this->Level; // Goblin's level
+
+    float baseDamage = PendingDamage; // Base damage
+
+    // Calculate hit probability based on player and goblin levels
+    float levelRatio = playerLevel / goblinLevel;
+    float hitProbability = FMath::Clamp(levelRatio * 0.5f, 0.0f, 1.0f); // Adjust for higher miss chance
+
+    // Random roll to decide if the hit lands
+    if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
     {
-        Health -= PendingDamage;
+        // Skew the damage range towards lower values
+        float minDamage = 2.0f; // Fixed minimum
+        float maxDamage = baseDamage; // Max damage remains as base damage
+
+        // Generate two random numbers and use the lower one for more frequent low damage hits
+        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
+        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
+        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
+
+        // Round to nearest whole number
+        int32 finalDamageInt = FMath::RoundToInt(finalDamage);
+        finalDamage = static_cast<float>(finalDamageInt);
+
+        // Apply damage
+        Health -= finalDamage;
         if (Health <= 0)
         {
             HandleDeath();
         }
 
+        // Show damage number (red for damage, white for miss)
         ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
         if (OwningCharacter)
         {
-            ShowDamageNumber(PendingDamage, OwningCharacter, FLinearColor::Red);
+            ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
         }
-
-        OnHealthChanged.Broadcast(Health, MaxHealth);
-        //UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
-        //UE_LOG(LogTemp, Warning, TEXT("MaxHealth: %f"), MaxHealth);
     }
     else
     {
+        // Missed attack
         ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
         if (OwningCharacter)
         {
             ShowDamageNumber(0, OwningCharacter, FLinearColor::White);
         }
     }
+
+    // Broadcast health change
+    OnHealthChanged.Broadcast(Health, MaxHealth);
 }
 
 void UNPCCombatComponent::HandleDeath()

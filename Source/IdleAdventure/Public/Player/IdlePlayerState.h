@@ -145,4 +145,6 @@ private:
 		int32 LocalWoodcuttingExp = 0;
 		int32 LocalPlayerLevel = 0;
 		int32 LocalWeeklyWoodcuttingExp = 0;
+
+		mutable bool bShouldTriggerLevelUpEffects;
 };

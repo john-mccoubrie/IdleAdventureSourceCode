@@ -8,6 +8,10 @@
 AEnemy_Goblin_Boss::AEnemy_Goblin_Boss()
 {
 	BossCombatComponent = CreateDefaultSubobject<UGoblinBossCombatComponent>(TEXT("GoblinBossCombatComponent"));
+
+	GoblinBossWeapon = CreateDefaultSubobject<USkeletalMeshComponent>("GoblinBossWeapon");
+	GoblinBossWeapon->SetupAttachment(GetMesh(), FName("LeftHandSocket"));
+	GoblinBossWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AEnemy_Goblin_Boss::Interact()
@@ -16,10 +20,6 @@ void AEnemy_Goblin_Boss::Interact()
 	UE_LOG(LogTemp, Warning, TEXT("Enemy boss interact called"));
 }
 
-void AEnemy_Goblin_Boss::EquipWeapon()
-{
-	Super::EquipWeapon();
-}
 
 void AEnemy_Goblin_Boss::SpawnEnemyAttackEffect()
 {

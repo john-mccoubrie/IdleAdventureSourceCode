@@ -19,13 +19,16 @@ public:
 
 	AEnemy_Goblin_Boss();
 	virtual void Interact() override;
-	virtual void EquipWeapon() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
 
+
 	UPROPERTY()
 	UGoblinBossCombatComponent* BossCombatComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GoblinBossWeapon")
+	USkeletalMeshComponent* GoblinBossWeapon;
 
 private:
 	bool bIsTimerSet = false;

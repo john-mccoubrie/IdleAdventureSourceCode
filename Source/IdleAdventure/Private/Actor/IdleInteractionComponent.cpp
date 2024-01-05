@@ -2,6 +2,7 @@
 #include "Actor/IdleInteractionComponent.h"
 #include "Player/IdlePlayerController.h"
 #include <Character/IdleCharacter.h>
+#include "Actor/IdleActorManager.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
@@ -105,7 +106,6 @@ void UIdleInteractionComponent::StartCombatAbility(APawn* PlayerPawn, AActor* En
 
 void UIdleInteractionComponent::SpawnTreeCutEffect(APawn* PlayerPawn)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("SpawnTreeCutEffect IdleInteractionComponent"));
     AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
     AIdleCharacter* ParticleCharacter = Cast<AIdleCharacter>(PlayerPawn);
     if (!ParticleCharacter)
@@ -113,38 +113,73 @@ void UIdleInteractionComponent::SpawnTreeCutEffect(APawn* PlayerPawn)
         UE_LOG(LogTemp, Warning, TEXT("No particle character"));
         return;
     }
-    
 
     USkeletalMeshComponent* CharacterWeapon = ParticleCharacter->GetMesh();
     StaffEndLocation = CharacterWeapon->GetSocketLocation(FName("StaffEndSocket"));
+
+    // Existing logic to set the rotation towards the tree
     FVector TreeLocation = TargetTree->GetActorLocation();
 
-    FRotator RotationTowardsTree = UKismetMathLibrary::FindLookAtRotation(StaffEndLocation, TreeLocation);
-    RotationTowardsTree.Yaw += PC->YawRotationStaffMultiplier;
-    RotationTowardsTree.Pitch += PC->PitchRotationStaffMultiplier;
-    RotationTowardsTree.Roll += PC->RollRotationStaffMultiplier;
-    //UE_LOG(LogTemp, Warning, TEXT("before Spawned effect"));
-    // Spawn the Niagara effects
+    // New raycasting logic to find the ground location beneath the tree
+    FHitResult Hit;
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(TargetTree);
+    bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, TreeLocation, FVector(TreeLocation.X, TreeLocation.Y, -10000.0f), ECC_WorldStatic, CollisionParams);
+
+    FVector EffectLocation;
+    if (bHit)
+    {
+        // Position the tree effect a certain distance above the ground
+        float DistanceAboveGround = 50.0f; // Adjust as needed
+        EffectLocation = Hit.ImpactPoint + FVector(0.0f, 0.0f, DistanceAboveGround);
+    }
+    else
+    {
+        // Default to tree base location if raycast didn't hit
+        FVector TreeBoundsMin, TreeBoundsMax;
+        TargetTree->GetActorBounds(false, TreeBoundsMin, TreeBoundsMax);
+        EffectLocation = FVector(TreeLocation.X, TreeLocation.Y, TreeBoundsMin.Z);
+    }
+
+    // Calculate the horizontal direction towards the tree cut effect location
+    FVector HorizontalDirection = (EffectLocation - StaffEndLocation);
+    HorizontalDirection.Z = 0; // Ignore the vertical component
+    FRotator HorizontalRotation = HorizontalDirection.Rotation();
+
+    // Apply additional rotation adjustments if necessary
+    HorizontalRotation.Yaw += PC->YawRotationStaffMultiplier;
+    // Optionally, remove or modify the Pitch and Roll adjustments as they might not be needed
+    // HorizontalRotation.Pitch += PC->PitchRotationStaffMultiplier;
+    // HorizontalRotation.Roll += PC->RollRotationStaffMultiplier;
+
+    // Spawn the tree effect at the calculated location
     if (GetWorld() && TreeCutEffect && TargetTree)
     {
-        //UE_LOG(LogTemp, Warning, TEXT("Spawned effect"));
-        //effect on the tree
-        SpawnedTreeEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeCutEffect, TargetTree->GetActorLocation());
+        SpawnedTreeEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), TreeCutEffect, EffectLocation);
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("Target Tree is null"));
     }
-    
-    SpawnedStaffEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), StaffEffect, StaffEndLocation, RotationTowardsTree);
+
+    // Spawn the staff effect with the new horizontal rotation
+    SpawnedStaffEffect = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), StaffEffect, StaffEndLocation, HorizontalRotation);
 }
 
 void UIdleInteractionComponent::EndTreeCutEffect()
 {
     if (SpawnedTreeEffect && SpawnedStaffEffect)
     {
-        SpawnedTreeEffect->Deactivate();
-        SpawnedStaffEffect->Deactivate();
+        if (IsValid(SpawnedTreeEffect))
+        {
+            SpawnedTreeEffect->Deactivate();
+            SpawnedTreeEffect = nullptr;
+        }
+        if (IsValid(SpawnedStaffEffect))
+        {
+            SpawnedStaffEffect->Deactivate();
+            SpawnedStaffEffect = nullptr;
+        }
     }
 }
 
@@ -250,6 +285,11 @@ void UIdleInteractionComponent::PlayCofferAddSound()
     PlaySound(AddToCofferSound);
 }
 
+void UIdleInteractionComponent::PlayInventoryFullSound()
+{
+    PlaySound(InventoryFullSound);
+}
+
 void UIdleInteractionComponent::PlayAddToLegendaryMeterSound()
 {
     PlaySound(AddToLegendaryMeterSound);
@@ -260,6 +300,48 @@ void UIdleInteractionComponent::PlayLegendaryTreeSpawnSound()
     PlaySound(LegendaryTreeSpawnSound);
 }
 
+void UIdleInteractionComponent::SpawnLevelUpEffect(APawn* PlayerPawn)
+{
+    if (!PlayerPawn)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("PlayerPawn is null"));
+        return;
+    }
+
+    // Get the root component or a specific component like a skeletal mesh to attach the effect
+    USceneComponent* AttachComponent = PlayerPawn->GetRootComponent();
+    // If you want to attach to a specific bone, use something like PlayerPawn->GetMesh()->GetSocketByName("SocketName");
+
+    if (GetWorld() && LevelUpEffect)
+    {
+        // Spawn the effect and attach it to the component
+        SpawnedLevelUpEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(LevelUpEffect, AttachComponent, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
+
+        // Set a timer to stop the effect after 3 seconds
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UIdleInteractionComponent::StopLevelUpEffect, 3.0f, false);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("LevelUpEffect is null or world is not valid"));
+    }
+}
+
+void UIdleInteractionComponent::StopLevelUpEffect()
+{
+    if (SpawnedLevelUpEffect)
+    {
+        SpawnedLevelUpEffect->Deactivate();
+        SpawnedLevelUpEffect->DestroyComponent();
+        SpawnedLevelUpEffect = nullptr;
+    }
+}
+
+void UIdleInteractionComponent::PlayLevelUpSound()
+{
+    PlaySound(LevelUpSound);
+}
+
 void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
 {
     if (SoundToPlay && StaffAudioComponent && !StaffAudioComponent->IsPlaying())
@@ -268,8 +350,6 @@ void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
         StaffAudioComponent->Play();
     }
 }
-
-
 
 void UIdleInteractionComponent::BeginPlay()
 {

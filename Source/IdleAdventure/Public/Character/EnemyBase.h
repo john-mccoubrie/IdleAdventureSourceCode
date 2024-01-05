@@ -24,7 +24,6 @@ public:
 
 	virtual void Interact();
 	virtual void EndCombatEffects();
-	virtual void EquipWeapon();
 	virtual void EnemyDeathAnimation();
 
 	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
@@ -57,8 +56,7 @@ public:
 
 	UNiagaraComponent* SpawnedEnemyAttackEffect;
 
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	TObjectPtr<USkeletalMeshComponent> EnemyWeapon;
+	
 
 protected:
 	// Called when the game starts or when spawned

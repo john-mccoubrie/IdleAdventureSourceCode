@@ -117,23 +117,20 @@ void AIdleActorManager::CutTree(AIdleEffectActor* Tree)
 
     if (TreeTimers.Contains(Tree->GetFName()))
     {
+        // If a timer exists, clear and invalidate it
         FTimerHandle& ExistingTimerHandle = TreeTimers[Tree->GetFName()];
         if (ExistingTimerHandle.IsValid())
         {
             GetWorld()->GetTimerManager().ClearTimer(ExistingTimerHandle);
             ExistingTimerHandle.Invalidate();
-            //UE_LOG(LogTemp, Warning, TEXT("ExistingTimerHandle Invalidated in respawn tree"));
         }
     }
 
-    FTimerHandle LocalTreeTimerHandle;
+    // Use the same handle if it already exists, or create a new one if not
+    FTimerHandle& TreeTimerHandle = TreeTimers.FindOrAdd(Tree->GetFName());
     float TimeUntilRespawn = Tree->TotalDuration;
+    GetWorld()->GetTimerManager().SetTimer(TreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TimeUntilRespawn, false);
     UE_LOG(LogTemp, Warning, TEXT("Total Duration: %f"), Tree->TotalDuration);
-
-    GetWorld()->GetTimerManager().SetTimer(LocalTreeTimerHandle, FTimerDelegate::CreateUObject(this, &AIdleActorManager::OnCountdownFinished, Tree), TimeUntilRespawn, false);
-    //UE_LOG(LogTemp, Warning, TEXT("TimeUntilRespawn: %f"), TimeUntilRespawn);
-
-    TreeTimers.Add(Tree->GetFName(), LocalTreeTimerHandle);
 }
 
 void AIdleActorManager::RespawnTree(AIdleEffectActor* Tree)

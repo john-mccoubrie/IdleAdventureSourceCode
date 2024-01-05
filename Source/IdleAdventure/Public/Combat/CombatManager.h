@@ -8,7 +8,7 @@
 
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, Health, float, MaxHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeath);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnCharacterDeath, FString, Time, FString, Difficulty, FString, CauseOfDeath, FString, Tip);
 
 UCLASS()
 class IDLEADVENTURE_API ACombatManager : public AActor

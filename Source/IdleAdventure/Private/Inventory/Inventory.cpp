@@ -109,7 +109,7 @@ void AInventory::TransferAndClearEssenceCounts()
     for (const auto& EssenceEntry : EssenceCount)
     {
         EssenceAddedToCoffer.FindOrAdd(EssenceEntry.Key) += EssenceEntry.Value;
-        //UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
+        UE_LOG(LogTemp, Warning, TEXT("Essence: %s, Count: %d"), *EssenceEntry.Key.ToString(), EssenceEntry.Value);
     }
 
     TArray<FEssenceCoffer> EssenceCofferArray;
@@ -154,6 +154,8 @@ void AInventory::TransferAndClearEssenceCounts()
     AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
     GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::White);
 
+    //Pull updated counts in game to match
+    //RequestPlayFabData();
 
     EssenceCount.Empty();
 

@@ -12,11 +12,6 @@ void AEnemy_Demon::Interact()
 	Super::Interact();
 }
 
-void AEnemy_Demon::EquipWeapon()
-{
-	Super::EquipWeapon();
-}
-
 void AEnemy_Demon::SpawnEnemyAttackEffect()
 {
 	Super::SpawnEnemyAttackEffect();

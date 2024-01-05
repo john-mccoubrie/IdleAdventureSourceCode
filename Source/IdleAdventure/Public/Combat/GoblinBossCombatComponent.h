@@ -18,7 +18,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void HandleDeath() override;
-	virtual void TakeDamage(float amount) override;
+	virtual void TakeDamage(float amount, float level) override;
 	void StopDamageCheckTimer();
 
 

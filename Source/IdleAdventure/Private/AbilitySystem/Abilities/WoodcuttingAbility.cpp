@@ -39,7 +39,7 @@ UWoodcuttingAbility::~UWoodcuttingAbility()
 
 void UWoodcuttingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Activate ability wca"));
+    //UE_LOG(LogTemp, Warning, TEXT("Activate ability wca"));
     OnTreeLifespanChanged.AddDynamic(this, &UWoodcuttingAbility::SetDuration);
     if (bAbilityIsActive)
     {
@@ -107,7 +107,7 @@ void UWoodcuttingAbility::OnTreeCutDown()
     SpawnManager->UpdateTreeCount(1);
 
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-    UE_LOG(LogTemp, Warning, TEXT("End ability"));
+    //UE_LOG(LogTemp, Warning, TEXT("End ability"));
 }
 
 void UWoodcuttingAbility::SetDuration(float TotalDuration)
@@ -134,7 +134,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
     else
     {
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer. Woodcutting ability"), FLinearColor::Red);
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest cart. Woodcutting ability"), FLinearColor::Red);
     }
     
 }
@@ -142,6 +142,7 @@ void UWoodcuttingAbility::AddEssenceToInventory()
 void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecExecuted, FActiveGameplayEffectHandle ActiveHandle)
 {
     //UE_LOG(LogTemp, Warning, TEXT("Periodic delegate called on target"));
+    
 
     if (bIsChoppingLegendaryTree)
     {
@@ -154,25 +155,38 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     ABonusManager* BonusManager = ABonusManager::GetInstance(GetWorld());
 
+    if (Character->EssenceCount >= 24)
+    {
+        OnTreeCutDown();
+        AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+        IdleActorManager->OnCountdownFinished(PC->CurrentTree);
+        PC->InterruptTreeCutting();
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest cart."), FLinearColor::Red);
+        PC->IdleInteractionComponent->PlayInventoryFullSound();
+        return;
+    }
+
+
     //Woodcutting algorithm
     float LevelMultiplier = IdleAttributeSet->GetWoodcuttingLevel();
-    UE_LOG(LogTemp, Warning, TEXT("LevelMultiplier: %f"), LevelMultiplier);
+    //UE_LOG(LogTemp, Warning, TEXT("LevelMultiplier: %f"), LevelMultiplier);
 
     // Adjust the base chance and the level influence to balance the ease of gathering logs
     float BaseChance = 10.0f;
     float LevelInfluence = 0.5f;
     float ChanceToYield = BaseChance + (LevelMultiplier * LevelInfluence);
-    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield: %f"), ChanceToYield);
+    //UE_LOG(LogTemp, Warning, TEXT("ChanceToYield: %f"), ChanceToYield);
 
     // Random factor to add some unpredictability
     float RandomFactor = FMath::RandRange(-10.0f, 10.0f);
     ChanceToYield += RandomFactor;
     ChanceToYield *= TestManager->CurrentSettings.LogYieldFrequencyFactor;
     ChanceToYield = FMath::Clamp(ChanceToYield, 0.0f, 100.0f);  // Ensure chance stays between 0 and 100
-    UE_LOG(LogTemp, Warning, TEXT("ChanceToYield after RandomFactor: %f"), ChanceToYield);
+    //UE_LOG(LogTemp, Warning, TEXT("ChanceToYield after RandomFactor: %f"), ChanceToYield);
 
     float RandomRoll = FMath::RandRange(0, 100);
-    UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
+    //UE_LOG(LogTemp, Warning, TEXT("RandomRoll: %f"), RandomRoll);
 
     //uncomment this to return to normal algorithm
     //RandomRoll = 1;
@@ -200,11 +214,11 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
         float RarityRoll = FMath::RandRange(0.f, 100.f);
 
-        UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
-        UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
+        //UE_LOG(LogTemp, Warning, TEXT("WisdomThreshold: %f"), WisdomThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("TemperanceThreshold: %f"), TemperanceThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("JusticeThreshold: %f"), JusticeThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("CourageThreshold: %f"), CourageThreshold);
+        //UE_LOG(LogTemp, Warning, TEXT("RarityRoll: %f"), RarityRoll);
 
 
         //Default Essence to add multiper
@@ -319,6 +333,10 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
                 NewLog->ItemDescription = EssenceData->Description;
             }
         }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Essence data table not active yet"));
+        }
         //AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());
         for (int i = 0; i < EssenceToAdd; ++i)
         {
@@ -365,10 +383,9 @@ void UWoodcuttingAbility::GetLegendaryEssence()
         DialogueManager->UpdateAndSaveQuestProgress(CurrentQuest, "Legendary", EssenceToAdd);
     }
     Character->UpdateAllActiveQuests("Legendary", EssenceToAdd * BonusManager->MultiplierSet.CourageYieldMultiplier);
-    
-    //Test values (originally 1000)
+
     ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
-    float LegendaryExpGain = 5000;
+    float LegendaryExpGain = 1000;
     
     ExperienceGain = static_cast<float>(FMath::RoundToInt(LegendaryExpGain * BonusManager->MultiplierSet.LegendaryEssenceMultiplier));
     Character->ShowExpNumber(ExperienceGain, Character, FLinearColor::Yellow);
@@ -422,7 +439,7 @@ void UWoodcuttingAbility::StopCutDownTimer()
 {
     FTimerManager& TimerManager = GetWorld()->GetTimerManager();
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-    UE_LOG(LogTemp, Warning, TEXT("End ability in stop cutdowntimer"));
+    //UE_LOG(LogTemp, Warning, TEXT("End ability in stop cutdowntimer"));
 
     if (GetWorld()->GetTimerManager().IsTimerActive(StopWoodcuttingTimerHandle))
     {

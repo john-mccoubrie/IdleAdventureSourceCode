@@ -34,7 +34,7 @@ AIdleEffectActor::AIdleEffectActor()
 
 	TreeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TreeMeshComponent"));
 	TreeMeshComponent->SetupAttachment(RootComponent);
-	
+
 
 	// Initialize and attach the Niagara system component
 	LegendaryEffectParticle = CreateDefaultSubobject<UNiagaraComponent>(TEXT("LegendaryEffectParticle"));

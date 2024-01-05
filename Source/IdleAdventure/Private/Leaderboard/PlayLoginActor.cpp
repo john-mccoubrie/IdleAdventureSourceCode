@@ -4,10 +4,15 @@
 #include "Leaderboard/PlayLoginActor.h"
 //#include "Chat/PhotonChatManager.h"
 #include "Game/IdleGameModeBase.h"
+#include "PlayFab.h"
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include <Kismet/GameplayStatics.h>
 #include <IdleGameInstance.h>
+//#include "steam/steam_api.h"
+#define ELobbyType Steam_ELobbyType
+#include "steam/steam_api.h"
+#undef ELobbyType
 
 // Sets default values
 APlayLoginActor::APlayLoginActor()
@@ -21,6 +26,36 @@ APlayLoginActor::APlayLoginActor()
 void APlayLoginActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+    /*
+    if (SteamAPI_Init()) // Ensure Steam is initialized
+    {
+        // Get Steam display name
+        const char* steamName = SteamFriends()->GetPersonaName();
+
+        // Convert to FString
+        FString SteamDisplayName = FString(UTF8_TO_TCHAR(steamName));
+
+        // Log into PlayFab using Steam ID
+        LoginWithSteam();
+
+        // Update PlayFab display name with Steam name
+        //UpdatePlayFabDisplayName(SteamDisplayName);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Steam API failed to initialize."));
+    }
+    */
+
+    if (SteamAPI_Init()) {
+        UE_LOG(LogTemp, Log, TEXT("Steam API initialized successfully."));
+        // Additional Steam-related initialization code can go here
+    }
+    else {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to initialize Steam API."));
+        // Handle the failure to initialize Steam API
+    }
 	
     GetMutableDefault<UPlayFabRuntimeSettings>()->TitleId = TEXT("8B4AE");
 
@@ -45,6 +80,29 @@ void APlayLoginActor::BeginPlay()
         }
     }
 }
+
+/*
+void APlayLoginActor::LoginWithSteam()
+{
+    // Obtain the Steam Session Ticket or Encrypted App Ticket
+    uint8 ticket[1024];
+    uint32 ticketSize;
+    HAuthTicket hTicket = SteamUser()->GetAuthSessionTicket(ticket, sizeof(ticket), &ticketSize);
+
+    // Convert binary ticket to a hex-encoded string
+    FString hexTicket = BytesToHex(ticket, ticketSize);
+
+    PlayFab::ClientModels::FLoginWithSteamRequest Request;
+    Request.SteamTicket = hexTicket; // Set the hex-encoded ticket here
+    Request.CreateAccount = true; // Automatically create a PlayFab account if one doesn't exist
+
+    // Assuming clientAPI is a valid PlayFabClientAPI instance
+    clientAPI->LoginWithSteam(Request,
+        PlayFab::UPlayFabClientAPI::FLoginWithSteamDelegate::CreateUObject(this, &APlayLoginActor::OnLoginSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnLoginError)
+    );
+}
+*/
 
 void APlayLoginActor::OnSuccess(const PlayFab::ClientModels::FLoginResult& Result)
 {
@@ -328,7 +386,7 @@ void APlayLoginActor::HandleChatConnected()
 
 void APlayLoginActor::HandleUpdateDisplayNameSuccess()
 {
-    UGameplayStatics::OpenLevel(this, TEXT("Map1"));
+    UGameplayStatics::OpenLevel(this, TEXT("LevelSelectScreenBasic"));
 }
 
 void APlayLoginActor::OnGetPhotonTokenSuccess(const PlayFab::ClientModels::FGetPhotonAuthenticationTokenResult& Result)
@@ -365,6 +423,159 @@ void APlayLoginActor::AuthenticateWithPhoton(const FString& PhotonToken)
             //PhotonChatManager->ConnectToChat(jPhotonToken);
         }
     }
+}
+
+void APlayLoginActor::LoginWithSteam()
+{
+    if (SteamAPI_Init()) // Ensure Steam is initialized
+    {
+        // Obtain the Steam Session Ticket
+        uint8 ticket[1024];
+        uint32 ticketSize;
+        HAuthTicket hTicket = SteamUser()->GetAuthSessionTicket(ticket, sizeof(ticket), &ticketSize);
+
+        // Convert binary ticket to a hex-encoded string
+        FString hexTicket = BytesToHex(ticket, ticketSize);
+
+        PlayFab::ClientModels::FLoginWithSteamRequest Request;
+        Request.SteamTicket = hexTicket; // Use the session ticket for login
+        Request.CreateAccount = true; // Automatically create a PlayFab account if one doesn't exist
+
+        // Send the login request to PlayFab
+        clientAPI->LoginWithSteam(Request,
+            PlayFab::UPlayFabClientAPI::FLoginWithSteamDelegate::CreateUObject(this, &APlayLoginActor::OnLoginSteamSuccess),
+            PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnLoginSteamError)
+        );
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Steam API failed to initialize."));
+    }
+}
+
+void APlayLoginActor::OnLoginSteamSuccess(const PlayFab::ClientModels::FLoginResult& Result) {
+    
+    FString SteamName = UTF8_TO_TCHAR(SteamFriends()->GetPersonaName());
+
+    // Update the display name in PlayFab
+    
+    UE_LOG(LogTemp, Log, TEXT("%s"), *SteamName);
+    UpdateDisplayNameFromSteam(SteamName);
+    
+    
+    FString successMessage = FString::Printf(TEXT("Steam Login Successful. PlayFab ID: %s"), *Result.PlayFabId);
+    UE_LOG(LogTemp, Log, TEXT("%s"), *successMessage);
+
+    // Additional information can also be sent to the UI if necessary
+    FString sessionTicketMessage = FString::Printf(TEXT("New PlayFab Session Ticket: %s"), *Result.SessionTicket);
+    UE_LOG(LogTemp, Log, TEXT("%s"), *sessionTicketMessage);
+
+    // Post the success message to the UI
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    if (GameChatManager) {
+        GameChatManager->PostNotificationToLoginScreen(successMessage, FLinearColor::Green);
+        // Uncomment the following line if you want to display the session ticket message as well
+        // GameChatManager->PostNotificationToLoginScreen(sessionTicketMessage, FLinearColor::White);
+    }
+
+
+
+    FString PlayFabUserID = Result.PlayFabId; // store the playfab user ID
+    std::wstring wstrUserID(*PlayFabUserID);
+
+    // Convert std::wstring to ExitGames::Common::JString
+    ExitGames::Common::JString jUserID = wstrUserID.c_str();
+
+    AuthenticateWithPhoton();
+
+    bShouldConnectToChatAfterLevelLoad = true;
+    PendingUserID = jUserID;
+    IdleGameInstance = Cast<UIdleGameInstance>(GetGameInstance());
+    if (IdleGameInstance)
+    {
+        IdleGameInstance->StoredPlayFabUserID = jUserID;
+        //IdleGameInstance->StoredPlayFabDisplayName = UpdatePlayerDisplayNameInstance->TestDisplayName;
+        //UE_LOG(LogTemp, Warning, TEXT("Stored PlayFabUserID in IdleGameInstance"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("IdleGameInstance is null"));
+    }
+
+
+    // Example: Add a delay before changing levels
+    //FTimerHandle TimerHandle;
+    //GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &APlayLoginActor::LoadLevelSelectScreen, 5.0f, false);
+
+}
+
+void APlayLoginActor::OnLoginSteamError(const PlayFab::FPlayFabCppError& ErrorResult) {
+    FString errorMessage = FString::Printf(TEXT("Steam Login Failed. Error: %s"), *ErrorResult.GenerateErrorReport());
+    UE_LOG(LogTemp, Error, TEXT("%s"), *errorMessage);
+
+    // Post the error message to the UI
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    if (GameChatManager) {
+        GameChatManager->PostNotificationToLoginScreen(errorMessage, FLinearColor::Red);
+    }
+
+}
+
+void APlayLoginActor::UpdateDisplayNameFromSteam(const FString& DesiredDisplayName)
+{
+    UE_LOG(LogTemp, Log, TEXT("Attempting to update display name to: %s"), *DesiredDisplayName);
+
+    if (!clientAPI)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PlayFab clientAPI is not initialized."));
+        return;
+    }
+
+    PlayFab::ClientModels::FUpdateUserTitleDisplayNameRequest DisplayNameRequest;
+    DisplayNameRequest.DisplayName = DesiredDisplayName;
+
+    clientAPI->UpdateUserTitleDisplayName(DisplayNameRequest,
+        PlayFab::UPlayFabClientAPI::FUpdateUserTitleDisplayNameDelegate::CreateUObject(this, &APlayLoginActor::OnUpdateDisplayNameSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnUpdateDisplayNameError)
+    );
+
+    UE_LOG(LogTemp, Log, TEXT("UpdateUserTitleDisplayName request sent."));
+}
+
+void APlayLoginActor::OnUpdateDisplayNameSuccess(const PlayFab::ClientModels::FUpdateUserTitleDisplayNameResult& Result)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Display name updated successfully!"));
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    GameChatManager->PostNotificationToLoginScreen(TEXT("Player name updated successfully!"), FLinearColor::Green);
+    //Display name is successfully updated, delegate points to APlayLoginActor to call "Idle Forest" Level
+    //Cannot call GetWorld() here because it is a UObject and has no world context
+    //OnUpdateDisplayNameSuccessDelegate.Broadcast();
+    FTimerHandle TimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &APlayLoginActor::LoadLevelSelectScreen, 1.0f, false);
+    //LoadLevelSelectScreen();
+}
+
+void APlayLoginActor::OnUpdateDisplayNameError(const PlayFab::FPlayFabCppError& Error)
+{
+    UE_LOG(LogTemp, Error, TEXT("Error updating display name: %s"), *Error.ErrorMessage);
+}
+
+void APlayLoginActor::LoadLevelSelectScreen()
+{
+    // Proceed to open the next level or carry out success logic
+    UGameplayStatics::OpenLevel(this, TEXT("LevelSelectScreenBasic"));
+}
+
+void APlayLoginActor::AuthenticateWithPhoton()
+{
+
+
+    PlayFab::ClientModels::FGetPhotonAuthenticationTokenRequest PhotonRequest;
+    PhotonRequest.PhotonApplicationId = L"abbf3a31-ccd8-4c23-8704-3ec991bc5d0b";
+    clientAPI->GetPhotonAuthenticationToken(PhotonRequest,
+        PlayFab::UPlayFabClientAPI::FGetPhotonAuthenticationTokenDelegate::CreateUObject(this, &APlayLoginActor::OnGetPhotonTokenSuccess),
+        PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayLoginActor::OnGetPhotonTokenError)
+    );
 }
 
 

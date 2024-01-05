@@ -65,17 +65,35 @@ public:
 	void PlayCofferAddSound();
 
 	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayInventoryFullSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void PlayAddToLegendaryMeterSound();
 
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void PlayLegendaryTreeSpawnSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void SpawnLevelUpEffect(APawn* PlayerPawn);
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void StopLevelUpEffect();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayLevelUpSound();
 
 	void PlaySound(USoundBase* SoundToPlay);
 
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
 	UNiagaraComponent* SpawnedAttackEffect;
-
+	
+	//Level up
+	UNiagaraComponent* SpawnedLevelUpEffect;
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UNiagaraSystem* LevelUpEffect;
+	//Use the staff audio component
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* LevelUpSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* TreeCutEffect;
@@ -121,6 +139,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Sound Properties")
 	USoundCue* AddToCofferSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* InventoryFullSound;
 
 	UPROPERTY(EditAnywhere, Category = "Sound Properties")
 	USoundCue* AddToLegendaryMeterSound;

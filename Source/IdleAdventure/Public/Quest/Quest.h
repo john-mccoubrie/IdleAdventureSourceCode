@@ -219,6 +219,9 @@ public:
 	FString QuestCategory;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FString Quote;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsStarted;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)

@@ -10,9 +10,30 @@
 #include "GameFramework/Actor.h"
 #include "GameChatManager.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FQuoteCategoryPair
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FString Quote;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString Category;
+
+	FQuoteCategoryPair() {}
+	FQuoteCategoryPair(const FString& InQuote, const FString& InCategory)
+		: Quote(InQuote), Category(InCategory) {}
+};
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPostGameChat, FString, Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostGameNotification, FString, Message, FSlateColor, Color);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostGameNotificationToLoginScreen, FString, Message, FSlateColor, Color);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostQuote, FString, Quote, FString, Category);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLoadSavedQuotes, FString, Category, FString, Quote);
 
 UCLASS()
 class IDLEADVENTURE_API AGameChatManager : public AActor
@@ -32,6 +53,14 @@ public:
 	void PostNotificationToUI(FString Message, FSlateColor Color);
 	void PostNotificationToLoginScreen(FString Message, FSlateColor Color);
 
+	UFUNCTION(BlueprintCallable, Category = "Meditations Quotes")
+	void PostQuoteToMeditationsJournal(FString Message, FString Category);
+
+	void LoadQuotes();
+
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	TMap<FString, FString> QuotesAndCategories;
+
 	//Message from playfab
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
 	FOnPostGameChat OnPostGameChat;
@@ -39,6 +68,12 @@ public:
 	//In game warnings
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
 	FOnPostGameNotification FOnPostGameNotification;
+
+	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
+	FOnPostQuote OnPostQuote;
+
+	UPROPERTY(BlueprintAssignable, Category = "Event")
+	FOnLoadSavedQuotes OnLoadSavedQuotes;
 	
 	//Login screen warnings
 	UPROPERTY(BlueprintAssignable, Category = "Chat Events")
@@ -47,4 +82,5 @@ public:
 private:
 	static AGameChatManager* GameChatManagerSingletonInstance;
 	PlayFabClientPtr clientAPI = nullptr;
+	FTimerHandle LoadQuotesTimerHandle;
 };

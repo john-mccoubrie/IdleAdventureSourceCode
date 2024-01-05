@@ -1,6 +1,4 @@
 
-
-
 #include "PlayFab/PlayFabManager.h"
 #include <Kismet/GameplayStatics.h>
 #include "EngineUtils.h"
@@ -17,7 +15,7 @@ APlayFabManager* APlayFabManager::SingletonInstance = nullptr;
 APlayFabManager::APlayFabManager()
 {
     //UE_LOG(LogTemp, Warning, TEXT("PlayFabManager constructor called"));
-    
+
 }
 
 void APlayFabManager::BeginPlay()
@@ -34,7 +32,7 @@ void APlayFabManager::BeginPlay()
     //UE_LOG(LogTemp, Warning, TEXT("PLa"))
     FetchCompletedQuestsData();
     LoadPlayerEquipmentInventory();
-   
+
 }
 
 void APlayFabManager::BeginDestroy()
@@ -108,6 +106,7 @@ bool APlayFabManager::PurchaseEquipment(const FString& EquipmentName, const FEqu
 bool APlayFabManager::UpdatePlayFabEssenceCount(const FEquipmentData& EquipmentData)
 {
     SuccessfulUpdateCount = 0;
+
     // Array of essence types
     TArray<FName> EssenceTypes = {
         FName(TEXT("Wisdom")),
@@ -132,71 +131,78 @@ bool APlayFabManager::UpdatePlayFabEssenceCount(const FEquipmentData& EquipmentD
         return false;
     }
 
-    // Ensure all essence types have enough essence to cover the costs
+    // Ensure all required essence types have enough essence to cover the costs
     for (int32 i = 0; i < EssenceTypes.Num(); ++i)
     {
-        //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-        
-            int32* CurrentEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[i]);
-            if (CurrentEssenceCount && *CurrentEssenceCount < Costs[i])
-            {
-                UE_LOG(LogTemp, Warning, TEXT("Insufficient essence of type: %s"), *EssenceTypes[i].ToString());
-                return false;
-            }
-        
+        // Skip if the cost for this essence is zero
+        if (Costs[i] == 0) continue;
+
+        int32* CurrentEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[i]);
+        if (CurrentEssenceCount && *CurrentEssenceCount < Costs[i])
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Insufficient essence of type: %s"), *EssenceTypes[i].ToString());
+            return false;
+        }
+        else if (!CurrentEssenceCount)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Essence type not found: %s"), *EssenceTypes[i].ToString());
+            return false;
+        }
     }
 
     // Deduct the costs and update on PlayFab
     for (int32 i = 0; i < EssenceTypes.Num(); ++i)
     {
-        //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-        
-            int32* CurrentEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[i]);
-            if (CurrentEssenceCount)
-            {
-                if (*CurrentEssenceCount >= Costs[i])
-                {
-                    *CurrentEssenceCount -= Costs[i];
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("Insufficient essence of type: %s"), *EssenceTypes[i].ToString());
-                }
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("Essence type not found: %s"), *EssenceTypes[i].ToString());
-            }
+        // Skip if the cost for this essence is zero
+        if (Costs[i] == 0) continue;
 
-            // Now update the essence count on PlayFab
-            // Assume UpdatePlayFabEssenceCount is a method that handles updating essence count on PlayFab
-            if (CurrentEssenceCount)
+        int32* CurrentEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[i]);
+        if (CurrentEssenceCount && *CurrentEssenceCount >= Costs[i])
+        {
+            *CurrentEssenceCount -= Costs[i];
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Insufficient essence of type: %s"), *EssenceTypes[i].ToString());
+            // Revert already deducted essences before returning false
+            for (int32 j = 0; j < i; ++j)
             {
-                if (!TryPlayFabUpdate(EssenceTypes[i], *CurrentEssenceCount))
-                {
-                    // Add the essence cost back since the update on PlayFab failed
-                    *CurrentEssenceCount += Costs[i];
-                    UE_LOG(LogTemp, Error, TEXT("Failed to update essence count of type: %s on PlayFab"), *EssenceTypes[i].ToString());
+                if (Costs[j] == 0) continue; // Skip reverting if cost is zero
 
-                    // Revert the other essence types
-                    for (int32 j = 0; j < i; ++j)
-                    {
-                        int32* RevertEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[i]);
-                        *RevertEssenceCount += Costs[j];
-                        // Optionally: revert the count on PlayFab as well
-                    }
-                    return false;
+                int32* RevertEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[j]);
+                if (RevertEssenceCount)
+                {
+                    *RevertEssenceCount += Costs[j];
                 }
             }
-            
-        
+            return false;
+        }
+
+        // Assume TryPlayFabUpdate is a method that handles updating essence count on PlayFab
+        if (!TryPlayFabUpdate(EssenceTypes[i], *CurrentEssenceCount))
+        {
+            // Add the essence cost back since the update on PlayFab failed
+            *CurrentEssenceCount += Costs[i];
+            UE_LOG(LogTemp, Error, TEXT("Failed to update essence count of type: %s on PlayFab"), *EssenceTypes[i].ToString());
+
+            // Revert the other essence types
+            for (int32 j = 0; j < i; ++j)
+            {
+                if (Costs[j] == 0) continue; // Skip reverting if cost is zero
+
+                int32* RevertEssenceCount = Character->CharacterInventory->EssenceAddedToCoffer.Find(EssenceTypes[j]);
+                if (RevertEssenceCount)
+                {
+                    *RevertEssenceCount += Costs[j];
+                }
+            }
+            return false;
+        }
     }
 
     // Update EssenceAddedToCoffer on PlayFab after updating essence counts
     UpdateEssenceAddedToCofferOnPlayFab();
-
     return true;
-    
 }
 
 bool APlayFabManager::UpdatePlayerEquipmentInventory(const TArray<FEquipmentData>& NewPlayerEquipmentInventory)
@@ -208,6 +214,9 @@ bool APlayFabManager::UpdatePlayerEquipmentInventory(const TArray<FEquipmentData
     // Create a request to update the PlayFab user data
     PlayFab::ClientModels::FUpdateUserDataRequest UpdateRequest;
     UpdateRequest.Data.Add(TEXT("PlayerEquipmentInventory"), PlayFabInventoryData);
+
+    //OnPurchaseCompleted.Broadcast(true);
+    //LoadPlayerEquipmentInventory();
 
     // Send the request to PlayFab
     clientAPI->UpdateUserData(UpdateRequest,
@@ -257,7 +266,11 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
         }
         //Add the default item for all players
         FName DefaultItemName = "DefaultStaff";
-        DataTableRowNames.Insert(DefaultItemName, 0); //Ensure that the default item is first in the player inventory
+        // Check if the default item is already in the inventory
+        if (!DataTableRowNames.Contains(DefaultItemName))
+        {
+            DataTableRowNames.Insert(DefaultItemName, 0); // Insert only if it's not already there
+        }
 
         for (const FName& DataTableRowName : DataTableRowNames)
         {
@@ -280,7 +293,7 @@ void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetU
             {
                 UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager"));
             }
-            
+
         }
         //UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
         OnInventoryLoaded.Broadcast(DataTableRowNames);
@@ -299,7 +312,7 @@ void APlayFabManager::OnErrorFetchInventory(const PlayFab::FPlayFabCppError& Err
 
 bool APlayFabManager::TryPlayFabUpdate(FName EssenceType, int32 NewCount)
 {
-    
+
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
 
     PlayFab::ClientModels::FUpdateUserDataRequest Request;
@@ -310,14 +323,14 @@ bool APlayFabManager::TryPlayFabUpdate(FName EssenceType, int32 NewCount)
         PlayFab::FPlayFabErrorDelegate::CreateUObject(this, &APlayFabManager::OnErrorUpdateEssence));
 
     return true;
-    
+
 }
 
 void APlayFabManager::OnSuccessUpdateEssence(const PlayFab::ClientModels::FUpdateUserDataResult& Result)
 {
     //AIdleCharacter* Character = Cast<AIdleCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
     //OnPurchaseCompleted.Broadcast(true);
-    UE_LOG(LogTemp, Error, TEXT("Successfully updated essence count on PlayFab"));
+    //UE_LOG(LogTemp, Error, TEXT("Successfully updated essence count on PlayFab"));
 
     // Create an array of FEssenceCoffer to be broadcasted
     TArray<FEssenceCoffer> EssenceCofferArray;
@@ -339,13 +352,14 @@ void APlayFabManager::OnSuccessUpdateEssence(const PlayFab::ClientModels::FUpdat
     {
         // Broadcast the OnEssenceTransferred event
         //OnEssenceTransferred.Broadcast(EssenceCofferArray);
-        OnPurchaseCompleted.Broadcast(true);
+        UE_LOG(LogTemp, Error, TEXT("Successfully updated essence count on PlayFab"));
+        //OnPurchaseCompleted.Broadcast();
     }
 }
 
 void APlayFabManager::OnErrorUpdateEssence(const PlayFab::FPlayFabCppError& Error)
 {
-    OnPurchaseCompleted.Broadcast(false);
+    //OnPurchaseCompleted.Broadcast(false);
     UE_LOG(LogTemp, Error, TEXT("Failed to update essence count on PlayFab. Error: %s"), *Error.GenerateErrorReport());
 }
 

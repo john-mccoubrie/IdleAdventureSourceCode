@@ -1,6 +1,5 @@
 
 
-
 #include "StoicStore/StoicStoreManager.h"
 #include <Character/IdleCharacter.h>
 #include "PlayerEquipment/PlayerEquipment.h"
@@ -14,8 +13,8 @@
 // Sets default values
 AStoicStoreManager::AStoicStoreManager()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 
 }
 
@@ -56,19 +55,18 @@ bool AStoicStoreManager::PurchaseItem(const FEquipmentData& ItemData)
     {
         UE_LOG(LogTemp, Warning, TEXT("returned false in stoicstoremanager"));
         return false;
-    }	
+    }
 }
 
 // Called when the game starts or when spawned
 void AStoicStoreManager::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 // Called every frame
 void AStoicStoreManager::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
 }
-

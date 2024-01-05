@@ -4,6 +4,8 @@
 #include "Core/PlayFabClientDataModels.h"
 #include "Core/PlayFabClientAPI.h"
 #include "EngineUtils.h"
+#include <Save/IdleSaveGame.h>
+#include <PhotonCloudAPIBPLibrary.h>
 
 AGameChatManager* AGameChatManager::GameChatManagerSingletonInstance = nullptr;
 
@@ -20,6 +22,10 @@ void AGameChatManager::BeginPlay()
         GameChatManagerSingletonInstance = this;
     }
     clientAPI = IPlayFabModuleInterface::Get().GetClientAPI();
+
+    
+    LoadQuotes();
+
     //GetMessageOfTheDay();
     //PostNotificationToUI(TEXT("Welcome to StoicScape!"), FLinearColor::White);
 }
@@ -103,7 +109,7 @@ void AGameChatManager::PostNotificationToUI(FString Message, FSlateColor Color)
     else
     {
         // If not bound, delay the broadcasting by using a timer
-        UE_LOG(LogTemp, Warning, TEXT("Delegate not bound, delaying notification."));
+        UE_LOG(LogTemp, Warning, TEXT("PostNotificationToUI not bound, delaying notification."));
 
         // Use a lambda to capture the 'Message' and call this function again
         FTimerDelegate TimerDel;
@@ -122,6 +128,70 @@ void AGameChatManager::PostNotificationToLoginScreen(FString Message, FSlateColo
 {
     UE_LOG(LogTemp, Warning, TEXT("OnPostGameNotificationToLoginScreen"));
     OnPostGameNotificationToLoginScreen.Broadcast(Message, Color);
+}
+
+void AGameChatManager::PostQuoteToMeditationsJournal(FString Message, FString Category)
+{
+    PostNotificationToUI(TEXT("You unlocked a new Stoic quote! Check your meditations book to see the quotes you've collected."), FLinearColor::Yellow);
+    OnPostQuote.Broadcast(Message, Category);
+
+    // Load existing quotes from save game or create a new one if it doesn't exist
+    UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+    }
+
+    // Add the new quote to the appropriate category and save
+    if (SaveGameInstance)
+    {
+        SaveGameInstance->AddQuoteAndSave(Message, Category);
+    }
+}
+
+void AGameChatManager::LoadQuotes()
+{
+    UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
+    if (LoadGameInstance)
+    {
+        TWeakObjectPtr<AGameChatManager> WeakThis(this); // Capture a weak pointer to this
+
+        // Schedule a repeating timer to check for delegate binding
+        FTimerDelegate TimerDel;
+        TimerDel.BindLambda([WeakThis, LoadGameInstance]()
+            {
+                if (WeakThis.IsValid() && WeakThis->OnLoadSavedQuotes.IsBound())
+                {
+                    TArray<TArray<FString>*> Categories = { &LoadGameInstance->WisdomQuotes, &LoadGameInstance->TemperanceQuotes, &LoadGameInstance->JusticeQuotes, &LoadGameInstance->CourageQuotes };
+                    TArray<FString> CategoryNames = { "Wisdom", "Temperance", "Justice", "Courage" };
+
+                    for (int i = 0; i < Categories.Num(); ++i)
+                    {
+                        for (const FString& Quote : *Categories[i])
+                        {
+                            WeakThis->OnLoadSavedQuotes.Broadcast(CategoryNames[i], Quote);
+                            UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *CategoryNames[i], *Quote);
+                        }
+                    }
+
+                    // Stop the timer as we have successfully broadcasted
+                    if (WeakThis.IsValid())
+                    {
+                        WeakThis->GetWorld()->GetTimerManager().ClearTimer(WeakThis->LoadQuotesTimerHandle);
+                    }
+                }
+                else if (WeakThis.IsValid())
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Waiting for OnLoadSavedQuotes to be bound..."));
+                }
+            });
+
+        GetWorld()->GetTimerManager().SetTimer(LoadQuotesTimerHandle, TimerDel, 1.0f, true);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Save game instance not found."));
+    }
 }
 
 

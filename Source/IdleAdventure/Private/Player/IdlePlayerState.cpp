@@ -34,6 +34,9 @@ AIdlePlayerState::AIdlePlayerState()
 
 void AIdlePlayerState::BeginPlay()
 {
+	//stop level up effects from firing during game set up
+	bShouldTriggerLevelUpEffects = false;
+
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LoginActorTag"), FoundActors);
 	APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
@@ -128,7 +131,7 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("CheckForLevelUp"));
 	ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
-	float NextLevelExpGrowthRate = TestManager->CurrentSettings.LevelUpMultiplier;
+	float NextLevelExpGrowthRate = 1.5f;
 
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
 	FString PlayerName = TEXT("PlayerName");
@@ -152,12 +155,11 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 
 	//LeaderboardManager->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
 	OnExpGained.Broadcast(IdleAttributeSet->GetWoodcutExp());
-	float testWCLvl = IdleAttributeSet->GetWoodcuttingLevel();
 	// Current level's required experience
 	//float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
 	float expForCurrentLevel = 0.0f;
 
-	if (IdleAttributeSet->GetWoodcuttingLevel() == 1)
+	if (IdleAttributeSet->GetWoodcuttingLevel() == 0)
 	{
 		expForCurrentLevel = 0;
 	}
@@ -213,12 +215,31 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 		//EquipmentManager.UnlockEquipment(IdleAttributeSet->GetWoodcuttingLevel());
 		//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
 
+		AIdlePlayerController* PlayerController = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+
+		if (bShouldTriggerLevelUpEffects)
+		{
+			//PlayLevel up sound
+			PlayerController->IdleInteractionComponent->PlayLevelUpSound();
+			//PlayLevelUp particle effect
+			APawn* MyPawn = PlayerController->GetPawn();
+			PlayerController->IdleInteractionComponent->SpawnLevelUpEffect(MyPawn);
+
+			//Game chat notification
+			AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+			int WoodcuttingLevelAsInt = static_cast<int>(IdleAttributeSet->GetWoodcuttingLevel());
+			FString formattedMessage = FString::Printf(TEXT("Congratulations, you leveled up! You are now level %d"), WoodcuttingLevelAsInt);
+			GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Yellow);
+		}
+		
 		// Broadcast level up delegate
 		WhenLevelUp.Broadcast(progress);
 		ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
 		ShowPlayerLevelOnText.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
 
 	}
+
+	bShouldTriggerLevelUpEffects = true;
 }
 
 

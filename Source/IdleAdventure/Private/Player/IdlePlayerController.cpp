@@ -31,6 +31,8 @@
 #include <Chat/GameChatManager.h>
 #include <Actor/CofferManager.h>
 #include <Combat/GoblinBossCombatComponent.h>
+#include <Combat/DemonBossCombatComponent.h>
+#include <Combat/GhoulBossCombatComponent.h>
 
 AIdlePlayerController::AIdlePlayerController()
 {
@@ -315,6 +317,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		TargetTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		CurrentTree = Cast<AIdleEffectActor>(ClickResult.GetActor());
 		ClickTree(ClickResult, PlayerPawn);
+		MoveToClickLocation(InputActionValue, ClickResult, PlayerPawn);
 	}
 	else if (ClickResult.GetComponent()->ComponentTags.Contains("Coffer"))
 	{
@@ -419,48 +422,82 @@ void AIdlePlayerController::HandleZoomAction(const FInputActionValue& InputActio
 
 void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputActionValue, FHitResult CursorHit, APawn* PlayerPawn)
 {
-	//FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
-	if (CursorHit.GetComponent()->ComponentTags.Contains("Enemy"))
+	FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
+	TargetDestination = AdjustedTargetLocation;
+	if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
 	{
-		FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
-		TargetDestination = AdjustedTargetLocation;
-		if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
+		if (PlayerPawn)
 		{
-			if (PlayerPawn)
+			FNavLocation ProjectedLocation;
+			if (!NavSystem->ProjectPointToNavigation(TargetDestination, ProjectedLocation))
 			{
-				// Call SimpleMoveToLocation without expecting a return value
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
-				// Log that we've issued a move command
-				//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+				// Find nearest point on NavMesh
+				if (!NavSystem->GetRandomPointInNavigableRadius(TargetDestination, 1000.0f, ProjectedLocation))
+				{
+					UE_LOG(LogTemp, Error, TEXT("Failed to find a navigable point near TargetDestination"));
+					return;
+				}
 			}
+
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, ProjectedLocation.Location);
+			//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *ProjectedLocation.Location.ToString());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No player pawn"));
 		}
 	}
 	else
 	{
-		// Now use AdjustedTargetLocation for moving the player
-	//TargetDestination = AdjustedTargetLocation;
-		TargetDestination = CursorHit.ImpactPoint;
+		UE_LOG(LogTemp, Error, TEXT("No current nav system"));
+	}
+}
 
-		// Log the target destination
-		//UE_LOG(LogTemp, Warning, TEXT("Target Destination: %s"), *TargetDestination.ToString());
+void AIdlePlayerController::RecalculatePathToTarget()
+{
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn || !TargetTree) return;
 
-		// Start moving towards the target using the NavMesh
-		if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this);
+	if (!NavSystem) return;
+
+	FNavLocation ProjectedLocation;
+	if (NavSystem->ProjectPointToNavigation(TargetTree->GetActorLocation(), ProjectedLocation))
+	{
+		FPathFindingQuery Query;
+		FNavAgentProperties NavAgentProperties = ControlledPawn->GetNavAgentPropertiesRef();
+		const ANavigationData* NavData = NavSystem->GetNavDataForProps(NavAgentProperties);
+		if (NavData)
 		{
-			if (PlayerPawn)
+			Query = FPathFindingQuery(ControlledPawn, *NavData, ControlledPawn->GetNavAgentLocation(), ProjectedLocation.Location);
+			FPathFindingResult Result = NavSystem->FindPathSync(NavAgentProperties, Query);
+
+			if (!Result.IsSuccessful() || !Result.Path.IsValid())
 			{
-				// Call SimpleMoveToLocation without expecting a return value
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
-				// Log that we've issued a move command
-				//UE_LOG(LogTemp, Warning, TEXT("SimpleMoveToLocation called to move to location: %s"), *TargetDestination.ToString());
+				// The path is not valid anymore, need to find a new path
+				MoveToTarget(TargetTree);
 			}
 		}
 	}
 }
 
+void AIdlePlayerController::MoveToTarget(AActor* Target)
+{
+	if (!Target) return;
+
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn) return;
+
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this);
+	if (NavSystem)
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Target->GetActorLocation());
+	}
+}
+
 FVector AIdlePlayerController::AdjustTargetZAxis(FVector NewTargetLocation)
 {
-	float MaxZOffset = 100.0f; // Maximum allowable Z-offset from the player's current Z-position
+	float MaxZOffset = 50.0f; // Maximum allowable Z-offset from the player's current Z-position
 	float PlayerZ = GetPawn()->GetActorLocation().Z;
 
 	// Clamp the Z-value of the target location to be within the allowable range above or below the player's Z-position
@@ -531,6 +568,7 @@ void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 		UE_LOG(LogTemp, Warning, TEXT("IdleInteractionComponent is null"));
 	}
 
+	/*
 	// Start moving towards the tree using the NavMesh
 	if (PlayerPawn)
 	{
@@ -539,6 +577,7 @@ void AIdlePlayerController::ClickTree(FHitResult TreeHit, APawn* PlayerPawn)
 		FVector TargetTreeDestination = AdjustedTargetLocation;
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetTreeDestination);
 	}
+	*/
 }
 
 void AIdlePlayerController::OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn)
@@ -580,16 +619,17 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
 
-	if (MyCharacter->EssenceCount <= 24)
+	if (MyCharacter->EssenceCount >= 24)
 	{
-		IdleInteractionComponent->StartWoodcuttingAbility(PlayerPawn);
-		WoodcuttingEXPEffect();
+		UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
+		IdleInteractionComponent->PlayInventoryFullSound();
+		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest cart."), FLinearColor::Red);
 	}
 	else
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Inventory is full in player controller!"));
-		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-		GameChatManager->PostNotificationToUI(TEXT("Inventory is full! Add your essence to the nearest coffer."), FLinearColor::Red);
+		IdleInteractionComponent->StartWoodcuttingAbility(PlayerPawn);
+		WoodcuttingEXPEffect();
 	}
 }
 
@@ -630,7 +670,7 @@ void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
 	}
 
 
-	UE_LOG(LogTemp, Warning, TEXT("StartEnemyInteraction in PlayerController called."));
+	//UE_LOG(LogTemp, Warning, TEXT("StartEnemyInteraction in PlayerController called."));
 	//CurrentPlayerState = EPlayerState::Idle;
 	CurrentPlayerState = EPlayerState::InCombat;
 
@@ -640,7 +680,7 @@ void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
 	//called from anim notify now
 	
 	TargetEnemy->Interact();
-	UE_LOG(LogTemp, Warning, TEXT("Actor clicked: %s"), *TargetEnemy->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Actor clicked: %s"), *TargetEnemy->GetName());
 	IdleInteractionComponent->StartCombatAbility(PlayerPawn, TargetEnemy);
 	IdleInteractionComponent->SpawnCombatEffect(PlayerPawn, TargetEnemy);
 
@@ -648,7 +688,7 @@ void AIdlePlayerController::StartEnemyInteraction(APawn* PlayerPawn)
 
 void AIdlePlayerController::StartObjectInteraction(APawn* PlayerPawn)
 {
-	UE_LOG(LogTemp, Warning, TEXT("StartObjectInteraction in PlayerController called."));
+	//UE_LOG(LogTemp, Warning, TEXT("StartObjectInteraction in PlayerController called."));
 	CurrentPlayerState = EPlayerState::Idle;
 
 	TargetHealthPotion->Interact();
@@ -666,7 +706,7 @@ void AIdlePlayerController::StartAnimNotifyEnemyInteraction(APawn* PlayerPawn)
 
 void AIdlePlayerController::InteruptCombat()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Interrupt Combat"));
+	//UE_LOG(LogTemp, Warning, TEXT("Interrupt Combat"));
 
 	if (CurrentPlayerState == EPlayerState::InCombat)
 	{
@@ -687,6 +727,16 @@ void AIdlePlayerController::InteruptCombat()
 			if (GoblinBossCombatComponent)
 			{
 				GoblinBossCombatComponent->StopDamageCheckTimer();
+			}
+			UDemonBossCombatComponent* DemonBossCombatComponent = Cast<UDemonBossCombatComponent>(TargetEnemy->GetComponentByClass(UDemonBossCombatComponent::StaticClass()));
+			if (DemonBossCombatComponent)
+			{
+				DemonBossCombatComponent->StopDamageCheckTimer();
+			}
+			UGhoulBossCombatComponent* GhoulBossCombatComponent = Cast<UGhoulBossCombatComponent>(TargetEnemy->GetComponentByClass(UGhoulBossCombatComponent::StaticClass()));
+			if (GhoulBossCombatComponent)
+			{
+				GhoulBossCombatComponent->StopDamageCheckTimer();
 			}
 			TargetEnemy->EndCombatEffects();
 		}

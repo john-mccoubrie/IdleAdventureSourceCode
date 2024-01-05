@@ -18,7 +18,6 @@ class IDLEADVENTURE_API AEnemy_Demon_Boss : public AEnemyBase
 public:
 	AEnemy_Demon_Boss();
 	virtual void Interact() override;
-	virtual void EquipWeapon() override;
 	virtual void SpawnEnemyAttackEffect() override;
 	virtual void EndCombatEffects() override;
 	virtual void EnemyAttacksPlayer() override;
@@ -26,6 +25,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat Component")
 	UDemonBossCombatComponent* DemonBossCombatComponent;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DemonTailspinMontage;
+
 private:
 	float TestingFloat;
+	bool bDemonIsTimerSet = false;
 };

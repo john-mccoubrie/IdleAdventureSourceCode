@@ -12,6 +12,10 @@
 AEnemy_Goblin::AEnemy_Goblin()
 {
 	CombatComponent = CreateDefaultSubobject<UNPCCombatComponent>(TEXT("NPCCombatComponent"));
+
+	GoblinWeapon = CreateDefaultSubobject<USkeletalMeshComponent>("GoblinWeapon");
+	GoblinWeapon->SetupAttachment(GetMesh(), FName("LeftHandSocket"));
+	GoblinWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AEnemy_Goblin::Interact()
@@ -25,11 +29,6 @@ void AEnemy_Goblin::Interact()
 	//CombatManager->HandleCombat(PlayerCharacter->CombatComponent, this->CombatComponent);
 	//SpawnEnemyAttackEffect();
     //EnemyAttacksPlayer();
-}
-
-void AEnemy_Goblin::EquipWeapon()
-{
-	Super::EquipWeapon();
 }
 
 void AEnemy_Goblin::SpawnEnemyAttackEffect()
@@ -50,4 +49,9 @@ void AEnemy_Goblin::EnemyAttacksPlayer()
 void AEnemy_Goblin::EnemyDeathAnimation()
 {
 	Super::EnemyDeathAnimation();
+}
+
+void AEnemy_Goblin::UpdateWalkSpeed(float NewSpeed)
+{
+	Super::UpdateWalkSpeed(NewSpeed);
 }

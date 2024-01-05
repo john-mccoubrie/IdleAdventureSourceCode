@@ -5,10 +5,14 @@
 #include "EngineUtils.h"
 #include "Components/CapsuleComponent.h"
 #include <Kismet/GameplayStatics.h>
+//#define ELobbyType Steam_ELobbyType
+//#include "steam/steam_api.h"
+//#undef ELobbyType
 #include <PlayFab/PlayFabManager.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <Player/IdlePlayerState.h>
 #include <Player/IdlePlayerController.h>
+#include <Game/SteamManager.h>
 
 ASpawnManager* ASpawnManager::SpawnManagerSingletonInstance = nullptr;
 
@@ -40,6 +44,14 @@ void ASpawnManager::BeginPlay()
 
 	GetWorld()->GetTimerManager().SetTimer(CountdownTimerHandle, this, &ASpawnManager::UpdateCountdown, 1.0f, true);
 
+	/*
+	if (SteamAPI_Init()) {
+		// Steam API is initialized
+	}
+	else {
+		// Handle error, Steam API not available
+	}
+	*/
 	//SpawnTrees();
 	//FTimerHandle SpawnTimerHandle;
 	//GetWorld()->GetTimerManager().SetTimer(SpawnTimerHandle, this, &ASpawnManager::SpawnTrees, 2.0f, false);
@@ -126,11 +138,11 @@ void ASpawnManager::UpdateBossCount(int32 Amount)
 
 void ASpawnManager::CheckRunComplete()
 {
+	ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
 	OnRunCountsUpdated.Broadcast(TreeCount, EnemyCount, BossCount);
 	if (TreeCount <= 0 && EnemyCount <= 0 && BossCount <= 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Run Complete"));
-		FRunCompleteRewards RewardsToSend;
 		FString MapName = UGameplayStatics::GetCurrentLevelName(this, true);
 		FString CompletionTime = GetFormattedTime(CountdownTime);
 
@@ -146,6 +158,10 @@ void ASpawnManager::CheckRunComplete()
 			EasyRewards.Courage = 100;
 			EasyRewards.LegendaryEssence = 5;
 			RewardsToSend = EasyRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_EASY"));
+			}
 		}
 		else if (MapName == "MediumMap")
 		{
@@ -159,6 +175,10 @@ void ASpawnManager::CheckRunComplete()
 			MediumRewards.Courage = 150;
 			MediumRewards.LegendaryEssence = 10;
 			RewardsToSend = MediumRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_MEDIUM"));
+			}
 		}
 		else if (MapName == "HardMap")
 		{
@@ -172,6 +192,10 @@ void ASpawnManager::CheckRunComplete()
 			HardRewards.Courage = 200;
 			HardRewards.LegendaryEssence = 15;
 			RewardsToSend = HardRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_HARD"));
+			}
 		}
 		else if (MapName == "ExpertMap")
 		{
@@ -185,6 +209,10 @@ void ASpawnManager::CheckRunComplete()
 			ExpertRewards.Courage = 300;
 			ExpertRewards.LegendaryEssence = 30;
 			RewardsToSend = ExpertRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_EXPERT"));
+			}
 		}
 		else if (MapName == "LegendaryMap")
 		{
@@ -198,6 +226,10 @@ void ASpawnManager::CheckRunComplete()
 			LegendaryRewards.Courage = 500;
 			LegendaryRewards.LegendaryEssence = 50;
 			RewardsToSend = LegendaryRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_LEGENDARY"));
+			}
 		}
 		else if (MapName == "ImpossibleMap")
 		{
@@ -211,6 +243,44 @@ void ASpawnManager::CheckRunComplete()
 			ImpossibleRewards.Courage = 1000;
 			ImpossibleRewards.LegendaryEssence = 100;
 			RewardsToSend = ImpossibleRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_IMPOSSIBLE"));
+			}
+		}
+		else if (MapName == "TutorialMap")
+		{
+			FRunCompleteRewards TutorialRewards;
+			TutorialRewards.MapDifficulty = "Tutorial";
+			TutorialRewards.Time = CompletionTime;
+			TutorialRewards.Experience = 5000.0f;
+			TutorialRewards.Wisdom = 10;
+			TutorialRewards.Temperance = 10;
+			TutorialRewards.Justice = 10;
+			TutorialRewards.Courage = 10;
+			TutorialRewards.LegendaryEssence = 1;
+			RewardsToSend = TutorialRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_TUTORIAL"));
+			}
+		}
+		else if (MapName == "GatheringMap")
+		{
+			FRunCompleteRewards GatheringRewards;
+			GatheringRewards.MapDifficulty = "Gathering";
+			GatheringRewards.Time = CompletionTime;
+			GatheringRewards.Experience = 10000.0f;
+			GatheringRewards.Wisdom = 100;
+			GatheringRewards.Temperance = 100;
+			GatheringRewards.Justice = 100;
+			GatheringRewards.Courage = 100;
+			GatheringRewards.LegendaryEssence = 5;
+			RewardsToSend = GatheringRewards;
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_GATHERING"));
+			}
 		}
 
 		//Update player rewards on playfab
@@ -243,13 +313,19 @@ void ASpawnManager::UpdateCountdown()
 		CountdownTime--;
 		BroadcastCountdownTime(CountdownTime);
 	}
+	//else if sounds for every 300 seconds or so
 	else
 	{
 		// Optionally handle what happens when the countdown reaches zero
-		GetWorld()->GetTimerManager().ClearTimer(CountdownTimerHandle);
+		int32 TotalSeconds = static_cast<int32>(CountdownTime);
+		int32 Minutes = TotalSeconds / 60;
+		int32 Seconds = TotalSeconds % 60;
 
-		// Game over screen
-		// end the game
+		FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		GetWorld()->GetTimerManager().ClearTimer(CountdownTimerHandle);
+		OnTimerAtZero.Broadcast(TimeString, RewardsToSend.MapDifficulty, "Time Expired",
+			"Visit the StoicStore to purchase auras that grant speed bonuses, staves that grant attack bonuses, both which help gather resources and kill enemies faster. Also, try not being so slow."
+		);;
 	}
 }
 
@@ -292,6 +368,14 @@ void ASpawnManager::InitializeCountdown()
 	else if (MapName == "ImpossibleMap")
 	{
 		CountdownTime = 7200.0f;
+	}
+	else if (MapName == "TutorialMap")
+	{
+		CountdownTime = 3600.0f;
+	}
+	else if (MapName == "GatheringMap")
+	{
+		CountdownTime = 3600.0f;
 	}
 }
 

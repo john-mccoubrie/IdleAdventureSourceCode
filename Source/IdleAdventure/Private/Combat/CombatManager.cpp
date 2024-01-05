@@ -63,7 +63,7 @@ void ACombatManager::HandleCombat(UBaseCombatComponent* attacker, UBaseCombatCom
         if (attacker)
         {
             // Apply the calculated damage
-            defender->TakeDamage(attacker->Damage + DamageMultiplier);
+            defender->TakeDamage(attacker->Damage + DamageMultiplier, attacker->Level);
         }
         else
         {

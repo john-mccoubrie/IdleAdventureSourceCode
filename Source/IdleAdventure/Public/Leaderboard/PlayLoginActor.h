@@ -27,6 +27,11 @@ class IDLEADVENTURE_API APlayLoginActor : public AActor
 public:
     APlayLoginActor();
     virtual void BeginPlay() override;
+
+    //UFUNCTION(BlueprintCallable, Category = "PlayFab||Login")
+    //void LoginWithSteam();
+
+
     void OnSuccess(const PlayFab::ClientModels::FLoginResult& Result);
     void OnError(const PlayFab::FPlayFabCppError& ErrorResult) const;
 
@@ -93,5 +98,17 @@ public:
     void OnGetPhotonTokenSuccess(const PlayFab::ClientModels::FGetPhotonAuthenticationTokenResult& Result);
     void OnGetPhotonTokenError(const PlayFab::FPlayFabCppError& ErrorResult);
     void AuthenticateWithPhoton(const FString& PhotonToken);
+
+
+    //Steam
+    UFUNCTION(BlueprintCallable, Category = "Steam||Login")
+    void LoginWithSteam();
+    void OnLoginSteamSuccess(const PlayFab::ClientModels::FLoginResult& Result);
+    void OnLoginSteamError(const PlayFab::FPlayFabCppError& ErrorResult);
+    void UpdateDisplayNameFromSteam(const FString& DesiredDisplayName);
+    void OnUpdateDisplayNameSuccess(const PlayFab::ClientModels::FUpdateUserTitleDisplayNameResult& Result);
+    void OnUpdateDisplayNameError(const PlayFab::FPlayFabCppError& Error);
+    void LoadLevelSelectScreen();
+    void AuthenticateWithPhoton();
 
 };
