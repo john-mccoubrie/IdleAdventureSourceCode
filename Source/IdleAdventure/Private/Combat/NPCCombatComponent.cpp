@@ -2,7 +2,6 @@
 
 
 #include "Combat/NPCCombatComponent.h"
-#include <Character/Enemy_Goblin.h>
 #include <PlayerEquipment/BonusManager.h>
 #include <Kismet/GameplayStatics.h>
 #include <Character/IdleCharacter.h>
@@ -26,6 +25,11 @@ void UNPCCombatComponent::TakeDamage(float amount, float level)
     }
 }
 
+void UNPCCombatComponent::DamageCheck()
+{
+    Super::DamageCheck();
+}
+
 void UNPCCombatComponent::StopDamageCheckTimer()
 {
     if (GetWorld()->GetTimerManager().IsTimerActive(DamageCheckTimer))
@@ -42,6 +46,44 @@ void UNPCCombatComponent::DestroyOwner()
     }
 }
 
+void UNPCCombatComponent::RespawnEnemy()
+{
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Made it to respawn enemy"));
+        // Spawn the health potion using the Blueprint reference
+        AEnemy_Goblin* SpawnedGoblin = World->SpawnActor<AEnemy_Goblin>(TutorialGoblinBlueprint, SavedLocation, SavedRotation);
+        if (SpawnedGoblin)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Spawned tutorial goblin"));
+        }
+    }
+}
+
+bool UNPCCombatComponent::IsTutorialMap()
+{
+    if (GetWorld())
+    {
+        // Get the current level name
+        FString LevelName = GetWorld()->GetMapName();
+        //LevelName = UGameplayStatics::RemoveLevelPrefix(LevelName); // Optional: Clean the level name
+
+        // Log the level name for debugging
+        UE_LOG(LogTemp, Warning, TEXT("Current level name: %s"), *LevelName);
+
+        // Check if it's the TutorialMap
+        return LevelName.Equals("TutorialMap", ESearchCase::IgnoreCase);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GetWorld() returned nullptr, unable to determine level name."));
+    }
+
+    return false;
+}
+
+/*
 void UNPCCombatComponent::DamageCheck()
 {
     // Getting player's level from the player state
@@ -100,10 +142,12 @@ void UNPCCombatComponent::DamageCheck()
     // Broadcast health change
     OnHealthChanged.Broadcast(Health, MaxHealth);
 }
+*/
 
 void UNPCCombatComponent::HandleDeath()
 {
     Super::HandleDeath();
+
 
     ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
     SpawnManager->UpdateEnemyCount(1);
@@ -119,6 +163,8 @@ void UNPCCombatComponent::HandleDeath()
     if (FMath::RandBool() && HealthPotionBlueprint)
     {
         AActor* Owner = GetOwner();
+        SavedLocation = Owner->GetActorLocation();
+        SavedRotation = Owner->GetActorRotation();
         FVector SpawnLocation = Owner ? Owner->GetActorLocation() : FVector::ZeroVector;
         FRotator SpawnRotation = Owner ? Owner->GetActorRotation() : FRotator::ZeroRotator;
 
@@ -137,9 +183,9 @@ void UNPCCombatComponent::HandleDeath()
 
     //Handle Exp
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 200.0f);
-    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 200.0f);
-    Character->ShowExpNumber(200.0f, Character, FLinearColor::White);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Experience);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Experience);
+    Character->ShowExpNumber(Experience, Character, FLinearColor::White);
 
     //Update player controller values
     PC->InteruptCombat();
@@ -154,6 +200,7 @@ void UNPCCombatComponent::HandleDeath()
     AEnemy_Goblin* OwningCharacter = Cast<AEnemy_Goblin>(GetOwner());
     if (OwningCharacter)
     {
+        OwningCharacter->EndCombatEffects();
         OwningCharacter->EnemyDeathAnimation();
     }
 
@@ -162,5 +209,12 @@ void UNPCCombatComponent::HandleDeath()
     {
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UNPCCombatComponent::DestroyOwner, 1.0f, false);
+    }
+    if (IsTutorialMap())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Countdown started for enemy respawn"));
+        //ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+        SpawnManager->ScheduleRespawn("Goblin", TutorialGoblinBlueprint, SavedLocation, SavedRotation);
+        //GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, this, &UNPCCombatComponent::RespawnEnemy, 5.0f, false);
     }
 }

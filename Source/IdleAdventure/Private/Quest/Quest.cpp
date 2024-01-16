@@ -68,10 +68,16 @@ void UQuest::MarkQuestReadyToTurnIn()
         AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
         // Format the message using FString::Printf
         FString NotificationMessage = FString::Printf(TEXT("%s is ready to be turned in!"), *this->QuestName);
+
+        // Define the light sky blue color
+        FLinearColor LightSkyBlue = FLinearColor(135.0f / 255.0f, 206.0f / 255.0f, 250.0f / 255.0f, 1.0f);
         // Convert FLinearColor to FSlateColor
-        FSlateColor NotificationColor = FSlateColor(FLinearColor::Green);
+        FSlateColor NotificationColor = FSlateColor(LightSkyBlue);
         // Call the function with the formatted message and color
         GameChatManager->PostNotificationToUI(NotificationMessage, NotificationColor);
+
+        AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorldContext()->GetFirstPlayerController());
+        PC->IdleInteractionComponent->PlayQuestReadyForTurnInSound();
     }
 }
 
@@ -106,11 +112,14 @@ void UQuest::TurnInQuest()
         //QuestManager->QuestProgress.ResetProgress();
         //QuestProgress.ResetProgress();
         QuestProgress.ResetProgress(Rewards.Objectives);
+
+        AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorldContext()->GetFirstPlayerController());
+        PC->IdleInteractionComponent->PlayQuestTurnInSound();
     }
     else
     {
         //FString QuestToTurnIn = this->QuestName;
-        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorldContext());
         GameChatManager->PostNotificationToUI(TEXT("this quest is not ready to be turned in yet!"),FLinearColor::Red);
     }
 }
@@ -161,8 +170,10 @@ void UQuest::Complete()
     QuestManager->questCount--;
     // Format the message using FString::Printf
     FString NotificationMessage = FString::Printf(TEXT("You completed %s and got %i experience, %i wisdom essence, %i temperance essence, %i justice essence, %i courage essence, and %i legendary essence!"), *this->QuestName, this->Rewards.Experience, this->Rewards.WisdomEssence, this->Rewards.TemperanceEssence, this->Rewards.JusticeEssence, this->Rewards.CourageEssence, this->Rewards.LegendaryEssence);
+    // Define the light sky blue color
+    FLinearColor LightSkyBlue = FLinearColor(135.0f / 255.0f, 206.0f / 255.0f, 250.0f / 255.0f, 1.0f);
     // Convert FLinearColor to FSlateColor
-    FSlateColor NotificationColor = FSlateColor(FLinearColor::Green);
+    FSlateColor NotificationColor = FSlateColor(LightSkyBlue);
     // Call the function with the formatted message and color
     GameChatManager->PostNotificationToUI(NotificationMessage, NotificationColor);
 

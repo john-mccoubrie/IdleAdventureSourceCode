@@ -51,6 +51,9 @@ void UPlayerEquipment::EquipItem(const FEquipmentData& ItemData)
             UnequipCurrentItem(OldItemData, CurrentlyEquippedMesh);
 
             ApplyEquipmentEffects(ItemData);
+
+            //Play equip sound
+            PC->IdleInteractionComponent->PlayEquipSound();
         }
         else
         {

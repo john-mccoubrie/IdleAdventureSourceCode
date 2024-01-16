@@ -130,49 +130,29 @@ void AIdlePlayerState::InitializePlayerValues()
 void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("CheckForLevelUp"));
-	ATestManager* TestManager = ATestManager::GetInstance(GetWorld());
-	float NextLevelExpGrowthRate = 1.5f;
+
+	// Adjusted growth rates and transition level
+	float earlyGrowthRate = 1.6f;
+	float lateGrowthRate = 1.2f;
+	int transitionLevel = 7;
+	float initialExpForLevelOne = 2000.0f;
 
 	UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(AttributeSet);
-	FString PlayerName = TEXT("PlayerName");
-
-	// Calculate weekly experience (you'll need to define this based on your game's logic)
-	//int32 WeeklyExp = CalculateWeeklyExp(IdleAttributeSet->GetWoodcutExp());
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("LoginActorTag"), FoundActors);
-	if (FoundActors.Num() > 0)
-	{
-		APlayLoginActor* MyPlayLoginActor = Cast<APlayLoginActor>(FoundActors[0]);
-		if (MyPlayLoginActor)
-		{
-			// Update both global and weekly experience values on PlayFab
-			//UE_LOG(LogTemp, Warning, TEXT("GlobalExp in PC: %f"), IdleAttributeSet->GetWoodcutExp());
-			//UE_LOG(LogTemp, Warning, TEXT("WeeklyExp in PC: %f"), IdleAttributeSet->GetWeeklyWoodcutExp());
-			//MyPlayLoginActor->SavePlayerStatsToPlayFab(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWeeklyWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
-		}
-	}
-
-	//LeaderboardManager->UpdateLeaderboard(PlayerName, IdleAttributeSet->GetWoodcutExp(), IdleAttributeSet->GetWoodcuttingLevel());
-	OnExpGained.Broadcast(IdleAttributeSet->GetWoodcutExp());
-	// Current level's required experience
-	//float expForCurrentLevel = (IdleAttributeSet->GetWoodcuttingLevel() == 1) ? 0 : IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
-	float expForCurrentLevel = 0.0f;
-
-	if (IdleAttributeSet->GetWoodcuttingLevel() == 0)
-	{
-		expForCurrentLevel = 0;
-	}
-	else
-	{
-		expForCurrentLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 2);
-	}
-
-	// Next level's required experience
-	float expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 1);
 
 	// Player's total experience
 	float totalExp = IdleAttributeSet->GetWoodcutExp();
+	int currentLevel = IdleAttributeSet->GetWoodcuttingLevel();
+
+	// Calculate the experience for the current and next level
+	float expForCurrentLevel = (currentLevel == 0) ? 0.0f : initialExpForLevelOne;
+	float expForNextLevel = initialExpForLevelOne;
+
+	for (int lvl = 1; lvl <= currentLevel; ++lvl)
+	{
+		float growthRate = (lvl < transitionLevel) ? earlyGrowthRate : lateGrowthRate;
+		expForCurrentLevel = expForNextLevel;
+		expForNextLevel *= growthRate;
+	}
 
 	// Experience relative to the current level
 	float relativeExp = totalExp - expForCurrentLevel;
@@ -180,40 +160,35 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 	// Progress as a percentage
 	float progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 
-	// Logs for debugging
-	/*
-	UE_LOG(LogTemp, Warning, TEXT("expForCurrentLevel: %f"), expForCurrentLevel);
-	UE_LOG(LogTemp, Warning, TEXT("expForNextLevel: %f"), expForNextLevel);
-	UE_LOG(LogTemp, Warning, TEXT("totalExp: %f"), totalExp);
-	UE_LOG(LogTemp, Warning, TEXT("relativeExp: %f"), relativeExp);
-	UE_LOG(LogTemp, Warning, TEXT("progress: %f"), progress);
-	*/
 	// Broadcast the current progress
 	WhenLevelUp.Broadcast(progress);
 	ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
-	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Exp: %f"), IdleAttributeSet->GetWoodcutExp());
-	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Exp: %f"), expForNextLevel);
 	ShowPlayerLevelOnText.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
-	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
-	//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
+
 	// If the player has leveled up
 	while (IdleAttributeSet->GetWoodcutExp() >= expForNextLevel)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Level up"));
+
 		// Increase the level
 		IdleAttributeSet->SetWoodcuttingLevel(IdleAttributeSet->GetWoodcuttingLevel() + 1.f);
+		currentLevel = IdleAttributeSet->GetWoodcuttingLevel();
 
-		// Recalculate relativeExp and progress
+		// Recalculate expForCurrentLevel and expForNextLevel for the new level
+		float growthRate = (currentLevel < transitionLevel) ? earlyGrowthRate : lateGrowthRate;
 		expForCurrentLevel = expForNextLevel;
+		expForNextLevel *= growthRate;
 
-
-		expForNextLevel = IdleAttributeSet->GetMaxWoodcutExp() * pow(NextLevelExpGrowthRate, IdleAttributeSet->GetWoodcuttingLevel() - 1);
 		relativeExp = totalExp - expForCurrentLevel;
 		progress = (relativeExp / (expForNextLevel - expForCurrentLevel)) * 100;
 
-		//UEquipmentManager& EquipmentManager = UEquipmentManager::Get();
-		//EquipmentManager.UnlockEquipment(IdleAttributeSet->GetWoodcuttingLevel());
-		//UE_LOG(LogTemp, Warning, TEXT("Woodcutting Level: %f"), IdleAttributeSet->GetWoodcuttingLevel());
+		// Additional logic for when the player levels up
+		// ... (Play sounds, update UI, etc.) ...
+
+		// Broadcast level up delegate
+		WhenLevelUp.Broadcast(progress);
+		ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
+		ShowPlayerLevelOnText.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
 
 		AIdlePlayerController* PlayerController = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
 
@@ -231,11 +206,6 @@ void AIdlePlayerState::CheckForLevelUp(const FOnAttributeChangeData& Data) const
 			FString formattedMessage = FString::Printf(TEXT("Congratulations, you leveled up! You are now level %d"), WoodcuttingLevelAsInt);
 			GameChatManager->PostNotificationToUI(formattedMessage, FLinearColor::Yellow);
 		}
-		
-		// Broadcast level up delegate
-		WhenLevelUp.Broadcast(progress);
-		ShowExpNumbersOnText.Broadcast(IdleAttributeSet->GetWoodcutExp(), expForNextLevel);
-		ShowPlayerLevelOnText.Broadcast(IdleAttributeSet->GetWoodcuttingLevel());
 
 	}
 

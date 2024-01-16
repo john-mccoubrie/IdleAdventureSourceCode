@@ -18,6 +18,12 @@ UIdleInteractionComponent::UIdleInteractionComponent()
     // Initialize the Audio Component
     StaffAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffAudioComponent"));
     StaffAudioComponent->bAutoActivate = false;
+
+    EquipAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("EquipAudioComponent"));
+    EquipAudioComponent->bAutoActivate = false;
+
+    WorldAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("WorldAudioComponent"));
+    WorldAudioComponent->bAutoActivate = false;
     //StaffDinkAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffDinkAudioComponent"));
     //StaffDinkAudioComponent->bAutoActivate = false;
 
@@ -297,7 +303,7 @@ void UIdleInteractionComponent::PlayAddToLegendaryMeterSound()
 
 void UIdleInteractionComponent::PlayLegendaryTreeSpawnSound()
 {
-    PlaySound(LegendaryTreeSpawnSound);
+    PlayWorldSound(LegendaryTreeSpawnSound);
 }
 
 void UIdleInteractionComponent::SpawnLevelUpEffect(APawn* PlayerPawn)
@@ -310,10 +316,16 @@ void UIdleInteractionComponent::SpawnLevelUpEffect(APawn* PlayerPawn)
 
     // Get the root component or a specific component like a skeletal mesh to attach the effect
     USceneComponent* AttachComponent = PlayerPawn->GetRootComponent();
-    // If you want to attach to a specific bone, use something like PlayerPawn->GetMesh()->GetSocketByName("SocketName");
 
     if (GetWorld() && LevelUpEffect)
     {
+        // If there is an existing effect, stop it before spawning a new one
+        if (SpawnedLevelUpEffect)
+        {
+            SpawnedLevelUpEffect->Deactivate();
+            SpawnedLevelUpEffect->DestroyComponent();
+        }
+
         // Spawn the effect and attach it to the component
         SpawnedLevelUpEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(LevelUpEffect, AttachComponent, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
 
@@ -342,12 +354,69 @@ void UIdleInteractionComponent::PlayLevelUpSound()
     PlaySound(LevelUpSound);
 }
 
+void UIdleInteractionComponent::PlayEquipSound()
+{
+    if (EquipSound && EquipAudioComponent && !EquipAudioComponent->IsPlaying())
+    {
+        EquipAudioComponent->SetSound(EquipSound);
+        EquipAudioComponent->Play();
+    }
+}
+
+void UIdleInteractionComponent::PlayQuestReadyForTurnInSound()
+{
+    PlaySound(QuestReadyForTurnInSound);
+}
+
+void UIdleInteractionComponent::PlayQuestTurnInSound()
+{
+    PlaySound(QuestTurnInSound);
+}
+
+void UIdleInteractionComponent::PlayRunCompleteSound()
+{
+    PlayWorldSound(RunCompleteSound);
+}
+
+void UIdleInteractionComponent::PlayPickupPotionSound()
+{
+    PlayWorldSound(PickupPotionSound);
+}
+
+void UIdleInteractionComponent::PlayDialogueClickSound()
+{
+    PlayWorldSound(DialogueClickSound);
+}
+
 void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
 {
-    if (SoundToPlay && StaffAudioComponent && !StaffAudioComponent->IsPlaying())
+    if (SoundToPlay && StaffAudioComponent)
     {
+        // Stop the currently playing sound if any
+        if (StaffAudioComponent->IsPlaying())
+        {
+            StaffAudioComponent->Stop();
+        }
+
+        // Set the new sound and play it
         StaffAudioComponent->SetSound(SoundToPlay);
         StaffAudioComponent->Play();
+    }
+}
+
+void UIdleInteractionComponent::PlayWorldSound(USoundBase* SoundToPlay)
+{
+    if (SoundToPlay && WorldAudioComponent)
+    {
+        // Stop the currently playing sound if any
+        if (WorldAudioComponent->IsPlaying())
+        {
+            WorldAudioComponent->Stop();
+        }
+
+        // Set the new sound and play it
+        WorldAudioComponent->SetSound(SoundToPlay);
+        WorldAudioComponent->Play();
     }
 }
 

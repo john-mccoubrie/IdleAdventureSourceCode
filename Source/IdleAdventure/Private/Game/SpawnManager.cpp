@@ -5,14 +5,20 @@
 #include "EngineUtils.h"
 #include "Components/CapsuleComponent.h"
 #include <Kismet/GameplayStatics.h>
-//#define ELobbyType Steam_ELobbyType
-//#include "steam/steam_api.h"
-//#undef ELobbyType
+#include "AIController.h"
+#include "AI/NPCAIController.h"
+#include "Character/Enemy_Goblin.h"
+#include "Character/Enemy_Goblin_Boss.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include <PlayFab/PlayFabManager.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 #include <Player/IdlePlayerState.h>
 #include <Player/IdlePlayerController.h>
 #include <Game/SteamManager.h>
+#include <Save/IdleSaveGame.h>
 
 ASpawnManager* ASpawnManager::SpawnManagerSingletonInstance = nullptr;
 
@@ -36,6 +42,9 @@ void ASpawnManager::BeginPlay()
     TreeCount = CountActorsWithTag(GetWorld(), "Tree");
     EnemyCount = CountActorsWithTag(GetWorld(), "EnemyPawn");
 	BossCount = CountActorsWithTag(GetWorld(), "Boss");
+
+	InitializeMapDifficulty();
+	LoadCompletedLevels();
 
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ASpawnManager::BroadcastInitialRunCounts, 2.0f, false);
@@ -146,6 +155,13 @@ void ASpawnManager::CheckRunComplete()
 		FString MapName = UGameplayStatics::GetCurrentLevelName(this, true);
 		FString CompletionTime = GetFormattedTime(CountdownTime);
 
+		//Create or load save game
+		UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
+		if (!SaveGameInstance)
+		{
+			SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+		}
+
 		if (MapName == "EasyMap")
 		{
 			FRunCompleteRewards EasyRewards;
@@ -153,15 +169,17 @@ void ASpawnManager::CheckRunComplete()
 			EasyRewards.Time = CompletionTime;
 			EasyRewards.Experience = 5000.0f;
 			EasyRewards.Wisdom = 100;
-			EasyRewards.Temperance = 100;
-			EasyRewards.Justice = 100;
-			EasyRewards.Courage = 100;
-			EasyRewards.LegendaryEssence = 5;
+			EasyRewards.Temperance = 50;
+			EasyRewards.Justice = 30;
+			EasyRewards.Courage = 20;
+			EasyRewards.LegendaryEssence = 2;
 			RewardsToSend = EasyRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_EASY"));
 			}
+
+			SaveCompletedLevel(EasyRewards.MapDifficulty);
 		}
 		else if (MapName == "MediumMap")
 		{
@@ -170,32 +188,36 @@ void ASpawnManager::CheckRunComplete()
 			MediumRewards.Time = CompletionTime;
 			MediumRewards.Experience = 10000.0f;
 			MediumRewards.Wisdom = 150;
-			MediumRewards.Temperance = 150;
-			MediumRewards.Justice = 150;
-			MediumRewards.Courage = 150;
-			MediumRewards.LegendaryEssence = 10;
+			MediumRewards.Temperance = 70;
+			MediumRewards.Justice = 50;
+			MediumRewards.Courage = 30;
+			MediumRewards.LegendaryEssence = 5;
 			RewardsToSend = MediumRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_MEDIUM"));
 			}
+
+			SaveCompletedLevel(MediumRewards.MapDifficulty);
 		}
 		else if (MapName == "HardMap")
 		{
 			FRunCompleteRewards HardRewards;
 			HardRewards.MapDifficulty = "Hard";
 			HardRewards.Time = CompletionTime;
-			HardRewards.Experience = 15000.0f;
+			HardRewards.Experience = 20000.0f;
 			HardRewards.Wisdom = 200;
-			HardRewards.Temperance = 200;
-			HardRewards.Justice = 200;
-			HardRewards.Courage = 200;
-			HardRewards.LegendaryEssence = 15;
+			HardRewards.Temperance = 100;
+			HardRewards.Justice = 50;
+			HardRewards.Courage = 30;
+			HardRewards.LegendaryEssence = 7;
 			RewardsToSend = HardRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_HARD"));
 			}
+
+			SaveCompletedLevel(HardRewards.MapDifficulty);
 		}
 		else if (MapName == "ExpertMap")
 		{
@@ -204,15 +226,17 @@ void ASpawnManager::CheckRunComplete()
 			ExpertRewards.Time = CompletionTime;
 			ExpertRewards.Experience = 30000.0f;
 			ExpertRewards.Wisdom = 300;
-			ExpertRewards.Temperance = 300;
-			ExpertRewards.Justice = 300;
-			ExpertRewards.Courage = 300;
-			ExpertRewards.LegendaryEssence = 30;
+			ExpertRewards.Temperance = 200;
+			ExpertRewards.Justice = 100;
+			ExpertRewards.Courage = 50;
+			ExpertRewards.LegendaryEssence = 10;
 			RewardsToSend = ExpertRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_EXPERT"));
 			}
+
+			SaveCompletedLevel(ExpertRewards.MapDifficulty);
 		}
 		else if (MapName == "LegendaryMap")
 		{
@@ -220,16 +244,18 @@ void ASpawnManager::CheckRunComplete()
 			LegendaryRewards.MapDifficulty = "Legendary";
 			LegendaryRewards.Time = CompletionTime;
 			LegendaryRewards.Experience = 50000.0f;
-			LegendaryRewards.Wisdom = 500;
-			LegendaryRewards.Temperance = 500;
-			LegendaryRewards.Justice = 500;
-			LegendaryRewards.Courage = 500;
-			LegendaryRewards.LegendaryEssence = 50;
+			LegendaryRewards.Wisdom = 400;
+			LegendaryRewards.Temperance = 250;
+			LegendaryRewards.Justice = 150;
+			LegendaryRewards.Courage = 100;
+			LegendaryRewards.LegendaryEssence = 12;
 			RewardsToSend = LegendaryRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_LEGENDARY"));
 			}
+
+			SaveCompletedLevel(LegendaryRewards.MapDifficulty);
 		}
 		else if (MapName == "ImpossibleMap")
 		{
@@ -237,23 +263,25 @@ void ASpawnManager::CheckRunComplete()
 			ImpossibleRewards.MapDifficulty = "Impossible";
 			ImpossibleRewards.Time = CompletionTime;
 			ImpossibleRewards.Experience = 100000.0f;
-			ImpossibleRewards.Wisdom = 1000;
-			ImpossibleRewards.Temperance = 1000;
-			ImpossibleRewards.Justice = 1000;
-			ImpossibleRewards.Courage = 1000;
-			ImpossibleRewards.LegendaryEssence = 100;
+			ImpossibleRewards.Wisdom = 500;
+			ImpossibleRewards.Temperance = 300;
+			ImpossibleRewards.Justice = 200;
+			ImpossibleRewards.Courage = 100;
+			ImpossibleRewards.LegendaryEssence = 15;
 			RewardsToSend = ImpossibleRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_IMPOSSIBLE"));
 			}
+
+			SaveCompletedLevel(ImpossibleRewards.MapDifficulty);
 		}
 		else if (MapName == "TutorialMap")
 		{
 			FRunCompleteRewards TutorialRewards;
 			TutorialRewards.MapDifficulty = "Tutorial";
 			TutorialRewards.Time = CompletionTime;
-			TutorialRewards.Experience = 5000.0f;
+			TutorialRewards.Experience = 500.0f;
 			TutorialRewards.Wisdom = 10;
 			TutorialRewards.Temperance = 10;
 			TutorialRewards.Justice = 10;
@@ -264,6 +292,8 @@ void ASpawnManager::CheckRunComplete()
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_TUTORIAL"));
 			}
+
+			SaveCompletedLevel(TutorialRewards.MapDifficulty);
 		}
 		else if (MapName == "GatheringMap")
 		{
@@ -272,15 +302,17 @@ void ASpawnManager::CheckRunComplete()
 			GatheringRewards.Time = CompletionTime;
 			GatheringRewards.Experience = 10000.0f;
 			GatheringRewards.Wisdom = 100;
-			GatheringRewards.Temperance = 100;
-			GatheringRewards.Justice = 100;
-			GatheringRewards.Courage = 100;
-			GatheringRewards.LegendaryEssence = 5;
+			GatheringRewards.Temperance = 50;
+			GatheringRewards.Justice = 20;
+			GatheringRewards.Courage = 10;
+			GatheringRewards.LegendaryEssence = 3;
 			RewardsToSend = GatheringRewards;
 			if (SteamManager)
 			{
 				SteamManager->UnlockSteamAchievement(TEXT("COMPLETE_GATHERING"));
 			}
+
+			SaveCompletedLevel(GatheringRewards.MapDifficulty);
 		}
 
 		//Update player rewards on playfab
@@ -298,6 +330,9 @@ void ASpawnManager::CheckRunComplete()
 		UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
 		IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + RewardsToSend.Experience);
 		IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + RewardsToSend.Experience);
+
+		//Play run complete sound
+		PC->IdleInteractionComponent->PlayRunCompleteSound();
 	}
 }
 
@@ -404,6 +439,164 @@ void ASpawnManager::SpawnTrees()
 
 	UE_LOG(LogTemp, Warning, TEXT("Trees Spawned"));
 }
+
+void ASpawnManager::InitializeMapDifficulty()
+{
+	FString CurrentMapName = UGameplayStatics::GetCurrentLevelName(this, true);
+
+	if (CurrentMapName == "EasyMap")
+	{
+		RewardsToSend.MapDifficulty = "Easy";
+	}
+	else if (CurrentMapName == "MediumMap")
+	{
+		RewardsToSend.MapDifficulty = "Medium";
+	}
+	else if (CurrentMapName == "HardMap")
+	{
+		RewardsToSend.MapDifficulty = "Hard";
+	}
+	else if (CurrentMapName == "ExpertMap")
+	{
+		RewardsToSend.MapDifficulty = "Expert";
+	}
+	else if (CurrentMapName == "LegendaryMap")
+	{
+		RewardsToSend.MapDifficulty = "Legendary";
+	}
+	else if (CurrentMapName == "ImpossibleMap")
+	{
+		RewardsToSend.MapDifficulty = "Impossible";
+	}
+	else if (CurrentMapName == "TutorialMap")
+	{
+		RewardsToSend.MapDifficulty = "Tutorial";
+	}
+	else if (CurrentMapName == "GatheringMap")
+	{
+		RewardsToSend.MapDifficulty = "Gathering";
+	}
+	else
+	{
+		// Default or unknown map
+		RewardsToSend.MapDifficulty = "Unknown";
+	}
+	InitialRunDataSet.Broadcast(RewardsToSend.MapDifficulty);
+}
+
+void ASpawnManager::StopCountdownTimer()
+{
+	GetWorld()->GetTimerManager().ClearTimer(CountdownTimerHandle);
+}
+
+void ASpawnManager::ScheduleRespawn(FString EnemyType, TSubclassOf<AEnemyBase> TutorialGoblinReference, FVector Location, FRotator Rotation)
+{
+	FTimerHandle TimerHandle;
+	FTimerDelegate RespawnDelegate = FTimerDelegate::CreateUObject(this, &ASpawnManager::RespawnEnemy, EnemyType, TutorialGoblinReference, Location, Rotation);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, RespawnDelegate, 5.0f, false);
+}
+
+void ASpawnManager::RespawnEnemy(FString EnemyType, TSubclassOf<AEnemyBase> TutorialGoblinReference, FVector Location, FRotator Rotation)
+{
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Made it to respawn enemy"));
+
+		if (EnemyType == "Goblin")
+		{
+			// Use the provided Location instead of hardcoding it
+			FVector StartLocation(-18232.3814f, -11854.042262f, 1022.553947f);
+			// Spawn the enemy goblin using the Blueprint reference
+			AEnemy_Goblin* SpawnedGoblin = World->SpawnActor<AEnemy_Goblin>(TutorialGoblinReference, StartLocation, Rotation);
+			// Log the spawning
+			UE_LOG(LogTemp, Warning, TEXT("Spawned tutorial goblin at Location: %s, Rotation: %s"),
+				*SpawnedGoblin->GetActorLocation().ToString(), *SpawnedGoblin->GetActorRotation().ToString());
+
+			// Check if the Goblin has been possessed by an AI Controller
+			if (SpawnedGoblin->AIControllerClass && !SpawnedGoblin->GetController())
+			{
+
+
+
+				// Spawn the AI Controller
+				auto AIController = World->SpawnActor<ANPCAIController>(SpawnedGoblin->AIControllerClass, Location, Rotation);
+
+				if (AIController)
+				{
+					// Possess the spawned Goblin with the new AI Controller
+					AIController->Possess(SpawnedGoblin);
+
+					// If the Goblin has a Behavior Tree associated with it, start the Behavior Tree
+					if (AIController->GetBlackboardComponent() && SpawnedGoblin->BehaviorTree)
+					{
+						//AIController->GetBlackboardComponent()->InitializeBlackboard(*(SpawnedGoblin->BehaviorTree->BlackboardAsset));
+						//AIController->RunBehaviorTree(SpawnedGoblin->BehaviorTree);
+					}
+				}
+			}
+		}
+		else
+		{
+			FVector BossStartLocation(-20666.537117, -31360.737458, 1659.101517);
+			AEnemy_Goblin_Boss* SpawnedBoss = World->SpawnActor<AEnemy_Goblin_Boss>(TutorialGoblinReference, BossStartLocation, Rotation);
+			// Log the spawning
+			UE_LOG(LogTemp, Warning, TEXT("Spawned tutorial goblin at Location: %s, Rotation: %s"),
+				*SpawnedBoss->GetActorLocation().ToString(), *SpawnedBoss->GetActorRotation().ToString());
+
+			// Check if the Goblin has been possessed by an AI Controller
+			if (SpawnedBoss->AIControllerClass && !SpawnedBoss->GetController())
+			{
+
+				// Spawn the AI Controller
+				auto AIController = World->SpawnActor<ANPCAIController>(SpawnedBoss->AIControllerClass, Location, Rotation);
+
+				if (AIController)
+				{
+					// Possess the spawned Goblin with the new AI Controller
+					AIController->Possess(SpawnedBoss);
+
+					// If the Goblin has a Behavior Tree associated with it, start the Behavior Tree
+					if (AIController->GetBlackboardComponent() && SpawnedBoss->BehaviorTree)
+					{
+						//AIController->GetBlackboardComponent()->InitializeBlackboard(*(SpawnedGoblin->BehaviorTree->BlackboardAsset));
+						//AIController->RunBehaviorTree(SpawnedGoblin->BehaviorTree);
+					}
+				}
+			}
+		}			
+	}
+}
+
+void ASpawnManager::SaveCompletedLevel(const FString& LevelName)
+{
+	// Retrieve an existing save game or create a new one if it doesn't exist
+	UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
+	if (!SaveGameInstance)
+	{
+		SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+	}
+
+	// Save the completed level
+	SaveGameInstance->SaveCompletedLevel(LevelName);
+}
+
+void ASpawnManager::LoadCompletedLevels()
+{
+	// Retrieve an existing save game
+	UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
+	if (LoadGameInstance)
+	{
+		// Broadcast the array of completed levels
+		FOnLoadCompletedLevels.Broadcast(LoadGameInstance->LoadCompletedLevels());
+	}
+	else
+	{
+		// Broadcast an empty array if no save game is found
+		FOnLoadCompletedLevels.Broadcast(TArray<FString>());
+	}
+}
+
 
 
 

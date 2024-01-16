@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Combat/NPCCombatComponent.h"
 #include "Actor/Base_NPCActor.h"
+#include "Combat/NPCCombatComponent.h"
 #include "NiagaraComponent.h"
 #include "AI/NPCAIController.h"
 #include "GameFramework/Character.h"
@@ -25,6 +25,7 @@ public:
 	virtual void Interact();
 	virtual void EndCombatEffects();
 	virtual void EnemyDeathAnimation();
+	virtual void DemonDeathAnimation();
 
 	UFUNCTION(BlueprintCallable, Category = "EnemyAttacks")
 	virtual void SpawnEnemyAttackEffect();
@@ -53,6 +54,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EnemyDeathMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DemonDeathMontage;
 
 	UNiagaraComponent* SpawnedEnemyAttackEffect;
 

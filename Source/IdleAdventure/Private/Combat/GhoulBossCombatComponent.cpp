@@ -45,9 +45,9 @@ void UGhoulBossCombatComponent::HandleDeath()
 
     //Handle Exp
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 5000.0f);
-    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 5000.0f);
-    Character->ShowExpNumber(10000.0f, Character, FLinearColor::White);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Experience);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Experience);
+    Character->ShowExpNumber(Experience, Character, FLinearColor::White);
 
     //Unlock Steam Achievement
     ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
@@ -88,6 +88,11 @@ void UGhoulBossCombatComponent::TakeDamage(float amount, float level)
         // Start a repeating timer that checks for damage every second
         GetWorld()->GetTimerManager().SetTimer(DamageCheckTimer, this, &UGhoulBossCombatComponent::DamageCheck, 1.0f, true);
     }
+}
+
+void UGhoulBossCombatComponent::DamageCheck()
+{
+    Super::DamageCheck();
 }
 
 void UGhoulBossCombatComponent::StopDamageCheckTimer()
@@ -279,6 +284,7 @@ void UGhoulBossCombatComponent::InitializeSwipeAttackTimer()
     GetWorld()->GetTimerManager().SetTimer(SwipeAttackTimer, this, &UGhoulBossCombatComponent::InitiateSwipeAttack, AttackInterval, true);
 }
 
+/*
 void UGhoulBossCombatComponent::DamageCheck()
 {
     // Getting player's level from the player state
@@ -337,3 +343,4 @@ void UGhoulBossCombatComponent::DamageCheck()
     // Broadcast health change
     OnHealthChanged.Broadcast(Health, MaxHealth);
 }
+*/

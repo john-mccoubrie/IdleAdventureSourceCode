@@ -132,8 +132,8 @@ void AGameChatManager::PostNotificationToLoginScreen(FString Message, FSlateColo
 
 void AGameChatManager::PostQuoteToMeditationsJournal(FString Message, FString Category)
 {
-    PostNotificationToUI(TEXT("You unlocked a new Stoic quote! Check your meditations book to see the quotes you've collected."), FLinearColor::Yellow);
-    OnPostQuote.Broadcast(Message, Category);
+    //PostNotificationToUI(TEXT("You unlocked a new Stoic quote! Check your meditations book to see the quotes you've collected."), FLinearColor::Yellow);
+    //OnPostQuote.Broadcast(Message, Category);
 
     // Load existing quotes from save game or create a new one if it doesn't exist
     UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
@@ -146,6 +146,7 @@ void AGameChatManager::PostQuoteToMeditationsJournal(FString Message, FString Ca
     if (SaveGameInstance)
     {
         SaveGameInstance->AddQuoteAndSave(Message, Category);
+        //OnPostQuote.Broadcast(Message, Category);
     }
 }
 
@@ -193,6 +194,8 @@ void AGameChatManager::LoadQuotes()
         UE_LOG(LogTemp, Warning, TEXT("Save game instance not found."));
     }
 }
+
+
 
 
 

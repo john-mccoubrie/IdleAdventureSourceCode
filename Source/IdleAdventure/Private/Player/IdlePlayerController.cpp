@@ -75,6 +75,26 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 	switch (CurrentPlayerState)
 	{
 	case EPlayerState::MovingToTree:
+		/* updated movemment logic works better with 900 or 1000
+		if (TargetTree)
+		{
+			// Check if the player is close enough to start cutting the tree
+			if (IsPlayerCloseEnoughToTree())
+			{
+				// Start woodcutting action
+				StartWoodcuttingAbility(GetPawn());
+				UE_LOG(LogTemp, Warning, TEXT("In Range"));
+			}
+			else
+			{
+				// If not close enough, recalculate the path to the tree
+				RecalculatePathToTarget();
+				UE_LOG(LogTemp, Warning, TEXT("Recalculating"));
+			}
+		}
+		break;
+		*/
+		
 		if (TargetTree)
 		{
 			MoveTowardsTarget(TargetTree, WoodcuttingCastingDistance, [this](APawn* PlayerPawn) {
@@ -83,7 +103,7 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 				});
 		}
 		break;
-
+		
 	case EPlayerState::MovingToCoffer:
 		if (TargetCoffer)
 		{
@@ -327,6 +347,7 @@ void AIdlePlayerController::HandleClickAction(const FInputActionValue& InputActi
 		{
 			AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
 			GameChatManager->PostNotificationToUI(TEXT("You have no essence to add to the coffer."), FLinearColor::Red);
+			IdleInteractionComponent->PlayInventoryFullSound();
 			return;
 		}
 		if (CurrentPlayerState == EPlayerState::CuttingTree)
@@ -464,20 +485,7 @@ void AIdlePlayerController::RecalculatePathToTarget()
 	FNavLocation ProjectedLocation;
 	if (NavSystem->ProjectPointToNavigation(TargetTree->GetActorLocation(), ProjectedLocation))
 	{
-		FPathFindingQuery Query;
-		FNavAgentProperties NavAgentProperties = ControlledPawn->GetNavAgentPropertiesRef();
-		const ANavigationData* NavData = NavSystem->GetNavDataForProps(NavAgentProperties);
-		if (NavData)
-		{
-			Query = FPathFindingQuery(ControlledPawn, *NavData, ControlledPawn->GetNavAgentLocation(), ProjectedLocation.Location);
-			FPathFindingResult Result = NavSystem->FindPathSync(NavAgentProperties, Query);
-
-			if (!Result.IsSuccessful() || !Result.Path.IsValid())
-			{
-				// The path is not valid anymore, need to find a new path
-				MoveToTarget(TargetTree);
-			}
-		}
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, ProjectedLocation.Location);
 	}
 }
 
@@ -493,6 +501,21 @@ void AIdlePlayerController::MoveToTarget(AActor* Target)
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, Target->GetActorLocation());
 	}
+}
+
+bool AIdlePlayerController::IsPlayerCloseEnoughToTree()
+{
+	APawn* PlayerPawn = GetPawn();
+	if (PlayerPawn && TargetTree)
+	{
+		FVector PlayerLocation = PlayerPawn->GetActorLocation();
+		FVector TreeLocation = TargetTree->GetActorLocation();
+		float Distance = FVector::Dist(PlayerLocation, TreeLocation);
+
+		return Distance <= WoodcuttingCastingDistance;
+	}
+
+	return false;
 }
 
 FVector AIdlePlayerController::AdjustTargetZAxis(FVector NewTargetLocation)

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include <Actor/IdleEffectActor.h>
+#include <Character/EnemyBase.h>
 #include "GameFramework/Actor.h"
 #include "SpawnManager.generated.h"
 
@@ -54,6 +55,8 @@ struct FRunCompleteRewards
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnRunCountsUpdated, float, Tree, float, Enemy, float, Boss);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRunComplete, FRunCompleteRewards, RunCompleteData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInitialRunDataSet, FString, InitialRunData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadCompletedLevels, TArray<FString>, CompletedLevels);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownUpdated, const FString&, TimeRemaining);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnTimerAtZero, FString, Time, FString, Difficulty, FString, CauseOfDeath, FString, Tip);
 
@@ -80,6 +83,11 @@ public:
 	void InitializeCountdown();
 	FString GetFormattedTime(float TimeInSeconds);
 	void SpawnTrees();
+	void InitializeMapDifficulty();
+	void StopCountdownTimer();
+	void ScheduleRespawn(FString EnemyType, TSubclassOf<AEnemyBase> TutorialGoblinReference, FVector Location, FRotator Rotation);
+	void RespawnEnemy(FString EnemyType, TSubclassOf<AEnemyBase> TutorialGoblinReference, FVector Location, FRotator Rotation);
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	TSubclassOf<AIdleEffectActor> BlueprintToSpawn;
@@ -98,11 +106,20 @@ public:
 	FOnRunComplete OnRunComplete;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FInitialRunDataSet InitialRunDataSet;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnTimerAtZero OnTimerAtZero;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnLoadCompletedLevels FOnLoadCompletedLevels;
 
 	float CountdownTime;
 
 	FRunCompleteRewards RewardsToSend;
+
+	void SaveCompletedLevel(const FString& LevelName);
+	void LoadCompletedLevels();
 
 private:
 	static ASpawnManager* SpawnManagerSingletonInstance;

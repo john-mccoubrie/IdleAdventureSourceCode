@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "UObject/Class.h"
-//#include "UI/DamageTextComponent.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 #include "BaseCombatComponent.generated.h"
 
 
@@ -28,6 +29,7 @@ public:
 	void IsAlive();
 	virtual void HandleDeath();
 	virtual void AddHealth(float HealthToAdd);
+	virtual void DamageCheck();
 
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, FSlateColor Color);
@@ -53,6 +55,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
 	float BossIconOffset;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	float Experience;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	float ScalingFactor;
+
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnHealthChangedDelegate OnHealthChanged;
 
@@ -62,9 +70,28 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UStoicTypeIndicatorComponent> StoicTypeComponentClass;
 
+	//sound set up
+	void PlaySound(USoundBase* SoundToPlay);
+	UPROPERTY(VisibleAnywhere, Category = "Sound Properties")
+	UAudioComponent* EnemyAudioComponent;
+
+	void PlayEnemeyHitSound();
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* EnemyHitSound;
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	virtual void StopCircleDamageCheckTimer();
+
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	virtual void StartCircleDamageCheckTimer();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+
+	FTimerHandle DamageCheckTimer;
+	float PendingDamage;
 
 	
 };

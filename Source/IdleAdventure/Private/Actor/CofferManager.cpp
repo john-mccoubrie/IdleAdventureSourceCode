@@ -161,7 +161,7 @@ void ACofferManager::AddEssenceToMeter(float EssenceToAdd)
         OnLegendaryCountChanged.Broadcast(LegendaryCount); // Update UI or other systems
         AddHealthToPlayer();
         // Check for legendary tree spawn
-        if (LegendaryCount > 3)
+        if (LegendaryCount >= 4)
         {
             AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
             IdleActorManager->GetLegendaryTree();
@@ -185,11 +185,15 @@ void ACofferManager::SpawnLegendaryTreeAndSounds()
 
 void ACofferManager::AddHealthToPlayer()
 {
-    //Give the player 10 health
+    //Give the player 40 health
     ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
     Character->CombatComponent->AddHealth(40.0f);
     Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
+
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    FString NotificationMessage = FString::Printf(TEXT("You healed 40 health for filling up a legendary meter!"));
+    GameChatManager->PostNotificationToUI(NotificationMessage, FLinearColor::Green);
 }
 
 void ACofferManager::RemoveActiveCoffers()

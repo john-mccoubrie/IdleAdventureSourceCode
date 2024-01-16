@@ -18,6 +18,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void HandleDeath() override;
 	virtual void TakeDamage(float amount, float level) override;
+	virtual void DamageCheck() override;
 	void StopDamageCheckTimer();
 
 	// Method to initiate the tailspin attack
@@ -55,9 +56,9 @@ public:
 	float zAdjustmentPoisonSpawn = 225.0f;
 
 private:
-	FTimerHandle DamageCheckTimer;
-	void DamageCheck();
-	float PendingDamage;
+	//FTimerHandle DamageCheckTimer;
+	//void DamageCheck();
+	//float PendingDamage;
 
 	// Timers for the tailspin attack
 	FTimerHandle SwipeAttackTimer;

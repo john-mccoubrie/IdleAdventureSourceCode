@@ -58,6 +58,8 @@ public:
 
 	void LoadQuotes();
 
+	//bool DoesQuoteExist(const FString& Quote, const FString& Category);
+
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
 	TMap<FString, FString> QuotesAndCategories;
 

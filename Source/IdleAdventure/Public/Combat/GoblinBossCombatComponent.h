@@ -7,6 +7,8 @@
 #include "Combat/BaseCombatComponent.h"
 #include "GoblinBossCombatComponent.generated.h"
 
+class AEnemyBase;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangedStoicType, FString, StoicType);
 
 UCLASS()
@@ -26,6 +28,17 @@ public:
 	FOnChangedStoicType OnChangedStoicType;
 
 	void InitializeDamagingCircleTimer();
+	virtual void StopCircleDamageCheckTimer() override;
+	virtual void StartCircleDamageCheckTimer() override;
+
+	//Tutorial respawn system --add this to base combat at some point
+	void RespawnEnemy();
+	bool IsTutorialMap();
+	UPROPERTY(EditDefaultsOnly, Category = "HealthPotion")
+	TSubclassOf<AEnemyBase> TutorialGoblinBossBlueprint;
+	FTimerHandle RespawnTimerHandle;
+	FVector SavedLocation;
+	FRotator SavedRotation;
 
 private:
 	FTimerHandle DamageCheckTimer;
@@ -46,12 +59,16 @@ private:
 	float TimeToDamage;
 	FVector DamagingCircleCenter;
 	FString CurrentStoicType;
-	void DamageCheck();
+	virtual void DamageCheck() override;
 	FString BossChangeType();
 	void ChangeStoicType();
 	FString GetPlayerWeaponType();
 	void SpawnDamagingCircle();
 	void CheckForPlayerInCircle();
+	void DestroyOwner();
+	bool CanInitializeCircleTimer();
+
+	bool bCanInitializeCircle = true;
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	UNiagaraSystem* CircleDamageEffect;

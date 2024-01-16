@@ -285,6 +285,8 @@ private:
 	void RecalculatePathToTarget();
 	void MoveToTarget(AActor* Target);
 
+	bool IsPlayerCloseEnoughToTree();
+
 	FVector AdjustTargetZAxis(FVector NewTargetLocation);
 	void ClickTree(FHitResult TreeHit, APawn* PlayerPawn);
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);

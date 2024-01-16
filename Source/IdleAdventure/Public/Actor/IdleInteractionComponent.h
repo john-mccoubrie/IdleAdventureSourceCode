@@ -81,7 +81,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void PlayLevelUpSound();
 
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayEquipSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayQuestReadyForTurnInSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayQuestTurnInSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayRunCompleteSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayPickupPotionSound();
+
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayDialogueClickSound();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* EquipAudioComponent;
+	UAudioComponent* WorldAudioComponent;
+
 	void PlaySound(USoundBase* SoundToPlay);
+	void PlayWorldSound(USoundBase* SoundToPlay);
 
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
@@ -94,6 +117,24 @@ public:
 	//Use the staff audio component
 	UPROPERTY(EditAnywhere, Category = "Sound Properties")
 	USoundCue* LevelUpSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* EquipSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* PickupPotionSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* DialogueClickSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* QuestReadyForTurnInSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* QuestTurnInSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* RunCompleteSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* TreeCutEffect;

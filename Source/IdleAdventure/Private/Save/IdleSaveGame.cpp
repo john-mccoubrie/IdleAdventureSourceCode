@@ -3,6 +3,7 @@
 
 #include "Save/IdleSaveGame.h"
 #include <Kismet/GameplayStatics.h>
+#include <Chat/GameChatManager.h>
 
 void UIdleSaveGame::SaveGame(int32 WoodcuttingExp, int32 PlayerLevel) 
 {
@@ -26,41 +27,84 @@ void UIdleSaveGame::LoadGame(int32& WoodcuttingExp, int32& PlayerLevel)
 
 void UIdleSaveGame::AddQuoteAndSave(const FString& Message, const FString& Category)
 {
-	// Add the new quote to the appropriate category
-	if (Category == "Wisdom")
-	{
-		WisdomQuotes.Add(Message);
-	}
-	else if (Category == "Temperance")
-	{
-		TemperanceQuotes.Add(Message);
-	}
-	else if (Category == "Justice")
-	{
-		JusticeQuotes.Add(Message);
-	}
-	else if (Category == "Courage")
-	{
-		CourageQuotes.Add(Message);
-	}
+	// Load existing quotes
+	LoadExistingQuotes();
 
-	// Save the updated quotes
-	UGameplayStatics::SaveGameToSlot(this, "QuotesSaveSlot", 0);
+	// Check if the quote already exists
+	if ((Category == "Wisdom" && WisdomQuotes.Contains(Message)) ||
+		(Category == "Temperance" && TemperanceQuotes.Contains(Message)) ||
+		(Category == "Justice" && JusticeQuotes.Contains(Message)) ||
+		(Category == "Courage" && CourageQuotes.Contains(Message)))
+	{
+		// Log a message to the player
+		UE_LOG(LogTemp, Warning, TEXT("The quote already exists in the category %s."), *Category);
+
+		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+		// Format the message using FString::Printf
+		FString NotificationMessage = FString::Printf(TEXT("You already unlocked this quote!"));
+
+		// Define the light red color
+		FLinearColor LightRed = FLinearColor(1.0f, 0.5f, 0.5f, 1.0f);
+		// Convert FLinearColor to FSlateColor
+		FSlateColor NotificationColor = FSlateColor(LightRed);
+		// Call the function with the formatted message and color
+		GameChatManager->PostNotificationToUI(NotificationMessage, NotificationColor);
+	}
+	else
+	{
+		// Add the new quote to the appropriate category
+		if (Category == "Wisdom")
+		{
+			WisdomQuotes.Add(Message);
+		}
+		else if (Category == "Temperance")
+		{
+			TemperanceQuotes.Add(Message);
+		}
+		else if (Category == "Justice")
+		{
+			JusticeQuotes.Add(Message);
+		}
+		else if (Category == "Courage")
+		{
+			CourageQuotes.Add(Message);
+		}
+
+		AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+		GameChatManager->OnPostQuote.Broadcast(Message, Category);
+		GameChatManager->PostNotificationToUI(TEXT("You unlocked a new Stoic quote! Check your meditations book to see the quotes you've collected."), FLinearColor::Yellow);
+		// Save the updated quotes
+		UGameplayStatics::SaveGameToSlot(this, "QuotesSaveSlot", 0);
+	}
 }
 
 void UIdleSaveGame::SaveQuotes(const TMap<FString, FString>& NewQuotes)
 {
-	// Load the existing saved game or create a new one if it doesn't exist
+	// Load existing save game instance or create a new one
 	UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
 	if (!SaveGameInstance)
 	{
 		SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
 	}
 
+	// Load existing quotes
+	SaveGameInstance->LoadExistingQuotes();
+
 	// Add new quotes to the existing ones
 	for (const auto& Quote : NewQuotes)
 	{
-		SaveGameInstance->QuotesAndCategories.Add(Quote.Key, Quote.Value);
+		if (!SaveGameInstance->WisdomQuotes.Contains(Quote.Key) &&
+			!SaveGameInstance->TemperanceQuotes.Contains(Quote.Key) &&
+			!SaveGameInstance->JusticeQuotes.Contains(Quote.Key) &&
+			!SaveGameInstance->CourageQuotes.Contains(Quote.Key))
+		{
+			SaveGameInstance->QuotesAndCategories.Add(Quote.Key, Quote.Value);
+		}
+		else
+		{
+			// Log a message to the player
+			UE_LOG(LogTemp, Warning, TEXT("The quote '%s' already exists."), *Quote.Key);
+		}
 	}
 
 	// Save the updated list of quotes to the save slot
@@ -75,6 +119,18 @@ TMap<FString, FString> UIdleSaveGame::LoadQuotes()
 		return LoadGameInstance->QuotesAndCategories;
 	}
 	return TMap<FString, FString>();
+}
+
+void UIdleSaveGame::LoadExistingQuotes()
+{
+	UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
+	if (LoadGameInstance)
+	{
+		WisdomQuotes = LoadGameInstance->WisdomQuotes;
+		TemperanceQuotes = LoadGameInstance->TemperanceQuotes;
+		JusticeQuotes = LoadGameInstance->JusticeQuotes;
+		CourageQuotes = LoadGameInstance->CourageQuotes;
+	}
 }
 
 void UIdleSaveGame::SaveDialogueStep(const int32 NewDialogueStep)
@@ -97,6 +153,7 @@ int32 UIdleSaveGame::LoadDialogueStep()
 void UIdleSaveGame::SetTutorialCompleted(bool Completed)
 {
 	bIsTutorialCompleted = Completed;
+	SaveCompletedLevel("Tutorial");
 }
 
 bool UIdleSaveGame::IsTutorialCompleted() const
@@ -151,4 +208,33 @@ TArray<FInventoryItem> UIdleSaveGame::LoadPlayerEquipmentPosition()
 	}
 
 	return TArray<FInventoryItem>();
+}
+
+void UIdleSaveGame::SaveCompletedLevel(const FString& LevelName)
+{
+	// Load the existing save game or create a new one if it doesn't exist
+	UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
+	if (!SaveGameInstance)
+	{
+		SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+	}
+
+	// Add the new level name to the array, avoiding duplicates
+	if (!SaveGameInstance->CompletedLevels.Contains(LevelName))
+	{
+		SaveGameInstance->CompletedLevels.Add(LevelName);
+	}
+
+	// Save the updated save game object to the save slot
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, "CompletedLevelsSaveSlot", 0);
+}
+
+TArray<FString> UIdleSaveGame::LoadCompletedLevels()
+{
+	UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
+	if (LoadGameInstance)
+	{
+		return LoadGameInstance->CompletedLevels;
+	}
+	return TArray<FString>();
 }

@@ -27,7 +27,7 @@ void UGoblinBossCombatComponent::BeginPlay()
     TimeToDamage = 2.0f;
 
     // Change Stoic Type every 3 to 10 seconds
-    float ChangeInterval = FMath::RandRange(3.0f, 10.0f);
+    float ChangeInterval = FMath::RandRange(6.0f, 10.0f);
     GetWorld()->GetTimerManager().SetTimer(ChangeStoicTypeTimer, this, &UGoblinBossCombatComponent::ChangeStoicType, ChangeInterval, true);
 }
 
@@ -54,11 +54,16 @@ void UGoblinBossCombatComponent::HandleDeath()
         SteamManager->UnlockSteamAchievement(TEXT("KILL_A_BOSS"));
     }
 
+    // Set up respawn for tutorial
+    AActor* Owner = GetOwner();
+    SavedLocation = Owner->GetActorLocation();
+    SavedRotation = Owner->GetActorRotation();
+
     //Handle Exp
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 5000.0f);
-    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 5000.0f);
-    Character->ShowExpNumber(5000.0f, Character, FLinearColor::White);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Experience);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Experience);
+    Character->ShowExpNumber(Experience, Character, FLinearColor::White);
 
     //Update player controller values
     PC->InteruptCombat();
@@ -74,11 +79,28 @@ void UGoblinBossCombatComponent::HandleDeath()
         GetWorld()->GetTimerManager().ClearTimer(ChangeStoicTypeTimer);
     }
 
-	//Destroy the enemy actor
-	if (AActor* Owner = GetOwner())
-	{
-		Owner->Destroy();
-	}
+    //Handle death animation
+    AEnemyBase* OwningCharacter = Cast<AEnemyBase>(GetOwner());
+    if (OwningCharacter)
+    {
+        OwningCharacter->EndCombatEffects();
+        OwningCharacter->EnemyDeathAnimation();
+    }
+
+    if (IsTutorialMap())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Countdown started for enemy respawn"));
+        //ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
+        SpawnManager->ScheduleRespawn("Boss", TutorialGoblinBossBlueprint, SavedLocation, SavedRotation);
+        //GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, this, &UNPCCombatComponent::RespawnEnemy, 5.0f, false);
+    }
+
+    // Delay the destruction of the owner
+    if (GetWorld())
+    {
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UGoblinBossCombatComponent::DestroyOwner, 1.0f, false);
+    }
 }
 
 void UGoblinBossCombatComponent::TakeDamage(float amount, float level)
@@ -115,27 +137,30 @@ void UGoblinBossCombatComponent::DamageCheck()
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
     float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
-    float goblinLevel = this->Level; // Goblin's level
+    float enemyLevel = this->Level; // Goblin's level
 
     float baseDamage = PendingDamage; // Base damage
 
-    // Calculate hit probability based on player and goblin levels
-    float levelRatio = playerLevel / goblinLevel;
-    float hitProbability = FMath::Clamp(levelRatio * 0.5f, 0.0f, 1.0f); // Adjust for higher miss chance
+    // Define scaling factors
+    float ScalingFactorHigher = 0.05; // Adjust as needed
+    float ScalingFactorLower = -0.1; // Adjust as needed
+
+    // Adjust hit probability based on player and enemy levels with distinction
+    float levelDifference = enemyLevel - playerLevel; // Note the difference: enemyLevel - playerLevel
+    float adjustedLevelDifference = (levelDifference > 0) ? levelDifference * ScalingFactorHigher : levelDifference * ScalingFactorLower;
+    float hitProbability = FMath::Clamp(0.5f + adjustedLevelDifference, 0.1f, 0.9f); // Hit probability between 10% and 90%
 
     FString PlayerWeaponType = GetPlayerWeaponType();
 
     // Random roll to decide if the hit lands
     if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
     {
-        // Skew the damage range towards lower values
-        float minDamage = 2.0f; // Fixed minimum
-        float maxDamage = baseDamage; // Max damage remains as base damage
+        // Adjusted damage range
+        float minDamage = FMath::Max(1.0f, baseDamage * 0.1f); // Minimum damage is at least 1 or 10% of base damage
+        float maxDamage = FMath::Max(baseDamage, minDamage); // Ensure max damage isn't lower than min
 
-        // Generate two random numbers and use the lower one for more frequent low damage hits
-        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
-        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
-        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
+        // Generate single random damage
+        float finalDamage = FMath::RandRange(minDamage, maxDamage);
 
         // Round to nearest whole number
         int32 finalDamageInt = FMath::RoundToInt(finalDamage);
@@ -149,14 +174,16 @@ void UGoblinBossCombatComponent::DamageCheck()
             {
                 ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
             }
+
+            PlayEnemeyHitSound();
         }
-        else
+        else if (Health <= MaxHealth)
         {
             Health += finalDamage;
             if (OwningCharacter)
             {
                 ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Green);
-            } 
+            }
         }
         if (Health <= 0)
         {
@@ -174,6 +201,7 @@ void UGoblinBossCombatComponent::DamageCheck()
     // Broadcast health change
     OnHealthChanged.Broadcast(Health, MaxHealth);
 }
+
 
 FString UGoblinBossCombatComponent::BossChangeType()
 {
@@ -206,6 +234,10 @@ FString UGoblinBossCombatComponent::GetPlayerWeaponType()
 
 void UGoblinBossCombatComponent::InitializeDamagingCircleTimer()
 {
+    if (!bCanInitializeCircle)
+    {
+        return;
+    }
     UE_LOG(LogTemp, Warning, TEXT("Initalize Damage Circle Timer Set"));
     float SpawnInterval = FMath::RandRange(CircleSpawnMin, CircleSpawnMax);
     GetWorld()->GetTimerManager().SetTimer(CircleSpawnTimerHandle, this, &UGoblinBossCombatComponent::SpawnDamagingCircle, SpawnInterval, false);
@@ -269,4 +301,65 @@ void UGoblinBossCombatComponent::CheckForPlayerInCircle()
 
     // Reset or set a new timer for the next circle
     InitializeDamagingCircleTimer();
+    
+}
+
+void UGoblinBossCombatComponent::DestroyOwner()
+{
+    if (AActor* Owner = GetOwner())
+    {
+        Owner->Destroy();
+    }
+}
+
+bool UGoblinBossCombatComponent::CanInitializeCircleTimer()
+{
+    return false;
+}
+
+//called from BP_NPCAIController
+void UGoblinBossCombatComponent::StopCircleDamageCheckTimer()
+{
+    Super::StopCircleDamageCheckTimer();
+    
+    bCanInitializeCircle = false;
+
+    UE_LOG(LogTemp, Warning, TEXT("StopCircleDamageCheckTimer called in goblinbosscombatcomponent"));
+}
+
+//called from BP_NPCAIController
+void UGoblinBossCombatComponent::StartCircleDamageCheckTimer()
+{
+    Super::StartCircleDamageCheckTimer();
+
+    bCanInitializeCircle = true;
+    InitializeDamagingCircleTimer();
+
+    UE_LOG(LogTemp, Warning, TEXT("StartCircleDamageCheckTimer called in goblinbosscombatcomponent"));
+}
+
+void UGoblinBossCombatComponent::RespawnEnemy()
+{
+}
+
+bool UGoblinBossCombatComponent::IsTutorialMap()
+{
+    if (GetWorld())
+    {
+        // Get the current level name
+        FString LevelName = GetWorld()->GetMapName();
+        //LevelName = UGameplayStatics::RemoveLevelPrefix(LevelName); // Optional: Clean the level name
+
+        // Log the level name for debugging
+        UE_LOG(LogTemp, Warning, TEXT("Current level name: %s"), *LevelName);
+
+        // Check if it's the TutorialMap
+        return LevelName.Equals("TutorialMap", ESearchCase::IgnoreCase);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GetWorld() returned nullptr, unable to determine level name."));
+    }
+
+    return false;
 }

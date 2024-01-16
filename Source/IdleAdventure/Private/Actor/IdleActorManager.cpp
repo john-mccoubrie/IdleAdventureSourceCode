@@ -178,9 +178,15 @@ void AIdleActorManager::GetLegendaryTree()
     // Ensure the array is empty before populating it
     AllIdleEffectActors.Empty();
 
+    // Iterate over all AIdleEffectActor instances in the world
     for (TActorIterator<AIdleEffectActor> ActorItr(GetWorld()); ActorItr; ++ActorItr)
     {
-        AllIdleEffectActors.Add(*ActorItr);
+        // Check if the actor is not hidden in game
+        if (!ActorItr->IsHidden())
+        {
+            // Add the actor to the array if it's visible
+            AllIdleEffectActors.Add(*ActorItr);
+        }
     }
 
     // Ensure there is at least one IdleEffectActor in the level
@@ -189,22 +195,25 @@ void AIdleActorManager::GetLegendaryTree()
         int32 RandomIndex = FMath::RandRange(0, AllIdleEffectActors.Num() - 1);
         LegendaryIdleEffectActor = AllIdleEffectActors[RandomIndex];
         LegendaryIdleEffectActor->Tags.Add("Legendary");
-        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-        if (!GameChatManager) {
-            UE_LOG(LogTemp, Error, TEXT("GameChatManager is null!"));
-        }
-        GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."), FLinearColor::Yellow);
-
-        // Log the name of the LegendaryIdleEffectActor to the output log
-        //UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
 
         // Check if the actor is valid before trying to call a method on it
         if (LegendaryIdleEffectActor)
         {
+            // Create message in game chat
+            AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+            if (!GameChatManager) {
+                UE_LOG(LogTemp, Error, TEXT("GameChatManager is null in idleactor manager for legendary tree!"));
+            }
+            GameChatManager->PostNotificationToUI(TEXT("A Legendary Tree spawned in the world..."), FLinearColor::Yellow);
+
+            // Log the name of the LegendaryIdleEffectActor to the output log
+            UE_LOG(LogTemp, Warning, TEXT("LegendaryIdleEffectActor is: %s"), *LegendaryIdleEffectActor->GetName());
+
             // Activate the legendary effect particle system
             LegendaryIdleEffectActor->ActivateLegendaryEffect();
-            //AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-            //PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
+            AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+            PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
+            UE_LOG(LogTemp, Warning, TEXT("Legendary Tree Spawned"));
         }
         else
         {
@@ -214,7 +223,7 @@ void AIdleActorManager::GetLegendaryTree()
     else
     {
         // Log a warning if no IdleEffectActor instances are found
-        UE_LOG(LogTemp, Warning, TEXT("No IdleEffectActor instances found in the level!"));
+        UE_LOG(LogTemp, Warning, TEXT("No visible idleeffectactors found in this level"));
     }
 }
 

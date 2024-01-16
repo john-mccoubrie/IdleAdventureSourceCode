@@ -83,6 +83,12 @@ void AEnemyBase::EnemyDeathAnimation()
     PlayAnimMontage(DeathMontage);
 }
 
+void AEnemyBase::DemonDeathAnimation()
+{
+    UAnimMontage* DeathMontage = DemonDeathMontage;
+    PlayAnimMontage(DemonDeathMontage);
+}
+
 void AEnemyBase::EnemyAttacksPlayer()
 {
     //UE_LOG(LogTemp, Warning, TEXT("Enemy attacks player in EnemyBase"));

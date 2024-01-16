@@ -12,6 +12,7 @@
 #include <Combat/CombatManager.h>
 #include <Character/Enemy_Demon_Boss.h>
 #include <Game/SteamManager.h>
+#include <Chat/GameChatManager.h>
 
 void UDemonBossCombatComponent::BeginPlay()
 {
@@ -27,6 +28,8 @@ void UDemonBossCombatComponent::BeginPlay()
 void UDemonBossCombatComponent::HandleDeath()
 {
     Super::HandleDeath();
+
+    
 
     ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
     SpawnManager->UpdateBossCount(1);
@@ -49,9 +52,9 @@ void UDemonBossCombatComponent::HandleDeath()
 
     //Handle Exp
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + 5000.0f);
-    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + 5000.0f);
-    Character->ShowExpNumber(5000.0f, Character, FLinearColor::White);
+    IdleAttributeSet->SetWoodcutExp(IdleAttributeSet->GetWoodcutExp() + Experience);
+    IdleAttributeSet->SetWeeklyWoodcutExp(IdleAttributeSet->GetWeeklyWoodcutExp() + Experience);
+    Character->ShowExpNumber(Experience, Character, FLinearColor::White);
 
     //Update player controller values
     PC->InteruptCombat();
@@ -62,10 +65,20 @@ void UDemonBossCombatComponent::HandleDeath()
         GetWorld()->GetTimerManager().ClearTimer(DamageCheckTimer);
     }
 
-    //Destroy the enemy actor
-    if (AActor* Owner = GetOwner())
+    //Handle death animation
+    AEnemyBase* OwningCharacter = Cast<AEnemyBase>(GetOwner());
+    if (OwningCharacter)
     {
-        Owner->Destroy();
+        OwningCharacter->EndCombatEffects();
+        OwningCharacter->DemonDeathAnimation();
+    }
+
+    //Destroy the enemy actor
+    // Delay the destruction of the owner
+    if (GetWorld())
+    {
+        FTimerHandle TimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UDemonBossCombatComponent::DestroyOwner, 1.0f, false);
     }
 }
 
@@ -84,6 +97,11 @@ void UDemonBossCombatComponent::TakeDamage(float amount, float level)
 		// Start a repeating timer that checks for damage every second
 		GetWorld()->GetTimerManager().SetTimer(DamageCheckTimer, this, &UDemonBossCombatComponent::DamageCheck, 1.0f, true);
 	}
+}
+
+void UDemonBossCombatComponent::DamageCheck()
+{
+    Super::DamageCheck();
 }
 
 void UDemonBossCombatComponent::StopDamageCheckTimer()
@@ -129,6 +147,8 @@ void UDemonBossCombatComponent::CheckForPlayerInRange()
             //ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
             //CombatManager->HandleCombat(this, PlayerCharacter->CombatComponent, 50);
             // Player is in range, start applying damage at intervals
+            AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+            GameChatManager->PostNotificationToUI(TEXT("The Demon is initiating his tailspin, RUN!!!"),FLinearColor::Red);
             GetWorld()->GetTimerManager().SetTimer(TailspinDamageTimer, this, &UDemonBossCombatComponent::ApplyTailspinDamage, TailspinDamageInterval, true);
         }
         else
@@ -207,6 +227,15 @@ void UDemonBossCombatComponent::InitializeTailspinAttackTimer()
     GetWorld()->GetTimerManager().SetTimer(TailspinAttackTimer, this, &UDemonBossCombatComponent::InitiateTailspinAttack, AttackInterval, true);
 }
 
+void UDemonBossCombatComponent::DestroyOwner()
+{
+    if (AActor* Owner = GetOwner())
+    {
+        Owner->Destroy();
+    }
+}
+
+/*
 void UDemonBossCombatComponent::DamageCheck()
 {
     // Getting player's level from the player state
@@ -265,3 +294,4 @@ void UDemonBossCombatComponent::DamageCheck()
     // Broadcast health change
     OnHealthChanged.Broadcast(Health, MaxHealth);
 }
+*/

@@ -120,7 +120,7 @@ struct FQuestProgress
 	int32 BossKills;
 
 	// Initialize all values to 0
-	FQuestProgress() : Wisdom(0), Temperance(0), Justice(0), Courage(0), Legendary(0) {}
+	FQuestProgress() : Wisdom(0), Temperance(0), Justice(0), Courage(0), Legendary(0), EnemyKills(0), BossKills(0) {}
 
 	// Method to update progress for a specific objective
 	void UpdateProgress(const FString& ObjectiveType, int32 Amount)
@@ -137,14 +137,14 @@ struct FQuestProgress
 	// Check if the progress meets or exceeds the objectives
 	bool IsComplete(const FQuestObjectives& Objectives) const
 	{
-		UE_LOG(LogTemp, Log, TEXT("Current Progress: Wisdom: %d, Temperance: %d, Justice: %d, Courage: %d, Legendary: %d"), Wisdom, Temperance, Justice, Courage, Legendary);
-		UE_LOG(LogTemp, Log, TEXT("Required Objectives: Wisdom: %d, Temperance: %d, Justice: %d, Courage: %d, Legendary: %d"), Objectives.Wisdom, Objectives.Temperance, Objectives.Justice, Objectives.Courage, Objectives.Legendary);
+		UE_LOG(LogTemp, Log, TEXT("Current Progress: Wisdom: %d, Temperance: %d, Justice: %d, Courage: %d, Legendary: %d, EnemyKills: %d, BossKills: %d"), Wisdom, Temperance, Justice, Courage, Legendary, EnemyKills, BossKills);
+		UE_LOG(LogTemp, Log, TEXT("Required Objectives: Wisdom: %d, Temperance: %d, Justice: %d, Courage: %d, Legendary: %d, EnemyKills: %d, BossKills: %d"), Objectives.Wisdom, Objectives.Temperance, Objectives.Justice, Objectives.Courage, Objectives.Legendary, Objectives.EnemyKills, Objectives.BossKills);
 
 		return Wisdom >= Objectives.Wisdom &&
 			Temperance >= Objectives.Temperance &&
 			Justice >= Objectives.Justice &&
 			Courage >= Objectives.Courage &&
-			Legendary >= Objectives.Legendary;
+			Legendary >= Objectives.Legendary &&
 			EnemyKills >= Objectives.EnemyKills &&
 			BossKills >= Objectives.BossKills;
 	}

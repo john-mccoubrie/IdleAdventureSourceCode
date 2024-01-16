@@ -21,14 +21,21 @@ void UCharacterCombatComponent::HandleDeath()
 	UE_LOG(LogTemp, Warning, TEXT("Player died!"));
     ACombatManager* CombatManager = ACombatManager::GetInstance(GetWorld());
     ASpawnManager* SpawnManager = ASpawnManager::GetInstance(GetWorld());
-    int32 TotalSeconds = static_cast<int32>(SpawnManager->CountdownTime);
-    int32 Minutes = TotalSeconds / 60;
-    int32 Seconds = TotalSeconds % 60;
+    if (SpawnManager)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Map Difficulty at Death: %s"), *SpawnManager->RewardsToSend.MapDifficulty);
 
-    FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
-    CombatManager->OnCharacterDeath.Broadcast(TimeString, SpawnManager->RewardsToSend.MapDifficulty, "Player Death", 
-        "Visit the StoicStore to purchase capes and staves to increase your armor, attack, and overall health. Killing enemies has a 50% chance to drop health potions and adding to the legendary meters grants 20 health."
-    );
+        int32 TotalSeconds = static_cast<int32>(SpawnManager->CountdownTime);
+        int32 Minutes = TotalSeconds / 60;
+        int32 Seconds = TotalSeconds % 60;
+
+        FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+        CombatManager->OnCharacterDeath.Broadcast(TimeString, SpawnManager->RewardsToSend.MapDifficulty, "Player Death",
+            "Visit the StoicStore to purchase capes and staves to increase your armor, attack, and overall health. Killing enemies has a 50% chance to drop health potions and adding to the legendary meters grants 20 health."
+        );
+
+        SpawnManager->StopCountdownTimer();
+    }  
 }
 
 void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
@@ -41,9 +48,14 @@ void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
     UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
     float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
 
-    // Calculate hit probability based on enemy and player levels
-    float levelDifference = enemyLevel - playerLevel;
-    float hitProbability = FMath::Clamp(0.5f + (levelDifference / 10.0f), 0.0f, 1.0f); // Adjusted for more balanced hit chance
+    // Define scaling factors
+    float ScalingFactorHigher = 0.05; // Adjust as needed
+    float ScalingFactorLower = -0.1; // Adjust as needed
+
+    // Adjust hit probability based on player and enemy levels with distinction
+    float levelDifference = playerLevel - enemyLevel;
+    float adjustedLevelDifference = (levelDifference > 0) ? levelDifference * ScalingFactorHigher : levelDifference * ScalingFactorLower;
+    float hitProbability = FMath::Clamp(0.5f + adjustedLevelDifference, 0.1f, 0.9f); // Hit probability between 10% and 90%
 
     // Random roll to decide if the hit lands
     if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
@@ -53,13 +65,12 @@ void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
         float armorEffect = BonusManager->MultiplierSet.Armor;
         float effectiveDamage = baseDamage - armorEffect; // Damage reduced by armor
 
-        float minDamage = 2.0f; // Fixed minimum
-        float maxDamage = FMath::Max(effectiveDamage, minDamage); // Ensure max damage isn't lower than min
+        // Ensure effective damage isn't less than a minimum value
+        float minDamage = FMath::Max(1.0f, effectiveDamage * 0.1f); // Minimum damage is at least 1 or 10% of effective damage
+        float maxDamage = FMath::Max(effectiveDamage, minDamage); // Max damage is the higher of effective damage or minDamage
 
-        // Generate two random numbers and use the lower one for more frequent low damage hits
-        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
-        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
-        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
+        // Generate damage
+        float finalDamage = FMath::RandRange(minDamage, maxDamage);
 
         // Round to nearest whole number
         int32 finalDamageInt = FMath::RoundToInt(finalDamage);

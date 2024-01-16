@@ -61,6 +61,7 @@ public:
 	// Existing methods...
 	void SaveQuotes(const TMap<FString, FString>& Quotes);
 	TMap<FString, FString> LoadQuotes();
+	void LoadExistingQuotes();
 
 	void SaveDialogueStep(const int32 NewDialogueStep);
 	int32 LoadDialogueStep();
@@ -91,5 +92,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Tutorial")
 	TArray<FInventoryItem> LoadPlayerEquipmentPosition();
+
+	//Save system
+	void SaveCompletedLevel(const FString& LevelName);
+
+	UFUNCTION(BlueprintCallable, Category = "Level Management")
+	TArray<FString> LoadCompletedLevels();
+
+	UPROPERTY(VisibleAnywhere, Category = "Game Progress")
+	TArray<FString> CompletedLevels;
 
 };

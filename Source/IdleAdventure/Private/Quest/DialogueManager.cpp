@@ -8,6 +8,7 @@
 #include <Character/IdleCharacter.h>
 #include <Save/IdleSaveGame.h>
 #include <Chat/GameChatManager.h>
+#include <Player/IdlePlayerController.h>
 
 ADialogueManager* ADialogueManager::DialogueManagerSingletonInstnace = nullptr;
 
@@ -76,6 +77,10 @@ int32 ADialogueManager::GetCurrentDialogue()
 
 void ADialogueManager::SaveDialogueStep(int32 DialogueToSave)
 {
+    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+    PC->IdleInteractionComponent->PlayDialogueClickSound();
+
+
     UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
     SaveGameInstance->DialogueStep = DialogueToSave;
     UE_LOG(LogTemp, Warning, TEXT("Save dialogue step: %i"), SaveGameInstance->DialogueStep);
