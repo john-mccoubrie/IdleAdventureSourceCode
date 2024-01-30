@@ -24,8 +24,9 @@ UIdleInteractionComponent::UIdleInteractionComponent()
 
     WorldAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("WorldAudioComponent"));
     WorldAudioComponent->bAutoActivate = false;
-    //StaffDinkAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("StaffDinkAudioComponent"));
-    //StaffDinkAudioComponent->bAutoActivate = false;
+
+    CombatAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("CombatAudioComponent"));
+    CombatAudioComponent->bAutoActivate = false;
 
 }
 
@@ -356,8 +357,15 @@ void UIdleInteractionComponent::PlayLevelUpSound()
 
 void UIdleInteractionComponent::PlayEquipSound()
 {
-    if (EquipSound && EquipAudioComponent && !EquipAudioComponent->IsPlaying())
+    if (EquipSound && EquipAudioComponent)
     {
+        // Stop the currently playing sound if there is one
+        if (EquipAudioComponent->IsPlaying())
+        {
+            EquipAudioComponent->Stop();
+        }
+
+        // Set the new sound and play it
         EquipAudioComponent->SetSound(EquipSound);
         EquipAudioComponent->Play();
     }
@@ -386,6 +394,11 @@ void UIdleInteractionComponent::PlayPickupPotionSound()
 void UIdleInteractionComponent::PlayDialogueClickSound()
 {
     PlayWorldSound(DialogueClickSound);
+}
+
+void UIdleInteractionComponent::PlayPlayerTakeHitSound()
+{
+    PlayCombatSound(PlayerTakeHitSound);
 }
 
 void UIdleInteractionComponent::PlaySound(USoundBase* SoundToPlay)
@@ -417,6 +430,22 @@ void UIdleInteractionComponent::PlayWorldSound(USoundBase* SoundToPlay)
         // Set the new sound and play it
         WorldAudioComponent->SetSound(SoundToPlay);
         WorldAudioComponent->Play();
+    }
+}
+
+void UIdleInteractionComponent::PlayCombatSound(USoundBase* SoundToPlay)
+{
+    if (SoundToPlay && CombatAudioComponent)
+    {
+        // Stop the currently playing sound if any
+        if (CombatAudioComponent->IsPlaying())
+        {
+            CombatAudioComponent->Stop();
+        }
+
+        // Set the new sound and play it
+        CombatAudioComponent->SetSound(SoundToPlay);
+        CombatAudioComponent->Play();
     }
 }
 

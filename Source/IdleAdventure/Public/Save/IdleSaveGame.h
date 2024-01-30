@@ -23,6 +23,13 @@ struct FInventoryItem
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Column;
+
+	FInventoryItem()
+		: ItemID("")
+		, Row(0)
+		, Column(0)
+	{
+	}
 };
 
 
@@ -101,5 +108,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Game Progress")
 	TArray<FString> CompletedLevels;
+	void IncrementEssenceCount(int EssenceToAdd, UWorld* WorldContext);
 
+private:
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	int32 TotalEssenceGathered;
 };

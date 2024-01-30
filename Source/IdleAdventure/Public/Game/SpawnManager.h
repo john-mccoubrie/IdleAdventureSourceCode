@@ -115,11 +115,16 @@ public:
 	FOnLoadCompletedLevels FOnLoadCompletedLevels;
 
 	float CountdownTime;
+	float InitialCountdownTime;
 
 	FRunCompleteRewards RewardsToSend;
 
 	void SaveCompletedLevel(const FString& LevelName);
 	void LoadCompletedLevels();
+
+
+	// Steam dungeon leaderboard
+	void OnTrialComplete(const FString& TrialName);
 
 private:
 	static ASpawnManager* SpawnManagerSingletonInstance;

@@ -75,7 +75,7 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 	switch (CurrentPlayerState)
 	{
 	case EPlayerState::MovingToTree:
-		/* updated movemment logic works better with 900 or 1000
+		/*
 		if (TargetTree)
 		{
 			// Check if the player is close enough to start cutting the tree
@@ -103,6 +103,7 @@ void AIdlePlayerController::PlayerTick(float DeltaTime)
 				});
 		}
 		break;
+		
 		
 	case EPlayerState::MovingToCoffer:
 		if (TargetCoffer)
@@ -156,11 +157,19 @@ void AIdlePlayerController::MoveTowardsTarget(AActor* Target, float CastingDista
 		return;
 	}
 
+	if (!Target)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Target is null"));
+		return;
+	}
+
 	FVector CurrentLocation = ControlledPawn->GetActorLocation();
 	FVector PawnLocation2D = FVector(CurrentLocation.X, CurrentLocation.Y, 0);
 	FVector TargetLocation2D = FVector(Target->GetActorLocation().X, Target->GetActorLocation().Y, 0);
 
-	if (FVector::Distance(PawnLocation2D, TargetLocation2D) <= CastingDistance)
+	float Distance = FVector::Distance(PawnLocation2D, TargetLocation2D);
+
+	if (Distance <= CastingDistance)
 	{
 		OnReachTarget(ControlledPawn);
 	}
@@ -445,6 +454,7 @@ void AIdlePlayerController::MoveToClickLocation(const FInputActionValue& InputAc
 {
 	FVector AdjustedTargetLocation = AdjustTargetZAxis(CursorHit.ImpactPoint);
 	TargetDestination = AdjustedTargetLocation;
+	UE_LOG(LogTemp, Warning, TEXT("Moving to Click Location: %s"), *AdjustedTargetLocation.ToString());
 	if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(this))
 	{
 		if (PlayerPawn)
@@ -633,8 +643,10 @@ void AIdlePlayerController::StartWoodcuttingAbility(APawn* PlayerPawn)
 {
 	if (CurrentWoodcuttingAbilityInstance && CurrentWoodcuttingAbilityInstance->bAbilityIsActive)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentWoodcuttingAbilityInstnace is already active"));
 		return;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("StartWoodcuttingAbility in PC"));
 
 	CurrentPlayerState = EPlayerState::CuttingTree;
 

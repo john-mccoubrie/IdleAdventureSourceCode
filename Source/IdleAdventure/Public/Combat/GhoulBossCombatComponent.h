@@ -41,6 +41,8 @@ public:
 	void StopSwipeAttack();
 
 	void InitializeSwipeAttackTimer();
+	virtual void StopCircleDamageCheckTimer() override;
+	virtual void StartCircleDamageCheckTimer() override;
 
 	bool bIsSwipeAttackActive;
 
@@ -51,9 +53,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	UNiagaraSystem* PoisonDamageEffect;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	float zAdjustmentPoisonSpawn = 225.0f;
+	
 
 private:
 	//FTimerHandle DamageCheckTimer;
@@ -70,10 +70,12 @@ private:
 	float SwipeTimeToDodge;
 	float SwipeDamageInterval;
 	float SwipeRange;
+	float zAdjustmentPoisonSpawn;
 
 	//Poison attack parameters
 	float PoisonDamagePerSecond;
 	float PoisonDuration;
 
+	bool bCanInitializeCircle = true;
 	
 };

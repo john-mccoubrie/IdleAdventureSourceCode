@@ -7,6 +7,7 @@
 #include <Game/SpawnManager.h>
 #include <Player/IdlePlayerController.h>
 #include <Player/IdlePlayerState.h>
+#include <Game/SteamManager.h>
 #include <AbilitySystem/IdleAttributeSet.h>
 
 void UCharacterCombatComponent::HandleDeath()
@@ -35,7 +36,13 @@ void UCharacterCombatComponent::HandleDeath()
         );
 
         SpawnManager->StopCountdownTimer();
-    }  
+    }
+
+    ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+    if (SteamManager)
+    {
+        SteamManager->UnlockSteamAchievement(TEXT("MOMENTO_MORI"));
+    }
 }
 
 void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
@@ -90,6 +97,9 @@ void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
         {
             ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
         }
+
+        // Play player take hit sound
+        PC->IdleInteractionComponent->PlayPlayerTakeHitSound();
     }
     else
     {
@@ -107,11 +117,15 @@ void UCharacterCombatComponent::TakeDamage(float amount, float enemyLevel)
 
 void UCharacterCombatComponent::AddHealth(float HealthToAdd)
 {
-    if (Health < 500)
+    if (Health <= 500)
     {
         Health += HealthToAdd;
         ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
         ShowDamageNumber(HealthToAdd, OwningCharacter, FLinearColor::Green);
-    }  
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Health is over 500"));
+    }
 }
 

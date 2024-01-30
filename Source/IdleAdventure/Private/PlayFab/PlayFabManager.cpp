@@ -245,70 +245,81 @@ void APlayFabManager::LoadPlayerEquipmentInventory()
 
 void APlayFabManager::OnSuccessFetchInventory(const PlayFab::ClientModels::FGetUserDataResult& Result)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("OnSuccessFetchInventoryCalled"));
-
-    auto PlayerEquipmentDataString = Result.Data.FindRef(TEXT("PlayerEquipmentInventory")).Value;
-    if (PlayerEquipmentDataString.IsEmpty())
-    {
-        UE_LOG(LogTemp, Error, TEXT("PlayerEquipmentInventory is empty or not found."));
-    }
-    //auto DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
-    DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
-
-    if (Character)
-    {
-        UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
-        UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/DataTables/DT_PlayerEquipment.DT_PlayerEquipment")));
-        if (!EquipmentDataTable)
+    // Processing the result in a separate thread to keep the game responsive
+    AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this, Result]()
         {
-            UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager."));
-            return;
-        }
-        //Add the default item for all players
-        FName DefaultItemName = "DefaultStaff";
-        // Check if the default item is already in the inventory
-        if (!DataTableRowNames.Contains(DefaultItemName))
-        {
-            DataTableRowNames.Insert(DefaultItemName, 0); // Insert only if it's not already there
-        }
-
-        for (const FName& DataTableRowName : DataTableRowNames)
-        {
-            if (DataTableRowName.IsNone())
+            auto PlayerEquipmentDataString = Result.Data.FindRef(TEXT("PlayerEquipmentInventory")).Value;
+            if (PlayerEquipmentDataString.IsEmpty())
             {
-                UE_LOG(LogTemp, Error, TEXT("Invalid DataTableRowName."));
+                UE_LOG(LogTemp, Error, TEXT("PlayerEquipmentInventory is empty or not found."));
                 return;
             }
-            if (EquipmentDataTable)
-            {
-                FEquipmentData* EquipmentData = EquipmentDataTable->FindRow<FEquipmentData>(DataTableRowName, TEXT("LookupEquipmentData"));
-                //DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
 
-                if (EquipmentData)
+            TArray<FName> DataTableRowNames = ConvertFromPlayFabFormat(PlayerEquipmentDataString);
+
+            // Make a non-const copy of DataTableRowNames for modification
+            TArray<FName> ModifiableDataTableRowNames = DataTableRowNames;
+
+            // Switch back to the game thread to update the UI or game state
+            AsyncTask(ENamedThreads::GameThread, [this, ModifiableDataTableRowNames]() mutable
                 {
-                    PlayerEquipment->AddEquipmentItem(*EquipmentData);
-                }
-            }
-            else
-            {
-                UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager"));
-            }
+                    if (Character)
+                    {
+                        UPlayerEquipment* PlayerEquipment = Cast<UPlayerEquipment>(Character->GetComponentByClass(UPlayerEquipment::StaticClass()));
+                        UDataTable* EquipmentDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Blueprints/DataTables/DT_PlayerEquipment.DT_PlayerEquipment")));
 
-        }
-        //UE_LOG(LogTemp, Warning, TEXT("Broadcasting with %d items."), DataTableRowNames.Num());
-        OnInventoryLoaded.Broadcast(DataTableRowNames);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Character null in playfabmanager"));
-    }
+                        if (!EquipmentDataTable)
+                        {
+                            UE_LOG(LogTemp, Error, TEXT("EquipmentDataTable is null in PlayFabManager."));
+                            return;
+                        }
+
+                        FName DefaultItemName = "DefaultStaff";
+                        if (!ModifiableDataTableRowNames.Contains(DefaultItemName))
+                        {
+                            ModifiableDataTableRowNames.Insert(DefaultItemName, 0); // Insert only if it's not already there
+                        }
+
+                        for (const FName& DataTableRowName : ModifiableDataTableRowNames)
+                        {
+                            if (DataTableRowName.IsNone())
+                            {
+                                UE_LOG(LogTemp, Error, TEXT("Invalid DataTableRowName."));
+                                return;
+                            }
+
+                            FEquipmentData* EquipmentData = EquipmentDataTable->FindRow<FEquipmentData>(DataTableRowName, TEXT("LookupEquipmentData"));
+                            if (EquipmentData)
+                            {
+                                PlayerEquipment->AddEquipmentItem(*EquipmentData);
+                            }
+                        }
+
+                        OnInventoryLoaded.Broadcast(ModifiableDataTableRowNames);
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("Character null in playfabmanager"));
+                    }
+                });
+        });
 }
 
 void APlayFabManager::OnErrorFetchInventory(const PlayFab::FPlayFabCppError& Error)
 {
-    UE_LOG(LogTemp, Error, TEXT("Failed to update player equipment inventory on PlayFab. Error: %s"), *Error.GenerateErrorReport());
-}
+    FString ErrorMessage = FString::Printf(TEXT("Failed to update player equipment inventory on PlayFab. Error: %s"), *Error.GenerateErrorReport());
+    UE_LOG(LogTemp, Error, TEXT("%s"), *ErrorMessage);
 
+    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+    if (GameChatManager)
+    {
+        GameChatManager->PostNotificationToUI(ErrorMessage, FLinearColor::Red);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameChatManager is not available to display the error."));
+    }
+}
 
 bool APlayFabManager::TryPlayFabUpdate(FName EssenceType, int32 NewCount)
 {

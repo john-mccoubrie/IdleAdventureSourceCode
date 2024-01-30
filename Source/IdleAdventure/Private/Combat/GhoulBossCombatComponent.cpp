@@ -19,11 +19,12 @@ void UGhoulBossCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SwipeAttackIntervalMin = 5.0f;
+	SwipeAttackIntervalMin = 8.0f;
 	SwipeAttackIntervalMax = 15.0f;
     SwipeTimeToDodge = 3.0f;
 	SwipeDamageInterval = 2.0f;
-	SwipeRange = 1500.0f;
+	SwipeRange = 4000.0f;
+    zAdjustmentPoisonSpawn = -100.0f;
     PoisonDamagePerSecond = 5.0f;
     PoisonDuration = 10.0f;
 }
@@ -105,6 +106,10 @@ void UGhoulBossCombatComponent::StopDamageCheckTimer()
 
 void UGhoulBossCombatComponent::InitiateSwipeAttack()
 {
+    if (!bCanInitializeCircle)
+    {
+        return;
+    }
     // Assuming GetOwner() returns the AEnemy_Demon_Boss instance
     AEnemy_Ghoul_Boss* GhoulBoss = Cast<AEnemy_Ghoul_Boss>(GetOwner());
     if (GhoulBoss && GhoulBoss->GhoulSwipeMontage)
@@ -116,6 +121,22 @@ void UGhoulBossCombatComponent::InitiateSwipeAttack()
         FVector BossLocation = GetOwner()->GetActorLocation();
         BossLocation.Z -= zAdjustmentPoisonSpawn;
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), PoisonCircleEffect, BossLocation);
+
+
+        // Debug: Draw a sphere representing the damage radius
+        DrawDebugSphere(
+            GetWorld(),
+            BossLocation,          // Center of the sphere
+            SwipeRange,            // Radius
+            32,                            // Segments (quality of the sphere)
+            FColor::Red,                   // Color
+            false,                         // Persistent (false = single frame)
+            5.0f,                          // Duration (seconds)
+            0,                             // Depth
+            5.0f                           // Thickness
+        );
+        
+
 
         //Spawn wind up effect
         GhoulBoss->SpawnWindUpEffect();
@@ -152,7 +173,7 @@ void UGhoulBossCombatComponent::CheckForPlayerInRange()
             ApplyPoisonEffectToPlayer(PlayerCharacter);
 
             AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-            GameChatManager->PostNotificationToUI(TEXT("You have been poisoned!"), FLinearColor::Green);
+            GameChatManager->PostNotificationToUI(TEXT("You have been poisoned! Maybe you need some more speed..."), FLinearColor::Green);
 
             //return to normal attack sequence
             StopSwipeAttack();
@@ -284,63 +305,37 @@ void UGhoulBossCombatComponent::InitializeSwipeAttackTimer()
     GetWorld()->GetTimerManager().SetTimer(SwipeAttackTimer, this, &UGhoulBossCombatComponent::InitiateSwipeAttack, AttackInterval, true);
 }
 
-/*
-void UGhoulBossCombatComponent::DamageCheck()
+void UGhoulBossCombatComponent::StopCircleDamageCheckTimer()
 {
-    // Getting player's level from the player state
-    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
-    float goblinLevel = this->Level; // Goblin's level
-
-    float baseDamage = PendingDamage; // Base damage
-
-    // Calculate hit probability based on player and goblin levels
-    float levelRatio = playerLevel / goblinLevel;
-    float hitProbability = FMath::Clamp(levelRatio * 0.5f, 0.0f, 1.0f); // Adjust for higher miss chance
-
-    // Random roll to decide if the hit lands
-    if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
+    bCanInitializeCircle = false;
+    if (SwipeAttackTimer.IsValid())
     {
-        // Skew the damage range towards lower values
-        float minDamage = 2.0f; // Fixed minimum
-        float maxDamage = baseDamage; // Max damage remains as base damage
-
-        // Generate two random numbers and use the lower one for more frequent low damage hits
-        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
-        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
-        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
-
-        // Round to nearest whole number
-        int32 finalDamageInt = FMath::RoundToInt(finalDamage);
-        finalDamage = static_cast<float>(finalDamageInt);
-
-        // Apply damage
-        Health -= finalDamage;
-        if (Health <= 0)
-        {
-            HandleDeath();
-        }
-
-        // Show damage number (red for damage, white for miss)
-        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
-        if (OwningCharacter)
-        {
-            ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
-        }
+        GetWorld()->GetTimerManager().ClearTimer(SwipeAttackTimer);
+        SwipeAttackTimer.Invalidate();
+        UE_LOG(LogTemp, Warning, TEXT("SwipeAttack timer cleared and invalidated"));
     }
-    else
+    if (SwipeDamageTimer.IsValid())
     {
-        // Missed attack
-        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
-        if (OwningCharacter)
-        {
-            ShowDamageNumber(0, OwningCharacter, FLinearColor::White);
-        }
+        GetWorld()->GetTimerManager().ClearTimer(SwipeDamageTimer);
+        SwipeDamageTimer.Invalidate();
+        UE_LOG(LogTemp, Warning, TEXT("SwipeDamage timer cleared and invalidated"));
     }
-
-    // Broadcast health change
-    OnHealthChanged.Broadcast(Health, MaxHealth);
+    if (PoisonTimerHandle.IsValid())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(PoisonTimerHandle);
+        PoisonTimerHandle.Invalidate();
+        UE_LOG(LogTemp, Warning, TEXT("PoisonTimerHandle timer cleared and invalidated"));
+    }
+    
 }
-*/
+
+void UGhoulBossCombatComponent::StartCircleDamageCheckTimer()
+{
+    Super::StartCircleDamageCheckTimer();
+
+    bCanInitializeCircle = true;
+    StopSwipeAttack();
+
+    UE_LOG(LogTemp, Warning, TEXT("StartSwipeAttackTimer called in ghoulbosscombatcomponent"));
+}
+

@@ -98,13 +98,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Sound")
 	void PlayDialogueClickSound();
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayPlayerTakeHitSound();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio")
 	UAudioComponent* EquipAudioComponent;
 	UAudioComponent* WorldAudioComponent;
+	UAudioComponent* CombatAudioComponent;
 
 	void PlaySound(USoundBase* SoundToPlay);
 	void PlayWorldSound(USoundBase* SoundToPlay);
+	void PlayCombatSound(USoundBase* SoundToPlay);
 
 	UNiagaraComponent* SpawnedTreeEffect;
 	UNiagaraComponent* SpawnedStaffEffect;
@@ -135,6 +139,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Sound Properties")
 	USoundCue* RunCompleteSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sound Properties")
+	USoundCue* PlayerTakeHitSound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UNiagaraSystem* TreeCutEffect;

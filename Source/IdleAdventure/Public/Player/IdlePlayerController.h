@@ -220,6 +220,8 @@ public:
 	void StartAnimNotifyEnemyInteraction(APawn* PlayerPawn);
 	//void FindEnemiesInRange(const FVector& Location, TArray<AEnemyBase*>& OutEnemies);
 
+	void StartConversionAbility(APawn* PlayerPawn);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -292,7 +294,7 @@ private:
 	void OnCofferClicked(FHitResult CofferHit, APawn* PlayerPawn);
 	void ResetWoodcuttingAbilityTimer();
 	void StartWoodcuttingAbility(APawn* PlayerPawn);
-	void StartConversionAbility(APawn* PlayerPawn);
+	
 	void StartNPCInteraction(APawn* PlayerPawn);
 	void StartEnemyInteraction(APawn* PlayerPawn);
 	void StartObjectInteraction(APawn* PlayerPawn);

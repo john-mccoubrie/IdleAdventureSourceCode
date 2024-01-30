@@ -32,7 +32,16 @@ public:
 	void RemoveActiveCoffers();
 	void UpdateProgressBar(ACoffer* UpdatedCoffer, float ProgressRatio);
 	void UpdateCofferProgressBar(float EssenceToAdd);
+
+	// Coffer system
 	void AddEssenceToMeter(float EssenceToAdd);
+	void IncrementEssence();
+	float TotalEssenceToAdd;
+	float TotalIncrements;
+	float Increment;
+	FTimerHandle IncrementTimerHandle;
+
+
 	void SpawnLegendaryTreeAndSounds();
 	void AddHealthToPlayer();
 

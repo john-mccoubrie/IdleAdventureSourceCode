@@ -4,6 +4,7 @@
 #include "Save/IdleSaveGame.h"
 #include <Kismet/GameplayStatics.h>
 #include <Chat/GameChatManager.h>
+#include <Game/SteamManager.h>
 
 void UIdleSaveGame::SaveGame(int32 WoodcuttingExp, int32 PlayerLevel) 
 {
@@ -238,3 +239,56 @@ TArray<FString> UIdleSaveGame::LoadCompletedLevels()
 	}
 	return TArray<FString>();
 }
+
+
+void UIdleSaveGame::IncrementEssenceCount(int EssenceToAdd, UWorld* WorldContext)
+{
+	ASteamManager* SteamManager = ASteamManager::GetInstance(WorldContext);
+	UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("TotalEssenceGatheredSaveSlot", 0));
+	if (SaveGameInstance)
+	{
+		// Increment the total essence count by the amount added
+		SaveGameInstance->TotalEssenceGathered += EssenceToAdd;
+		// Save the updated total essence count
+		UGameplayStatics::SaveGameToSlot(SaveGameInstance, "TotalEssenceGatheredSaveSlot", 0);
+
+		if (SaveGameInstance->TotalEssenceGathered >= 100)
+		{
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("ADEPT_PHILOSOPHER"));
+			}
+		}
+
+		if (SaveGameInstance->TotalEssenceGathered >= 1000)
+		{
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("WISE_PHILOSOPHER"));
+			}
+		}
+		
+		if (SaveGameInstance->TotalEssenceGathered >= 10000)
+		{
+			if (SteamManager)
+			{
+				SteamManager->UnlockSteamAchievement(TEXT("BASED_PHILOSOPHER"));
+			}
+		}
+		
+
+		UE_LOG(LogTemp, Warning, TEXT("Current count: %i"), SaveGameInstance->TotalEssenceGathered);
+		
+	}
+	else
+	{
+		// Initialize a new save game instance if none exists
+		SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+		SaveGameInstance->TotalEssenceGathered = EssenceToAdd;
+		// Save the new essence count
+		UGameplayStatics::SaveGameToSlot(SaveGameInstance, "TotalEssenceGatheredSaveSlot", 0);
+	}
+}
+
+
+

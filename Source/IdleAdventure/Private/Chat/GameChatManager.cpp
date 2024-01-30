@@ -153,46 +153,52 @@ void AGameChatManager::PostQuoteToMeditationsJournal(FString Message, FString Ca
 void AGameChatManager::LoadQuotes()
 {
     UIdleSaveGame* LoadGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("QuotesSaveSlot", 0));
-    if (LoadGameInstance)
-    {
-        TWeakObjectPtr<AGameChatManager> WeakThis(this); // Capture a weak pointer to this
-
-        // Schedule a repeating timer to check for delegate binding
-        FTimerDelegate TimerDel;
-        TimerDel.BindLambda([WeakThis, LoadGameInstance]()
-            {
-                if (WeakThis.IsValid() && WeakThis->OnLoadSavedQuotes.IsBound())
-                {
-                    TArray<TArray<FString>*> Categories = { &LoadGameInstance->WisdomQuotes, &LoadGameInstance->TemperanceQuotes, &LoadGameInstance->JusticeQuotes, &LoadGameInstance->CourageQuotes };
-                    TArray<FString> CategoryNames = { "Wisdom", "Temperance", "Justice", "Courage" };
-
-                    for (int i = 0; i < Categories.Num(); ++i)
-                    {
-                        for (const FString& Quote : *Categories[i])
-                        {
-                            WeakThis->OnLoadSavedQuotes.Broadcast(CategoryNames[i], Quote);
-                            UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *CategoryNames[i], *Quote);
-                        }
-                    }
-
-                    // Stop the timer as we have successfully broadcasted
-                    if (WeakThis.IsValid())
-                    {
-                        WeakThis->GetWorld()->GetTimerManager().ClearTimer(WeakThis->LoadQuotesTimerHandle);
-                    }
-                }
-                else if (WeakThis.IsValid())
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("Waiting for OnLoadSavedQuotes to be bound..."));
-                }
-            });
-
-        GetWorld()->GetTimerManager().SetTimer(LoadQuotesTimerHandle, TimerDel, 1.0f, true);
-    }
-    else
+    if (LoadGameInstance == nullptr)
     {
         UE_LOG(LogTemp, Warning, TEXT("Save game instance not found."));
+        return;
     }
+
+    TWeakObjectPtr<AGameChatManager> WeakThis(this);
+
+    // Ensure the delegate is bound
+    if (!OnLoadSavedQuotes.IsBound())
+    {
+        UE_LOG(LogTemp, Error, TEXT("OnLoadSavedQuotes delegate is not bound."));
+        return;
+    }
+
+    FTimerDelegate TimerDel;
+    TimerDel.BindLambda([WeakThis, LoadGameInstance]()
+        {
+            if (!WeakThis.IsValid())
+            {
+                UE_LOG(LogTemp, Error, TEXT("GameChatManager is no longer valid."));
+                return;
+            }
+
+            TArray<TArray<FString>*> Categories = { &LoadGameInstance->WisdomQuotes, &LoadGameInstance->TemperanceQuotes, &LoadGameInstance->JusticeQuotes, &LoadGameInstance->CourageQuotes };
+            TArray<FString> CategoryNames = { "Wisdom", "Temperance", "Justice", "Courage" };
+
+            for (int i = 0; i < Categories.Num(); ++i)
+            {
+                for (const FString& Quote : *Categories[i])
+                {
+                    if (!WeakThis.IsValid())
+                    {
+                        UE_LOG(LogTemp, Error, TEXT("GameChatManager is no longer valid during broadcasting."));
+                        return;
+                    }
+                    WeakThis->OnLoadSavedQuotes.Broadcast(CategoryNames[i], Quote);
+                    UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *CategoryNames[i], *Quote);
+                }
+            }
+
+            // Clear the timer as it's no longer needed
+            WeakThis->GetWorld()->GetTimerManager().ClearTimer(WeakThis->LoadQuotesTimerHandle);
+        });
+
+    GetWorld()->GetTimerManager().SetTimer(LoadQuotesTimerHandle, TimerDel, 1.0f, true);
 }
 
 

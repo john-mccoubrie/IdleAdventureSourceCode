@@ -245,6 +245,10 @@ void UGoblinBossCombatComponent::InitializeDamagingCircleTimer()
 
 void UGoblinBossCombatComponent::SpawnDamagingCircle()
 {
+    if (!bCanInitializeCircle)
+    {
+        return;
+    }
     if (CircleDamageEffect)
     {
         FVector PlayerLocation = UGameplayStatics::GetPlayerCharacter(this, 0)->GetActorLocation();
@@ -317,13 +321,17 @@ bool UGoblinBossCombatComponent::CanInitializeCircleTimer()
     return false;
 }
 
-//called from BP_NPCAIController
+// Called from BP_BossAIController
 void UGoblinBossCombatComponent::StopCircleDamageCheckTimer()
 {
     Super::StopCircleDamageCheckTimer();
     
     bCanInitializeCircle = false;
-
+    if (CircleSpawnTimerHandle.IsValid())
+    {
+        CircleSpawnTimerHandle.Invalidate();
+        UE_LOG(LogTemp, Warning, TEXT("StopCircleDamageCheckTimer invalidate called in goblinbosscombatcomponent"));
+    }
     UE_LOG(LogTemp, Warning, TEXT("StopCircleDamageCheckTimer called in goblinbosscombatcomponent"));
 }
 

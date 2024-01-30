@@ -83,66 +83,6 @@ bool UNPCCombatComponent::IsTutorialMap()
     return false;
 }
 
-/*
-void UNPCCombatComponent::DamageCheck()
-{
-    // Getting player's level from the player state
-    AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-    AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
-    UIdleAttributeSet* IdleAttributeSet = CastChecked<UIdleAttributeSet>(PS->AttributeSet);
-    float playerLevel = IdleAttributeSet->GetWoodcuttingLevel(); // Replace with actual combat level attribute
-    float goblinLevel = this->Level; // Goblin's level
-
-    float baseDamage = PendingDamage; // Base damage
-
-    // Calculate hit probability based on player and goblin levels
-    float levelRatio = playerLevel / goblinLevel;
-    float hitProbability = FMath::Clamp(levelRatio * 0.5f, 0.0f, 1.0f); // Adjust for higher miss chance
-
-    // Random roll to decide if the hit lands
-    if (FMath::RandRange(0.0f, 1.0f) <= hitProbability)
-    {
-        // Skew the damage range towards lower values
-        float minDamage = 2.0f; // Fixed minimum
-        float maxDamage = baseDamage; // Max damage remains as base damage
-
-        // Generate two random numbers and use the lower one for more frequent low damage hits
-        float randomDamage1 = FMath::RandRange(minDamage, maxDamage);
-        float randomDamage2 = FMath::RandRange(minDamage, maxDamage);
-        float finalDamage = FMath::Min(randomDamage1, randomDamage2);
-
-        // Round to nearest whole number
-        int32 finalDamageInt = FMath::RoundToInt(finalDamage);
-        finalDamage = static_cast<float>(finalDamageInt);
-
-        // Apply damage
-        Health -= finalDamage;
-        if (Health <= 0)
-        {
-            HandleDeath();
-        }
-
-        // Show damage number (red for damage, white for miss)
-        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
-        if (OwningCharacter)
-        {
-            ShowDamageNumber(finalDamage, OwningCharacter, FLinearColor::Red);
-        }
-    }
-    else
-    {
-        // Missed attack
-        ACharacter* OwningCharacter = Cast<ACharacter>(GetOwner());
-        if (OwningCharacter)
-        {
-            ShowDamageNumber(0, OwningCharacter, FLinearColor::White);
-        }
-    }
-
-    // Broadcast health change
-    OnHealthChanged.Broadcast(Health, MaxHealth);
-}
-*/
 
 void UNPCCombatComponent::HandleDeath()
 {
@@ -197,7 +137,7 @@ void UNPCCombatComponent::HandleDeath()
     }
 
     //Handle death animation
-    AEnemy_Goblin* OwningCharacter = Cast<AEnemy_Goblin>(GetOwner());
+    AEnemyBase* OwningCharacter = Cast<AEnemyBase>(GetOwner());
     if (OwningCharacter)
     {
         OwningCharacter->EndCombatEffects();

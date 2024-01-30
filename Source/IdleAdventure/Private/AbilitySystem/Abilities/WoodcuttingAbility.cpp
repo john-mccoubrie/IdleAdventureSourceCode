@@ -16,6 +16,7 @@
 #include <Actor/CofferManager.h>
 #include <Quest/DialogueManager.h>
 #include <Game/SpawnManager.h>
+#include <Save/IdleSaveGame.h>
 
 int32 UWoodcuttingAbility::InstanceCounter = 0;
 
@@ -254,6 +255,25 @@ void UWoodcuttingAbility::CalculateLogYield(UAbilitySystemComponent* Target, con
 
         AddExperience(ExperienceGain);
 
+
+        // Load the current save game instance
+        UIdleSaveGame * SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("TotalEssenceGatheredSaveSlot", 0));
+        if (SaveGameInstance)
+        {
+            UWorld* World = GetWorld();
+            // Increment the essence count
+            SaveGameInstance->IncrementEssenceCount(EssenceToAdd, World);
+        }
+        else
+        {
+            // If no save game exists, create a new one and then increment
+            SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::CreateSaveGameObject(UIdleSaveGame::StaticClass()));
+            UWorld* World = GetWorld();
+            // Increment the essence count
+            SaveGameInstance->IncrementEssenceCount(EssenceToAdd, World);
+            // Save the new save game instance
+            UGameplayStatics::SaveGameToSlot(SaveGameInstance, "TotalEssenceGatheredSaveSlot", 0);
+        }
 
         // Update quest progress here
         //AIdleCharacter* Character = Cast<AIdleCharacter>(GetAvatarActorFromActorInfo());

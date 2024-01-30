@@ -86,13 +86,13 @@ void AQuestManager::GetQuestData()
     Request.Keys.Add("TheDailyGrind");
     Request.Keys.Add("TheDailyStoic");
     Request.Keys.Add("DailyRun");
-    Request.Keys.Add("TestQuest");
+    //Request.Keys.Add("TestQuest");
     RequestedKeys.Add("DailyEasyQuest");
     RequestedKeys.Add("DailyLegendaryQuest");
     RequestedKeys.Add("TheDailyGrind");
     RequestedKeys.Add("TheDailyStoic");
     RequestedKeys.Add("DailyRun");
-    RequestedKeys.Add("TestQuest");
+    //RequestedKeys.Add("TestQuest");
 
     clientAPI->GetTitleData(Request,
         PlayFab::UPlayFabClientAPI::FGetTitleDataDelegate::CreateUObject(this, &AQuestManager::OnGetQuestDataSuccess),

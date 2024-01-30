@@ -149,30 +149,61 @@ void ACofferManager::AddActiveCoffer(ACoffer* NewCoffer)
 
 void ACofferManager::AddEssenceToMeter(float EssenceToAdd)
 {
-    EssenceMeter += EssenceToAdd;
-    UE_LOG(LogTemp, Error, TEXT("Essence meter: %f"), EssenceMeter);
-    UE_LOG(LogTemp, Error, TEXT("Essence to add: %f"), EssenceToAdd);
+    // Calculate the increments and the time interval for each increment
+    Increment = 1.0f; // Increment by 1 each time
+    TotalIncrements = EssenceToAdd;
+    float TimeInterval = 0.15f; // Time interval between increments, adjust as needed
 
-    // Check if the meter is full or overflows
-    while (EssenceMeter >= 24)
+    // Start the timer to increment essence
+    GetWorld()->GetTimerManager().SetTimer(
+        IncrementTimerHandle,
+        this,
+        &ACofferManager::IncrementEssence,
+        TimeInterval,
+        true
+    );
+
+    // Store the total essence to add
+    TotalEssenceToAdd = EssenceToAdd;
+}
+
+void ACofferManager::IncrementEssence()
+{
+    if (TotalIncrements > 0)
     {
-        EssenceMeter -= 24; // Subtract 24 for each legendary count increment
-        LegendaryCount++;
-        OnLegendaryCountChanged.Broadcast(LegendaryCount); // Update UI or other systems
-        AddHealthToPlayer();
-        // Check for legendary tree spawn
-        if (LegendaryCount >= 4)
+        EssenceMeter += Increment;
+        TotalIncrements -= Increment;
+
+        // Handle the meter overflow here
+        while (EssenceMeter >= 24)
         {
-            AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
-            IdleActorManager->GetLegendaryTree();
-            AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
-            PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
-            LegendaryCount = 0;
-            OnLegendaryCountChanged.Broadcast(LegendaryCount);
+            EssenceMeter -= 24; // Subtract 24 for each legendary count increment
+            LegendaryCount++;
+            OnLegendaryCountChanged.Broadcast(LegendaryCount); // Update UI or other systems
+            AddHealthToPlayer();
+
+            // Check for legendary tree spawn
+            if (LegendaryCount >= 4)
+            {
+                AIdleActorManager* IdleActorManager = AIdleActorManager::GetInstance(GetWorld());
+                IdleActorManager->GetLegendaryTree();
+                AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
+                PC->IdleInteractionComponent->PlayLegendaryTreeSpawnSound();
+                LegendaryCount = 0;
+                OnLegendaryCountChanged.Broadcast(LegendaryCount);
+            }
+        }
+
+        // Update UI after handling overflow
+        UpdateCofferProgressBar(EssenceMeter);
+
+        // Check if we have added all the essence
+        if (TotalIncrements <= 0)
+        {
+            // Stop the timer
+            GetWorld()->GetTimerManager().ClearTimer(IncrementTimerHandle);
         }
     }
-
-    UpdateCofferProgressBar(EssenceMeter); // Update the UI meter
 }
 
 void ACofferManager::SpawnLegendaryTreeAndSounds()
@@ -188,12 +219,26 @@ void ACofferManager::AddHealthToPlayer()
     //Give the player 40 health
     ACharacter* MyCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
     AIdleCharacter* Character = Cast<AIdleCharacter>(MyCharacter);
-    Character->CombatComponent->AddHealth(40.0f);
-    Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
+    if (Character->CombatComponent->Health + 40 <= 500)
+    {
+        Character->CombatComponent->AddHealth(40.0f);
+        Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
 
-    AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
-    FString NotificationMessage = FString::Printf(TEXT("You healed 40 health for filling up a legendary meter!"));
-    GameChatManager->PostNotificationToUI(NotificationMessage, FLinearColor::Green);
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        FString NotificationMessage = FString::Printf(TEXT("You healed 40 health for filling up a legendary meter!"));
+        GameChatManager->PostNotificationToUI(NotificationMessage, FLinearColor::Green);
+    }
+    else
+    {
+        float NewHealthToBroadcast = 500 - Character->CombatComponent->Health;
+        Character->CombatComponent->AddHealth(500 - Character->CombatComponent->Health);
+        Character->CombatComponent->OnHealthChanged.Broadcast(Character->CombatComponent->Health, Character->CombatComponent->MaxHealth);
+
+        AGameChatManager* GameChatManager = AGameChatManager::GetInstance(GetWorld());
+        
+        FString NotificationMessage = FString::Printf(TEXT("You healed %d health for filling up a legendary meter!"), (int)NewHealthToBroadcast);
+        GameChatManager->PostNotificationToUI(NotificationMessage, FLinearColor::Green);
+    }
 }
 
 void ACofferManager::RemoveActiveCoffers()

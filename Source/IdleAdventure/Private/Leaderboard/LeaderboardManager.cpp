@@ -45,7 +45,7 @@ void ULeaderboardManager::FetchLeaderboardDataForStatistic(const FLeaderboardDet
 {
     PlayFab::ClientModels::FGetLeaderboardAroundPlayerRequest Request;
     Request.StatisticName = Details.StatisticName;
-    Request.MaxResultsCount = 7;
+    Request.MaxResultsCount = 10;
 
     clientAPI->GetLeaderboardAroundPlayer(Request,
         PlayFab::UPlayFabClientAPI::FGetLeaderboardAroundPlayerDelegate::CreateLambda(Details.SuccessCallback),

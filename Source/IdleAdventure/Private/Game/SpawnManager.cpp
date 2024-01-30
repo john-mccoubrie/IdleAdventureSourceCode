@@ -43,6 +43,9 @@ void ASpawnManager::BeginPlay()
     EnemyCount = CountActorsWithTag(GetWorld(), "EnemyPawn");
 	BossCount = CountActorsWithTag(GetWorld(), "Boss");
 
+	ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+	SteamManager->DownloadScores("EasyMap");
+
 	InitializeMapDifficulty();
 	LoadCompletedLevels();
 
@@ -153,7 +156,9 @@ void ASpawnManager::CheckRunComplete()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Run Complete"));
 		FString MapName = UGameplayStatics::GetCurrentLevelName(this, true);
-		FString CompletionTime = GetFormattedTime(CountdownTime);
+
+		float TimeTaken = InitialCountdownTime - CountdownTime;
+		FString CompletionTime = GetFormattedTime(TimeTaken);
 
 		//Create or load save game
 		UIdleSaveGame* SaveGameInstance = Cast<UIdleSaveGame>(UGameplayStatics::LoadGameFromSlot("CompletedLevelsSaveSlot", 0));
@@ -324,6 +329,8 @@ void ASpawnManager::CheckRunComplete()
 
 		OnRunComplete.Broadcast(RewardsToSend);
 
+		OnTrialComplete(MapName);
+
 		//Update exp, weekly exp, and level
 		AIdlePlayerController* PC = Cast<AIdlePlayerController>(GetWorld()->GetFirstPlayerController());
 		AIdlePlayerState* PS = PC->GetPlayerState<AIdlePlayerState>();
@@ -333,6 +340,10 @@ void ASpawnManager::CheckRunComplete()
 
 		//Play run complete sound
 		PC->IdleInteractionComponent->PlayRunCompleteSound();
+
+		//Add all essence to coffer
+		//APawn* PlayerPawn = PC->GetPawn();
+		//PC->StartConversionAbility(PlayerPawn);
 	}
 }
 
@@ -382,35 +393,43 @@ void ASpawnManager::InitializeCountdown()
 
 	if (MapName == "EasyMap")
 	{
-		CountdownTime = 1200.0f;
+		//10 minutes
+		InitialCountdownTime = CountdownTime = 600.0f;
 	}
 	else if (MapName == "MediumMap")
 	{
-		CountdownTime = 1800.0f;
+		//15 minutes
+		InitialCountdownTime = CountdownTime = 900.0f;
 	}
 	else if (MapName == "HardMap")
 	{
-		CountdownTime = 2400.0f;
+		//20 minutes
+		InitialCountdownTime = CountdownTime = 1200.0f;
 	}
 	else if (MapName == "ExpertMap")
 	{
-		CountdownTime = 3600.0f;
+		//30 minutes
+		InitialCountdownTime = CountdownTime = 600.0f;
 	}
 	else if (MapName == "LegendaryMap")
 	{
-		CountdownTime = 5400.0f;
+		//60 minutes
+		InitialCountdownTime = CountdownTime = 3600.0f;
 	}
 	else if (MapName == "ImpossibleMap")
 	{
-		CountdownTime = 7200.0f;
+		//60 minutes
+		InitialCountdownTime = CountdownTime = 3600.0f;
 	}
 	else if (MapName == "TutorialMap")
 	{
-		CountdownTime = 3600.0f;
+		//60 minutes
+		InitialCountdownTime = CountdownTime = 3600.0f;
 	}
 	else if (MapName == "GatheringMap")
 	{
-		CountdownTime = 3600.0f;
+		//60 minutes -- potentially disable all time, have trees respawn
+		InitialCountdownTime = CountdownTime = 3600.0f;
 	}
 }
 
@@ -594,6 +613,29 @@ void ASpawnManager::LoadCompletedLevels()
 	{
 		// Broadcast an empty array if no save game is found
 		FOnLoadCompletedLevels.Broadcast(TArray<FString>());
+	}
+}
+
+void ASpawnManager::OnTrialComplete(const FString& TrialName)
+{
+	// Calculate the time taken to complete the trial
+	// Assuming InitialCountdownTime was set when the trial started
+	float TimeTaken = InitialCountdownTime - CountdownTime;
+
+	// Convert time to seconds (or any suitable numeric format for the leaderboard)
+	// For example, if TimeTaken is in seconds, no conversion is needed
+	int LeaderboardScore = static_cast<int>(TimeTaken);
+
+	UE_LOG(LogTemp, Warning, TEXT("On Trial Complete: %i"), LeaderboardScore);
+
+	// Update the Steam leaderboard
+	ASteamManager* SteamManager = ASteamManager::GetInstance(GetWorld());
+	if (SteamManager)
+	{
+		// This will upload the time as a score (in seconds)
+		//SteamManager->UploadScoreToLeaderboard(TrialName, LeaderboardScore);
+		SteamManager->UploadScore(TrialName, LeaderboardScore);
+		UE_LOG(LogTemp, Warning, TEXT("Trial Name: %s"), *TrialName);
 	}
 }
 
